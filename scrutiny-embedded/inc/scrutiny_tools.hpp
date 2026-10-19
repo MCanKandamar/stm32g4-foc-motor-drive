@@ -1,0 +1,465 @@
+//    scrutiny_tools.hpp
+//        Some simple tools used across the project
+//
+//   - License : MIT - See LICENSE file
+//   - Project : Scrutiny Debugger (github.com/scrutinydebugger/scrutiny-embedded)
+//
+//    Copyright (c) 2021 Scrutiny Debugger
+
+#ifndef __SCRUTINY_TOOLS_H__
+#define __SCRUTINY_TOOLS_H__
+
+#include <limits.h>
+#include <stdint.h>
+#include <stdlib.h>
+#include <string.h>
+
+#include "scrutiny_compiler.hpp"
+#include "scrutiny_setup.hpp"
+#include "scrutiny_types.hpp"
+
+#if !SCRUTINY_BUILD_AVR_GCC
+#include <cmath>
+#else
+#include <string.h>
+#endif
+
+namespace scrutiny
+{
+    namespace tools
+    {
+        inline bool is_little_endian(void)
+        {
+#if SCRUTINY_BUILD_TI_C28
+#if (defined(__little_endian__) && __little_endian__) || defined(_LITTLE_ENDIAN_) // Those macros are defined by the C2000 compiler
+            return true;
+#else
+            return false;
+#endif
+#elif (defined(__LITTLE_ENDIAN__) && __LITTLE_ENDIAN__ == 1) || (defined(_LITTLE_ENDIAN) && _LITTLE_ENDIAN == 1)
+            return true;
+#elif (defined(__BIG_ENDIAN__) && __BIG_ENDIAN__ == 1) || (defined(_BIG_ENDIAN) && _BIG_ENDIAN == 1)
+            return false;
+#else
+            // Runtime check. Should get optimized.
+            SCRUTINY_CONSTEXPR uint32_t x = 0x12345678;
+#if CHAR_BIT == 8
+            return *reinterpret_cast<unsigned char const *>(&x) == 0x78;
+#elif CHAR_BIT == 16
+            return *reinterpret_cast<unsigned char const *>(&x) == 0x5678;
+#else
+#error
+#endif
+#endif
+        }
+
+        /// @brief Returns true if the type is supported by scrutiny
+        bool is_supported_type(VariableType::eVariableType const vt);
+
+        /// @brief Returns which variable type to use to store a given size in multiple of 8bits
+        /// @param size Given size in bytes
+        /// @return The size to use.
+        VariableTypeSize::eVariableTypeSize get_required_type_size_8bits(uint_fast8_t const size);
+
+        /// @brief Returns which variable type to use to store a given size in multiple of char
+        /// @param size Given size in bytes
+        /// @return The size to use.
+        VariableTypeSize::eVariableTypeSize get_required_type_size_char(uint_fast8_t const size);
+
+        /// @brief Computes a standard CRC32
+        /// @param data Input data
+        /// @param size Size of data in bytes
+        /// @param start_value Start value of CRC. This value can be used to chain CRC calculation.
+        /// @return The CRC32 value of the data
+        uint32_t crc32(unsigned char const *data, uint32_t const size, uint32_t const start_value = 0);
+
+        /// @brief Makes an address range (start/end address)
+        /// @param start Start address
+        /// @param end End address
+        /// @return AddressRange object
+        inline AddressRange make_address_range(uintptr_t const start, uintptr_t const end)
+        {
+#if SCRUTINY_HAS_CPP11
+            return { reinterpret_cast<void *>(start), reinterpret_cast<void *>(end) };
+#else
+            AddressRange range;
+            range.start = reinterpret_cast<void *>(start);
+            range.end = reinterpret_cast<void *>(end);
+            return range;
+#endif
+        }
+
+        /// @brief Makes an address range (start/end address)
+        /// @param start Start address
+        /// @param end End address
+        /// @return AddressRange object
+        inline AddressRange make_address_range(void *const start, void *const end)
+        {
+#if SCRUTINY_HAS_CPP11
+            return { start, end };
+#else
+            AddressRange range;
+            range.start = start;
+            range.end = end;
+            return range;
+#endif
+        }
+
+        /// @brief Makes an address range (start/end address)
+        /// @param start Start address
+        /// @param size Address range size
+        /// @return AddressRange object
+        inline AddressRange make_address_range(void *const start, size_t size)
+        {
+            size = (size == 0) ? 1 : size;
+            uintptr_t const end = reinterpret_cast<uintptr_t>(start) + size - 1;
+#if SCRUTINY_HAS_CPP11
+            return { start, reinterpret_cast<void *>(end) };
+#else
+            AddressRange range;
+            range.start = start;
+            range.end = reinterpret_cast<void *>(end);
+            return range;
+#endif
+        }
+        /// @brief Creates a VariableType from a TypeType and a size.
+        /// @param tt The type type (uint, int, float, etc)
+        /// @param ts The type size (8,16, 32)
+        /// @return The VariableType enum object
+        inline VariableType::eVariableType make_type(VariableTypeType::eVariableTypeType const tt, VariableTypeSize::eVariableTypeSize const ts)
+        {
+            if (tt == VariableTypeType::_undef || ts == VariableTypeSize::_undef)
+            {
+                return VariableType::unknown;
+            }
+
+            return static_cast<VariableType::eVariableType>(static_cast<unsigned int>(tt) | static_cast<unsigned int>(ts));
+        }
+
+        /// @brief Return the size of a native bool (compiler specific)
+        inline uint_least8_t get_platform_boolean_size_8bits()
+        {
+            return (sizeof(bool) * (CHAR_BIT / 8));
+        }
+
+        /// @brief Return the size of a native bool (compiler specific)
+        inline VariableTypeSize::eVariableTypeSize get_platform_boolean_size()
+        {
+            return get_required_type_size_8bits(get_platform_boolean_size_8bits());
+        }
+
+        /// @brief Return the bool variable type that matches the platform ``bool`` size. Compiler specific.
+        inline VariableType::eVariableType get_platform_boolean()
+        {
+            return make_type(VariableTypeType::_boolean, get_platform_boolean_size());
+        }
+
+        /// @brief Returns the size of a given TypeSize in multiple of 8bits
+        /// @param ts The VariableTypeSize object
+        /// @return Size in multiple of 8bits
+        inline uint_least8_t get_type_size_8bits(VariableTypeSize::eVariableTypeSize const ts)
+        {
+            if (ts == VariableTypeSize::_undef)
+            {
+                return 0;
+            }
+
+            return 1 << (static_cast<unsigned int>(ts) & 0xF);
+        }
+
+        /// @brief Returns the size of a given type in multiple of 8bits
+        /// @param vt The VariableType object
+        /// @return Size in multiple of 8bits
+        inline uint_least8_t get_type_size_8bits(VariableType::eVariableType const vt)
+        {
+            if (vt == VariableType::unknown)
+            {
+                return 0;
+            }
+
+            if (vt == VariableType::boolean) // No size encoded in this type. Size is undef
+            {
+                return get_platform_boolean_size_8bits();
+            }
+
+            return 1 << (static_cast<unsigned int>(vt) & 0xF);
+        }
+
+        /// @brief Returns the size of a given type in multiple of char
+        /// @param vt The VariableType object
+        /// @return Size in multiple of char
+        inline uint_least8_t get_type_size_char(VariableType::eVariableType const vt)
+        {
+            return get_type_size_8bits(vt) / (CHAR_BIT / 8);
+        }
+
+        /// @brief Returns the Type Type of a given data type.
+        /// @param vt The VariableType object
+        /// @return The VariableTypeType enum object
+        inline VariableTypeType::eVariableTypeType get_var_type_type(VariableType::eVariableType const vt)
+        {
+            return static_cast<VariableTypeType::eVariableTypeType>(static_cast<unsigned int>(vt) & 0xF0);
+        }
+
+        /// @brief Returns true if given Variable Type is a floating point type, regardless of its size
+        inline bool is_float_type(VariableType::eVariableType const vt)
+        {
+            return get_var_type_type(vt) == VariableTypeType::_float;
+        }
+
+        /// @brief Returns true if given Variable Type is a unsigned int type, regardless of its size
+        inline bool is_uint_type(VariableType::eVariableType const vt)
+        {
+            return get_var_type_type(vt) == VariableTypeType::_uint;
+        }
+
+        /// @brief Returns true if given Variable Type is a signed int type, regardless of its size
+        inline bool is_sint_type(VariableType::eVariableType const vt)
+        {
+            return get_var_type_type(vt) == VariableTypeType::_sint;
+        }
+
+#if SCRUTINY_SUPPORT_64BITS
+        inline int_biggest_t read_biggest_sint(AnyType const &v)
+        {
+            return v.sint64;
+        }
+
+        inline int_biggest_t read_biggest_uint(AnyType const &v)
+        {
+            return v.uint64;
+        }
+
+        inline double read_biggest_float(AnyType const &v)
+        {
+            return v.float64;
+        }
+
+        inline void set_biggest_sint(AnyType &v, int_biggest_t val)
+        {
+            v.sint64 = val;
+        }
+
+        inline void set_biggest_uint(AnyType &v, uint_biggest_t val)
+        {
+            v.uint64 = val;
+        }
+
+        inline void set_biggest_float(AnyType &v, float_biggest_t val)
+        {
+            v.float64 = val;
+        }
+#else
+        inline int_biggest_t read_biggest_sint(AnyType const &v)
+        {
+            return v.sint32;
+        }
+
+        inline int_biggest_t read_biggest_uint(AnyType const &v)
+        {
+            return v.uint32;
+        }
+
+        inline float read_biggest_float(AnyType const &v)
+        {
+            return v.float32;
+        }
+
+        inline void set_biggest_sint(AnyType &v, int_biggest_t val)
+        {
+            v.sint32 = val;
+        }
+
+        inline void set_biggest_uint(AnyType &v, uint_biggest_t val)
+        {
+            v.uint32 = val;
+        }
+
+        inline void set_biggest_float(AnyType &v, float_biggest_t val)
+        {
+            v.float32 = val;
+        }
+#endif
+        /// @brief Custom implementation of non-standard strnlen. Gives the length of a string but doesn't read beyond maxlen
+        /// @param s The string
+        /// @param maxlen Maximum length to check
+        /// @return Minimum between the string length and maxlen param
+        inline size_t strnlen(char const *const s, size_t const maxlen)
+        {
+            size_t n = 0;
+            if (s == SCRUTINY_NULL)
+            {
+                return 0;
+            }
+
+            for (; n < maxlen; n++)
+            {
+                if (s[n] == '\0')
+                {
+                    break;
+                }
+            }
+
+            return n;
+        }
+
+        /// @brief Custom implementation of non-standard strncpy. Copy a string with a maximum size.
+        /// Guarantee that the destination string will be null terminated, dropping a character if needed.
+        /// @param dst Destination string
+        /// @param src Source string
+        /// @param maxlen Maximum length to copy
+        /// @return Number of characters copied.
+        inline size_t strncpy(char *const dst, char const *const src, size_t const maxlen)
+        {
+            size_t n = 0;
+            for (; n < maxlen; n++)
+            {
+                dst[n] = src[n];
+                if (src[n] == '\0')
+                {
+                    break;
+                }
+            }
+
+            if (n >= maxlen)
+            {
+                dst[maxlen - 1] = '\0';
+            }
+            return n;
+        }
+
+        /// @brief Portable function that tells if a float is a finite value, meaning is not NaNs, inf, -inf
+        /// @param val The float to test
+        /// @return true if finite value
+        inline bool is_float_finite(float const val)
+        {
+#if SCRUTINY_BUILD_AVR_GCC || SCRUTINY_BUILD_TI_C28
+            SCRUTINY_STATIC_ASSERT(sizeof(float) == sizeof(uint32_t), "Expect float to be 32 bits");
+            uint32_t uv;
+            memcpy(&uv, &val, sizeof(uint32_t));
+            uint16_t exponent = (uv >> 23) & 0xFF;
+            return exponent != 0xFF;
+#else
+            return std::isfinite(val);
+#endif
+        }
+
+        /// @brief Take an array of char and copy to a destination buffer, making sure that there is only 8bits per char.
+        /// translates to a memcpy on most platforms. Different behavior for 16bits char. Use big endianness
+        /// @param dst Destination buffer
+        /// @param src Source buffer
+        /// @param nb_8bits Number of char in the destination buffer to write.
+        inline void memcpy_dilate_8bits_big_endian(void *const dst, void const *const src, size_t const nb_8bits)
+        {
+#if CHAR_BIT == 8
+            memcpy(dst, src, nb_8bits);
+#elif CHAR_BIT == 16
+            for (size_t i = 0; i < (nb_8bits >> 1); i++)
+            {
+                static_cast<unsigned char *>(dst)[2 * i] = (static_cast<unsigned char const *>(src)[i] >> 8) & 0xFF;
+                static_cast<unsigned char *>(dst)[2 * i + 1] = (static_cast<unsigned char const *>(src)[i] & 0xFF);
+            }
+#endif
+        }
+
+        /// @brief Take an array of char and copy to a destination buffer, making sure that there is only 8bits per char.
+        /// translates to a memcpy on most platforms. Different behavior for 16bits char. Use little endianness
+        /// @param dst Destination buffer
+        /// @param src Source buffer
+        /// @param nb_8bits Number of char in the destination buffer to write.
+        inline void memcpy_dilate_8bits_little_endian(void *const dst, void const *const src, size_t const nb_8bits)
+        {
+#if CHAR_BIT == 8
+            memcpy(dst, src, nb_8bits);
+#elif CHAR_BIT == 16
+            for (size_t i = 0; i < (nb_8bits >> 1); i++)
+            {
+                static_cast<unsigned char *>(dst)[2 * i] = (static_cast<unsigned char const *>(src)[i] & 0xFF);
+                static_cast<unsigned char *>(dst)[2 * i + 1] = (static_cast<unsigned char const *>(src)[i] >> 8) & 0xFF;
+            }
+#endif
+        }
+
+        /// @brief Take an array of char and copy to a destination buffer, making sure that there is only 8bits per char.
+        /// translates to a memcpy on most platforms. Different behavior for 16bits char. Use target endianness
+        /// @param dst Destination buffer
+        /// @param src Source buffer
+        /// @param nb_8bits Number of char in the destination buffer to write.
+        inline void memcpy_dilate_8bits_native(void *const dst, void const *const src, size_t const nb_8bits)
+        {
+#if CHAR_BIT == 8
+            memcpy(dst, src, nb_8bits);
+#elif CHAR_BIT == 16
+            if (is_little_endian())
+            {
+                memcpy_dilate_8bits_little_endian(dst, src, nb_8bits);
+            }
+            else
+            {
+                memcpy_dilate_8bits_big_endian(dst, src, nb_8bits);
+            }
+#endif
+        }
+
+        /// @brief Copy a buffer that has 8bits per char into a buffer that has CHAR_BIT bits per char. For most platforms
+        /// this translates to a memcpy. Different behavior for 16bits char. Uses big endianness
+        /// @param dst Destination buffer
+        /// @param src Source buffer
+        /// @param nb_8bits Number of char in the source buffer
+        inline void memcpy_compress_from_8bits_big_endian(void *const dst, void const *const src, size_t const nb_8bits)
+        {
+#if CHAR_BIT == 8
+            memcpy(dst, src, nb_8bits);
+#elif CHAR_BIT == 16
+            for (size_t i = 0; i < (nb_8bits >> 1); i++)
+            {
+                static_cast<unsigned char *>(dst)[i] =
+                    (((static_cast<unsigned char const *>(src)[2 * i] & 0xFF) << 8) | (static_cast<unsigned char const *>(src)[2 * i + 1] & 0xFF));
+            }
+#endif
+        }
+
+        /// @brief Copy a buffer that has 8bits per char into a buffer that has CHAR_BIT bits per char. For most platforms
+        /// this translates to a memcpy. Different behavior for 16bits char. Uses little endianness
+        /// @param dst Destination buffer
+        /// @param src Source buffer
+        /// @param nb_8bits Number of char in the source buffer
+        inline void memcpy_compress_from_8bits_little_endian(void *const dst, void const *const src, size_t const nb_8bits)
+        {
+#if CHAR_BIT == 8
+            memcpy(dst, src, nb_8bits);
+#elif CHAR_BIT == 16
+            for (size_t i = 0; i < (nb_8bits >> 1); i++)
+            {
+                static_cast<unsigned char *>(dst)[i] =
+                    (((static_cast<unsigned char const *>(src)[2 * i + 1] & 0xFF) << 8) | (static_cast<unsigned char const *>(src)[2 * i] & 0xFF));
+            }
+#endif
+        }
+
+        /// @brief Copy a buffer that has 8bits per char into a buffer that has CHAR_BIT bits per char. For most platforms
+        /// this translates to a memcpy. Different behavior for 16bits char. Uses target endianness
+        /// @param dst Destination buffer
+        /// @param src Source buffer
+        /// @param nb_8bits Number of char in the source buffer
+        inline void memcpy_compress_from_8bits_native(void *const dst, void const *const src, size_t const nb_8bits)
+        {
+#if CHAR_BIT == 8
+            memcpy(dst, src, nb_8bits);
+#elif CHAR_BIT == 16
+            if (is_little_endian())
+            {
+                memcpy_compress_from_8bits_little_endian(dst, src, nb_8bits);
+            }
+            else
+            {
+                memcpy_compress_from_8bits_big_endian(dst, src, nb_8bits);
+            }
+#endif
+        }
+
+    } // namespace tools
+
+} // namespace scrutiny
+
+#endif //__SCRUTINY_TOOLS_H__

@@ -1,0 +1,558 @@
+//    scrutiny_comm_handler.cpp
+//        Manage the transport-ish layer of the communication protocol. Converts Request/Response
+//        to byte stream and validate CRC
+//
+//   - License : MIT - See LICENSE file
+//   - Project : Scrutiny Debugger (github.com/scrutinydebugger/scrutiny-embedded)
+//
+//    Copyright (c) 2021 Scrutiny Debugger
+
+#include <string.h>
+
+#include "protocol/scrutiny_comm_handler.hpp"
+#include "scrutiny_setup.hpp"
+#include "scrutiny_tools.hpp"
+
+namespace scrutiny
+{
+    namespace protocol
+    {
+
+        uint32_t CommHandler::s_session_counter = 0;
+
+        void CommHandler::init(
+            unsigned char *const rx_buffer,
+            uint16_t const rx_buffer_size,
+            unsigned char *const tx_buffer,
+            uint16_t const tx_buffer_size,
+            Timebase const *const timebase,
+            uint32_t const session_counter_seed)
+        {
+            m_rx_buffer = rx_buffer;
+            m_rx_buffer_size = rx_buffer_size;
+            m_tx_buffer = tx_buffer;
+            m_tx_buffer_size = tx_buffer_size;
+            m_timebase = timebase;
+            s_session_counter = session_counter_seed;
+            m_active_request.data = m_rx_buffer; // Half duplex comm. Share buffer
+            m_active_request.data_max_length = m_rx_buffer_size;
+            m_active_response.data = m_tx_buffer; // Half duplex comm. Share buffer
+            m_active_response.data_max_length = m_tx_buffer_size;
+            m_enabled = true;
+            m_crc = 0;
+
+            if (m_rx_buffer_size < MINIMUM_RX_BUFFER_SIZE || m_rx_buffer_size > MAXIMUM_RX_BUFFER_SIZE)
+            {
+                m_enabled = false;
+            }
+
+            if (m_tx_buffer_size < MINIMUM_TX_BUFFER_SIZE || m_tx_buffer_size > MAXIMUM_TX_BUFFER_SIZE)
+            {
+                m_enabled = false;
+            }
+
+            reset();
+        }
+
+        void CommHandler::receive_data(unsigned char const *const data, uint16_t const len)
+        {
+            uint16_t i = 0;
+
+            if (m_enabled == false)
+            {
+                m_rx_error = RxError::Disabled;
+                return;
+            }
+
+            if (m_state == State::Transmitting)
+            {
+                return; // Half duplex comm. Discard data;
+            }
+
+            // Handle rx timeouts. Start a new reception if no data for too long
+            if (len != 0)
+            {
+                if (m_timebase->has_expired(m_last_rx_timestamp, SCRUTINY_COMM_RX_TIMEOUT_US * 10))
+                {
+                    reset_rx();
+                    m_state = State::Idle;
+                }
+
+                // Update rx timestamp
+                m_last_rx_timestamp = m_timebase->get_timestamp();
+
+                if (m_state == State::Idle)
+                {
+                    m_state = State::Receiving;
+                }
+            }
+            // Process each bytes
+            while (i < len && !m_request_received && m_rx_state != RxFSMState::Error)
+            {
+                switch (m_rx_state) // FSM
+                {
+                case RxFSMState::WaitForCommand:
+                {
+                    m_crc = 0;
+                    if ((data[i] & 0x80) != 0) // Invalid command
+                    {
+                        m_rx_error = RxError::InvalidCommand;
+                        m_rx_state = RxFSMState::Error;
+                    }
+                    else
+                    {
+                        m_active_request.command_id = data[i];
+                        m_crc = tools::crc32(&data[i], 1, m_crc);
+                        m_rx_state = RxFSMState::WaitForSubfunction;
+                        i += 1;
+                    }
+                    break;
+                }
+
+                case RxFSMState::WaitForSubfunction:
+                {
+                    m_active_request.subfunction_id = data[i];
+                    m_crc = tools::crc32(&data[i], 1, m_crc);
+                    m_rx_state = RxFSMState::WaitForLength;
+                    i += 1;
+                    m_per_state_data.length_bytes_received = 0;
+                    break;
+                }
+
+                case RxFSMState::WaitForLength:
+                {
+                    bool next_state = false;
+                    if (m_per_state_data.length_bytes_received == 0)
+                    {
+                        if ((len - i) >= 2)
+                        {
+                            m_active_request.data_length = (static_cast<uint16_t>(data[i]) << 8u) | (static_cast<uint16_t>(data[i + 1]));
+                            m_crc = tools::crc32(&data[i], 2, m_crc);
+                            m_per_state_data.length_bytes_received = 2;
+                            i += 2;
+                            next_state = true;
+                        }
+                        else
+                        {
+                            m_active_request.data_length = static_cast<uint16_t>(data[i]) << 8u;
+                            m_crc = tools::crc32(&data[i], 1, m_crc);
+                            m_per_state_data.length_bytes_received = 1;
+                            i += 1;
+                        }
+                    }
+                    else
+                    {
+                        m_active_request.data_length |= static_cast<uint16_t>(data[i]);
+                        m_crc = tools::crc32(&data[i], 1, m_crc);
+                        m_per_state_data.length_bytes_received = 2;
+                        i += 1;
+                        next_state = true;
+                    }
+
+                    if (next_state)
+                    {
+                        if (m_active_request.data_length == 0)
+                        {
+                            m_per_state_data.crc_bytes_received = 0;
+                            m_rx_state = RxFSMState::WaitForCRC;
+                        }
+                        else
+                        {
+                            m_per_state_data.data_bytes_received = 0;
+                            m_rx_state = RxFSMState::WaitForData;
+                        }
+                    }
+                    break;
+                }
+
+                case RxFSMState::WaitForData:
+                {
+                    if (m_active_request.data_length > m_rx_buffer_size)
+                    {
+                        m_rx_error = RxError::Overflow;
+                        m_rx_state = RxFSMState::Error; // Timeout will bring it back to working state
+                        break;
+                    }
+
+                    uint16_t const available_bytes = static_cast<uint16_t>(len - i);
+                    uint16_t const missing_bytes = m_active_request.data_length - m_per_state_data.data_bytes_received;
+                    uint16_t const data_bytes_to_read = (available_bytes >= missing_bytes) ? missing_bytes : available_bytes;
+
+                    memcpy(&m_rx_buffer[m_per_state_data.data_bytes_received], &data[i], data_bytes_to_read);
+                    m_crc = tools::crc32(&data[i], data_bytes_to_read, m_crc);
+                    m_per_state_data.data_bytes_received += data_bytes_to_read;
+                    i += data_bytes_to_read;
+
+                    if (m_per_state_data.data_bytes_received >= m_active_request.data_length)
+                    {
+                        m_per_state_data.crc_bytes_received = 0;
+                        m_rx_state = RxFSMState::WaitForCRC;
+                    }
+
+                    break;
+                }
+
+                case RxFSMState::WaitForCRC:
+                {
+                    // Assumption that CRC is reset to 0 at the beginning
+                    // Data is received MSB first, so each new byte moves the data by 8
+                    m_active_request.crc <<= 8;
+                    m_active_request.crc |= static_cast<uint32_t>(data[i] & 0xFF);
+                    m_per_state_data.crc_bytes_received++;
+                    i += 1;
+
+                    if (m_per_state_data.crc_bytes_received >= 4)
+                    {
+                        m_state = State::Idle;
+
+                        if (m_crc == m_active_request.crc)
+                        {
+                            process_active_request();
+                        }
+                        else
+                        {
+                            reset_rx();
+                        }
+                    }
+                    break;
+                }
+
+                default:
+                    break;
+                }
+            }
+        }
+
+        void CommHandler::process_active_request(void)
+        {
+            bool must_process = false;
+            if (m_session_active == false)
+            {
+                if (received_discover_request() || received_connect_request()) // Check if we received a valid discover message
+                {
+                    must_process = true;
+                }
+            }
+            else
+            {
+                must_process = true;
+            }
+
+            if (must_process)
+            {
+                m_rx_state = RxFSMState::WaitForProcess;
+                m_request_received = true;
+            }
+            else
+            {
+                reset_rx();
+            }
+        }
+
+        Response *CommHandler::prepare_response(void)
+        {
+            m_active_response.reset();
+            return &m_active_response;
+        }
+
+        bool CommHandler::send_response(Response const *const response)
+        {
+            m_tx_error = TxError::None;
+            if (m_enabled == false)
+            {
+                m_tx_error = TxError::Disabled;
+                return false;
+            }
+
+            if (m_state != State::Idle)
+            {
+                m_tx_error = TxError::Busy;
+                return false; // Half duplex comm. Discard data;
+            }
+
+            if (response->data_length > m_tx_buffer_size)
+            {
+                reset_tx();
+                m_tx_error = TxError::Overflow;
+                return false;
+            }
+
+            m_active_response.command_id = response->command_id | 0x80;
+            m_active_response.subfunction_id = response->subfunction_id;
+            m_active_response.response_code = response->response_code;
+            m_active_response.data_length = response->data_length;
+            m_active_response.data = response->data;
+
+            add_crc(&m_active_response);
+
+            // cmd8 + subfn8 + code8 + len16 + data + crc32
+            m_nbytes_to_send = 1u + 1u + 1u + 2u + m_active_response.data_length + 4u;
+
+            m_state = State::Transmitting;
+            return true;
+        }
+
+        uint16_t CommHandler::pop_data(unsigned char *const buffer, uint16_t len)
+        {
+            SCRUTINY_STATIC_ASSERT(protocol::MAXIMUM_TX_BUFFER_SIZE <= 0xFFFF - 9, "Cannot parse successfully with 16bits counters");
+
+            if (m_state != State::Transmitting)
+            {
+                return 0u;
+            }
+
+            uint16_t i = 0u;
+
+            uint16_t const nbytes_to_send = static_cast<uint16_t>(m_nbytes_to_send - m_nbytes_sent);
+            if (len > nbytes_to_send)
+            {
+                len = nbytes_to_send;
+            }
+
+            while (m_nbytes_sent < 5 && i < len)
+            {
+                if (m_nbytes_sent == 0u)
+                {
+                    buffer[i] = m_active_response.command_id & 0xFFu;
+                }
+                else if (m_nbytes_sent == 1u)
+                {
+                    buffer[i] = m_active_response.subfunction_id & 0xFFu;
+                }
+                else if (m_nbytes_sent == 2u)
+                {
+                    buffer[i] = m_active_response.response_code & 0xFFu;
+                }
+                else if (m_nbytes_sent == 3u)
+                {
+                    buffer[i] = static_cast<unsigned char>((m_active_response.data_length >> 8) & 0xFFu);
+                }
+                else if (m_nbytes_sent == 4u) // cppcheck-suppress[knownConditionTrueFalse]
+                {
+                    buffer[i] = static_cast<unsigned char>(m_active_response.data_length & 0xFFu);
+                }
+
+                i++;
+                m_nbytes_sent++;
+            }
+
+            if (m_nbytes_sent >= 5u && i < len)
+            {
+                uint16_t const data_byte_sent = (m_nbytes_sent - 5);
+                if (data_byte_sent < m_active_response.data_length)
+                {
+                    uint16_t const remaining_data_bytes = m_active_response.data_length - (m_nbytes_sent - 5);
+                    uint16_t const user_request_remaining = (len - i);
+                    // Don't read more than available.
+                    uint16_t const data_bytes_to_copy =
+                        (user_request_remaining < remaining_data_bytes) ? user_request_remaining : remaining_data_bytes;
+                    memcpy(&buffer[i], &m_active_response.data[m_active_response.data_length - remaining_data_bytes], data_bytes_to_copy);
+
+                    i += data_bytes_to_copy;
+                    m_nbytes_sent += data_bytes_to_copy;
+                }
+
+                uint16_t const crc_position = m_active_response.data_length + 5u; // Will fit as per SCRUTINY_STATIC_ASSERT above.
+                while (i < len)
+                {
+                    if (m_nbytes_sent == crc_position)
+                    {
+                        buffer[i] = (m_active_response.crc >> 24u) & 0xFFu;
+                    }
+                    else if (m_nbytes_sent == crc_position + 1u)
+                    {
+                        buffer[i] = (m_active_response.crc >> 16u) & 0xFFu;
+                    }
+                    else if (m_nbytes_sent == crc_position + 2u)
+                    {
+                        buffer[i] = (m_active_response.crc >> 8) & 0xFFu;
+                    }
+                    else if (m_nbytes_sent == crc_position + 3u)
+                    {
+                        buffer[i] = (m_active_response.crc >> 0u) & 0xFFu;
+                    }
+                    else
+                    {
+                        break; // Should never go here.
+                    }
+                    m_nbytes_sent++;
+                    i++;
+                }
+            }
+
+            if (m_nbytes_sent >= m_nbytes_to_send)
+            {
+                reset_tx();
+                wait_next_request();
+            }
+
+            return i;
+        }
+
+        // Check if the last request received is a valid "Comm Discover request".
+        bool CommHandler::received_discover_request(void) const
+        {
+            if (m_active_request.command_id != static_cast<uint_least8_t>(CommandId::CommControl))
+            {
+                return false;
+            }
+
+            if (m_active_request.subfunction_id != static_cast<uint_least8_t>(CommControl::Subfunction::Discover))
+            {
+                return false;
+            }
+
+            if (m_active_request.data_length < sizeof(CommControl::DISCOVER_MAGIC))
+            {
+                return false;
+            }
+
+            if (memcmp(CommControl::DISCOVER_MAGIC, m_active_request.data, sizeof(CommControl::DISCOVER_MAGIC)) != 0)
+            {
+                return false;
+            }
+
+            return true;
+        }
+
+        // Check if the last request received is a valid "Comm Connect request".
+        bool CommHandler::received_connect_request(void) const
+        {
+            if (m_active_request.command_id != static_cast<uint_least8_t>(CommandId::CommControl))
+            {
+                return false;
+            }
+
+            if (m_active_request.subfunction_id != static_cast<uint_least8_t>(CommControl::Subfunction::Connect))
+            {
+                return false;
+            }
+
+            return true;
+        }
+
+        void CommHandler::process(void)
+        {
+            if (m_session_active)
+            {
+                if (m_timebase->has_expired(m_heartbeat_timestamp, SCRUTINY_COMM_HEARTBEAT_TIMEOUT_US * 10))
+                {
+                    reset(); // Disable and reset all internal vars
+                }
+            }
+        }
+
+        bool CommHandler::heartbeat(uint16_t const challenge)
+        {
+            bool success = false;
+            if (!m_session_active || !m_enabled)
+            {
+                return false;
+            }
+
+            if ((challenge != m_last_heartbeat_challenge || m_first_heartbeat_received == false))
+            {
+                m_first_heartbeat_received = true;
+                m_heartbeat_timestamp = m_timebase->get_timestamp();
+                m_last_heartbeat_challenge = challenge;
+                success = true;
+            }
+            return success;
+        }
+
+        uint16_t CommHandler::data_to_send(void) const
+        {
+            if (m_state != State::Transmitting)
+            {
+                return 0;
+            }
+
+            return m_nbytes_to_send - m_nbytes_sent;
+        }
+
+        void CommHandler::add_crc(Response *const response) const
+        {
+            if (response->data_length > m_tx_buffer_size)
+                return;
+
+            unsigned char const header[5] = { static_cast<unsigned char>(response->command_id),
+                                              static_cast<unsigned char>(response->subfunction_id),
+                                              static_cast<unsigned char>(response->response_code),
+                                              static_cast<unsigned char>((response->data_length >> 8) & 0xFF),
+                                              static_cast<unsigned char>(response->data_length & 0xFF) };
+
+            uint32_t const crc = tools::crc32(header, sizeof(header));
+            response->crc = tools::crc32(response->data, response->data_length, crc);
+        }
+
+        void CommHandler::reset(void)
+        {
+            m_state = State::Idle;
+            m_last_heartbeat_challenge = 0;
+            m_first_heartbeat_received = false;
+            m_session_id = 0;
+            m_session_active = false;
+            if (m_enabled)
+            {
+                m_heartbeat_timestamp = m_timebase->get_timestamp();
+
+                reset_rx();
+                reset_tx();
+            }
+        }
+
+        void CommHandler::reset_rx(void)
+        {
+            m_active_request.reset();
+            m_rx_state = RxFSMState::WaitForCommand;
+            m_request_received = false;
+            m_rx_error = RxError::None;
+            m_last_rx_timestamp = m_timebase->get_timestamp();
+            m_crc = 0;
+
+            if (m_state == State::Receiving)
+            {
+                m_state = State::Idle;
+            }
+        }
+
+        void CommHandler::reset_tx(void)
+        {
+            m_active_response.reset();
+            m_nbytes_to_send = 0;
+            m_nbytes_sent = 0;
+            m_tx_error = TxError::None;
+
+            if (m_state == State::Transmitting)
+            {
+                m_state = State::Idle;
+            }
+        }
+
+        bool CommHandler::connect(void)
+        {
+            if (!m_enabled || m_session_active)
+            {
+                return false;
+            }
+
+            m_session_id = s_session_counter++;
+            m_session_active = true;
+            m_first_heartbeat_received = false;
+            m_heartbeat_timestamp = m_timebase->get_timestamp();
+            reset_rx();
+
+            return true;
+        }
+
+        void CommHandler::disconnect(void)
+        {
+            m_session_id = 0;
+            m_session_active = false;
+            m_first_heartbeat_received = false;
+            reset_rx();
+            reset_tx();
+        }
+
+    } // namespace protocol
+} // namespace scrutiny

@@ -1,0 +1,248 @@
+//    scrutiny_config.hpp
+//        Definition of a run-time configuration of the scrutiny module.
+//        To be filled in startup phase
+//
+//   - License : MIT - See LICENSE file
+//   - Project : Scrutiny Debugger (github.com/scrutinydebugger/scrutiny-embedded)
+//
+//    Copyright (c) 2021 Scrutiny Debugger
+
+#ifndef ___SCRUTINY_CONFIG_H___
+#define ___SCRUTINY_CONFIG_H___
+
+#include "scrutiny_loop_handler.hpp"
+#include "scrutiny_setup.hpp"
+#include "scrutiny_types.hpp"
+#include "stdlib.h"
+
+namespace scrutiny
+{
+    class MainHandler;
+
+    class Config
+    {
+      public:
+        friend class MainHandler;
+
+        Config();
+
+        /// @brief Clear the configuration content
+        void clear();
+
+        /// @brief Set the buffers used for communications. The bigger the buffer, the more data can be processed by a single request.
+        /// @param rx_buffer Reception buffer
+        /// @param rx_buffer_size Reception buffer size
+        /// @param tx_buffer Transmission buffer
+        /// @param tx_buffer_size Transmission buffer size
+        void set_buffers(unsigned char *rx_buffer, uint16_t const rx_buffer_size, unsigned char *tx_buffer, uint16_t const tx_buffer_size);
+
+#if SCRUTINY_SUPPORT_PROTECTED_REGIONS
+        /// @brief Define some memory sections that are to be left untouched
+        /// @param range Array of ranges represented by the `AddressRange` object.
+        /// This array must be allocated outside of Scrutiny and stay allocated forever as no copy will be made
+        /// Consider using `scrutiny::tools::make_address_range` to generate these objects in a one-liner
+        /// @param count Number of ranges in the given array
+        void set_forbidden_address_range(AddressRange const *range, uint_least8_t const count);
+
+        /// @brief Defines some memory sections that are read-only.
+        /// @param ranges Array of ranges represented by the `scrutiny::AddressRange` object.
+        /// This array must be allocated outside of Scrutiny and stay allocated forever as no copy will be made
+        /// Consider using `scrutiny::tools::make_address_range` to generate these objects in a one-liner
+        /// @param count Number of ranges in the given array
+        void set_readonly_address_range(AddressRange const *ranges, uint_least8_t const count);
+#endif
+        /// @brief Configures the Runtime Published Values
+        /// @param array Array of `scrutiny::RuntimePublishedValue` that contains the definition of each RPV.
+        /// This array must be allocated outside of Scrutiny and stay
+        /// allocated forever as no copy will be made
+        /// @param nbr Number of RPV in the array
+        /// @param rd_cb Callback to call to read a RPV
+        /// @param wr_cb Callback to call to write a RPV
+        void set_published_values(
+            RuntimePublishedValue const *array,
+            uint16_t const nbr,
+            RpvReadCallback const rd_cb = SCRUTINY_NULL_FN_PTR(RpvReadCallback),
+            RpvWriteCallback const wr_cb = SCRUTINY_NULL_FN_PTR(RpvWriteCallback));
+
+        /// @brief Defines the different loops (tasks) in the application.
+        /// @param loops Array of pointers to the `scrutiny::LoopHandler`.
+        /// This array must be allocated outside of Scrutiny and stay
+        /// allocated forever as no copy will be made
+        /// @param loop_count Number of `scrutiny::LoopHandler` instances
+        void set_loops(LoopHandler **loops, uint_least8_t loop_count);
+
+        /// @brief Sets a callback to be called by Scrutiny after a request to the UserCommand function.
+        /// This generic feature allows the integrator to pass down some custom request/data to the application by leveraging the already
+        /// existing Scrutiny protocol.
+        /// @param callback The callback
+        inline void set_user_command_callback(user_command_callback_t callback)
+        {
+            m_user_command_callback = callback;
+        };
+
+        /// @brief Returns the actual user command callback. nullptr if unset
+        /// @return The callback
+        inline user_command_callback_t get_user_command_callback(void)
+        {
+            return m_user_command_callback;
+        };
+
+#if SCRUTINY_ENABLE_DATALOGGING
+
+        /// @brief Sets the buffer used to store data when doing a datalogging acquisition
+        /// @param buffer The datalogging buffer
+        /// @param buffer_size The datalogging buffer size
+        void set_datalogging_buffers(unsigned char *buffer, datalogging::buffer_size_t const buffer_size);
+
+        /// @brief Sets a callback to be called by Scrutiny when a datalogging trigger condition is triggered. This callback will be called from the
+        /// context of the LoopHandler using the datalogger with no thread safety. This means that if data are to be passed to another task, it is
+        /// the integrator responsibility to ensure thread safety
+        /// @param callback The callback to be called upon datalogging trigger
+        inline void set_datalogging_trigger_callback(datalogging::trigger_callback_t callback)
+        {
+            m_datalogger_trigger_callback = callback;
+        };
+#endif
+        /// @brief Returns true if a callback has been set to support the UserCallback service call
+        inline bool is_user_command_callback_set(void) const
+        {
+            return m_user_command_callback != SCRUTINY_NULL_FN_PTR(user_command_callback_t);
+        }
+
+        /// @brief Returns true if the communication buffers were set
+        inline bool is_buffer_set(void) const
+        {
+            return (m_rx_buffer != SCRUTINY_NULL) && (m_tx_buffer != SCRUTINY_NULL);
+        }
+#if SCRUTINY_SUPPORT_PROTECTED_REGIONS
+        /// @brief Returns true if forbidden regions have been defined
+        inline bool is_forbidden_address_range_set(void) const
+        {
+            return m_forbidden_address_ranges != SCRUTINY_NULL;
+        }
+
+        /// @brief Returns true if read-only regions have been defined
+        inline bool is_readonly_address_range_set(void) const
+        {
+            return m_readonly_address_ranges != SCRUTINY_NULL;
+        }
+
+        /// @brief Returns the list of forbidden address ranges. A forbidden range is never read or written by Scrutiny.
+        inline AddressRange const *forbidden_ranges(void) const
+        {
+            return m_forbidden_address_ranges;
+        }
+
+        /// @brief Returns the number of forbidden ranges configured
+        inline uint_least8_t forbidden_ranges_count(void) const
+        {
+            return m_forbidden_range_count;
+        }
+
+        /// @brief Returns the list of read-only address ranges. A read-only range is never written by Scrutiny.
+        inline AddressRange const *readonly_ranges(void) const
+        {
+            return m_readonly_address_ranges;
+        }
+
+        /// @brief Returns the number of read-only ranges configured
+        inline uint_least8_t readonly_ranges_count(void) const
+        {
+            return m_readonly_range_count;
+        }
+#endif
+        /// @brief Returns true if Runtime Published Values (RPV) were defined and a Read callback has been given
+        inline bool is_read_published_values_configured(void) const
+        {
+            return (m_rpv_read_callback != SCRUTINY_NULL_FN_PTR(RpvReadCallback) && m_rpvs != SCRUTINY_NULL && m_rpv_count > 0);
+        };
+
+        /// @brief Returns true if Runtime Published Values (RPV) were defined and a Write callback has been given
+        inline bool is_write_published_values_configured(void) const
+        {
+            return (m_rpv_write_callback != SCRUTINY_NULL_FN_PTR(RpvWriteCallback) && m_rpvs != SCRUTINY_NULL && m_rpv_count > 0);
+        };
+
+        /// @brief Returns true if a list of loops (tasks) were defined
+        inline bool is_loop_handlers_configured(void) const
+        {
+            return m_loops != SCRUTINY_NULL && m_loop_count > 0;
+        }
+#if SCRUTINY_ENABLE_DATALOGGING
+
+        /// @brief Returns true if the datalogging feature has been configured to a working point.
+        inline bool is_datalogging_configured(void) const
+        {
+            return (m_datalogger_buffer != SCRUTINY_NULL && m_datalogger_buffer_size != 0);
+        };
+
+        /// @brief Returns true if at least one loop support datalogging
+        bool has_at_least_one_loop_with_datalogging(void) const;
+#endif
+
+        /// @brief Returns the pointer to the array of Runtime Published Values (RPV)
+        inline RuntimePublishedValue const *get_rpvs_array(void) const
+        {
+            return m_rpvs;
+        }
+
+        /// @brief  Return the number of Runtime Published Values (RPV) configured
+        inline uint16_t get_rpv_count(void) const
+        {
+            return m_rpv_count;
+        }
+
+        /// @brief Return the Runtime Published Value (RPV) read callback
+        inline RpvReadCallback get_rpv_read_callback(void) const
+        {
+            return m_rpv_read_callback;
+        }
+
+        /// @brief Return the Runtime Published Value (RPV) write callback
+        inline RpvWriteCallback get_rpv_write_callback(void) const
+        {
+            return m_rpv_write_callback;
+        }
+
+        /// @brief Maximum bitrate in bit/sec. This value is given to the server and enforced by the server only.
+        uint32_t max_bitrate;
+
+        /// @brief A seed to initialize the session counter to avoid having collision in case multiple scrutiny enabled devices uses the same
+        /// communication channel
+        uint32_t session_counter_seed;
+
+        /// @brief The display name to be broadcasted during discovery phase. This value will be shown to the user.
+        char const *display_name;
+
+        /// @brief When true, memory write are enabled. When false, no memory write is permitted.
+        bool memory_write_enable;
+
+      private:
+        unsigned char *m_rx_buffer; // The comm Rx buffer
+        unsigned char *m_tx_buffer; // The comm Tx buffer
+
+#if SCRUTINY_SUPPORT_PROTECTED_REGIONS                  // The comm Tx buffer size
+        AddressRange const *m_forbidden_address_ranges; // The forbidden address range array pointer. nullptr if unset
+        AddressRange const *m_readonly_address_ranges;  // The read-only address range array pointer. nullptr if unset
+        uint_least8_t m_forbidden_range_count;          // The forbidden address range count
+        uint_least8_t m_readonly_range_count;           // The read-only address range count
+#endif
+        RuntimePublishedValue const *m_rpvs;             // The array of Runtime Published Values. nullptr if unset
+        RpvReadCallback m_rpv_read_callback;             // The callback to perform read operation on a Runtime Published Value (RPV)
+        RpvWriteCallback m_rpv_write_callback;           // The callback to perform write operation on a Runtime Published Value (RPV)
+        user_command_callback_t m_user_command_callback; // Callback to call when a User Command service call is requested by the server
+        LoopHandler **m_loops;                           // The array of Loop Handler pointers
+        uint16_t m_rx_buffer_size;                       // The comm Rx buffer size
+        uint16_t m_tx_buffer_size;
+        uint16_t m_rpv_count;       // The number of Runtime Published Values in the RPV array
+        uint_least8_t m_loop_count; // Number of Loop Handler in the array
+
+#if SCRUTINY_ENABLE_DATALOGGING
+        unsigned char *m_datalogger_buffer;                            // Buffer that stores the datalogging data
+        datalogging::buffer_size_t m_datalogger_buffer_size;           // size of the datalogging buffer
+        datalogging::trigger_callback_t m_datalogger_trigger_callback; // Callback to call upon datalogging acquisition triggers
+#endif
+    };
+} // namespace scrutiny
+
+#endif // ___SCRUTINY_CONFIG_H___

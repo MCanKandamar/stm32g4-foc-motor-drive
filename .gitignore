@@ -1,0 +1,12 @@
+# Build çıktıları
+build/
+mx.scratch
+__pycache__/
+
+# Firmware dışı içerik
+foc_smo_kitapcik/
+smo_kitap/
+.claude/
+
+# Kişisel Scrutiny dashboard düzeni
+cfg.scdb

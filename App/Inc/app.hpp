@@ -1,0 +1,137 @@
+#pragma once
+/* Exported functions prototypes ---------------------------------------------*/
+#include "current_control.hpp"
+#include "main.h"
+#include "hall_sensor.hpp"
+#include "motor_parameters.hpp"
+#include "pi_controller.hpp"
+#include "pll.hpp"
+#include "speed_control.hpp"
+#include "state_machine.hpp"
+#include "types.hpp"
+#include <cmath>
+#include <cstdint>
+#include <algorithm>
+
+constexpr uint32_t  LED_PERIOD_MS   = 101;
+constexpr float     DEG             = motor_control::PI / 180.0f;
+constexpr uint8_t   ADC_BIT         = 12;
+constexpr float     SHUNT_AMP_GAIN  = 20.0f;
+constexpr float     SHUNT_RES_OHM   = 0.0015f;     // 0.0015 Ohm
+
+constexpr float     I_MAX           = 20.0f;
+constexpr float     VDC_MAX         = 30.0f;
+constexpr float     VDC_MIN         = 12.0f;
+
+constexpr float     I_ALIGN         = 0.5f;
+constexpr uint32_t  ALIGN_MS        = 2000;
+
+constexpr float SPEED_REF_MAX_RPM = 3560.0f;   // 57BLF02 nominal rated: = 3000 rpm
+                                               //                tested: = 3560 rpm
+extern "C" TIM_HandleTypeDef    htim3;
+extern "C" TIM_HandleTypeDef    htim8;
+extern "C" ADC_HandleTypeDef    hadc3;
+extern "C" ADC_HandleTypeDef    hadc4;
+extern "C" ADC_HandleTypeDef    hadc5;
+extern "C" FDCAN_HandleTypeDef  hfdcan1;
+extern "C" SPI_HandleTypeDef    hspi2;
+extern "C" PCD_HandleTypeDef    hpcd_USB_FS;
+extern "C" CORDIC_HandleTypeDef hcordic;
+extern "C" DMA_HandleTypeDef    hdma_adc4;
+extern "C" DMA_HandleTypeDef    hdma_adc5;
+
+/* Paylaşılan veri: her grubun tek bir yazarı var ---------------------------*/
+
+// Yazar: ADC3 ISR (20 kHz). Thread'ler sadece okur.
+struct Measurements
+{
+    motor_control::Iabc_t    Iabc;
+    motor_control::Vabc_t    Vabc;
+    float                    Vabc_phase_divider_voltage[3];
+    volatile float           theta_e_rad_hall;
+    volatile float           theta_e_rad_pll;
+    motor_control::SinCos_t  SinCos;
+    motor_control::Idq_ref_t idq_ref;
+    motor_control::duties_t  duties;
+    uint8_t                  hall_state = 0;
+};
+
+// Yazar: Supervisor. ISR okur.
+struct Setpoints
+{
+    motor_control::CtrlMode     ctrl_mode;
+    motor_control::Idq_ref_t    idq_ref;         
+    motor_control::SinCos_t     align_sc;
+    volatile float              speed_ref_rpm = 0.0f;
+    uint32_t                    t_state; 
+};
+
+// Yazar: Monitor. ISR ve diğer thread'ler okur.
+struct Status
+{
+    volatile float              theta_deg;
+    volatile float              rpm;
+    volatile int                dir;
+    volatile float              Vdc;
+    motor_control::Idq_fdb_t    idq_fdb;
+};
+
+struct Commands
+{
+    volatile bool  start         = false;
+    volatile bool  stop          = false;
+    volatile bool  reset_fault   = false;
+    volatile float speed_ref_rpm = 0.0f;
+};
+
+// Yazar: Supervisor, sadece init ve ADC_OFFSET_CAL sırasında. ISR okur.
+struct AdcCalib
+{
+    float    adc_ref_voltage         = 3.3f;
+    float    volt_per_lsb            = adc_ref_voltage / ((1U << ADC_BIT) - 1U);
+    float    amp_per_lsb             = volt_per_lsb / SHUNT_RES_OHM / SHUNT_AMP_GAIN;
+    uint16_t amplifier_offset_raw[3] = {2048, 2048, 2048};
+};
+
+// Yazar: DMA (ADC4, ADC5).
+struct AdcDma
+{
+    uint16_t adc_vdc_vrefint_raw[2];
+    uint16_t Vabc_phase_raw[3];
+};
+
+extern Measurements meas;
+extern Setpoints    setpoints;
+extern Status       status;
+extern AdcCalib     adc_cal;
+extern AdcDma       adc_dma;
+extern Commands cmd;
+
+// Hata mandalı: birden çok yazarı var (ISR'lar, Monitor, Supervisor), bilerek grupların dışında.
+extern volatile motor_control::FaultCode  fault;
+
+extern motor_control::HallSensor          hall;
+extern motor_control::current_control     foc;
+extern motor_control::speed_control       speed_ctrl;
+extern motor_control::StateMachine        motor_state;
+extern motor_control::AnglePLL            pll;
+
+motor_control::SinCos_t cordicSinCos(float theta);
+
+uint8_t readHallPins();
+float   voltage_divider_get_voltage(float voltage, float kohm_top, float kohm_bottom);
+void    enter_state(motor_control::MotorState state);
+void    DRV_ENABLE_SET();
+void    DRV_ENABLE_RESET();
+void    powerOn();
+void    powerOff();
+void    adcOffsetCalibration();
+void    update_duties(motor_control::duties_t duties);
+motor_control::Iabc_t get_abc_currents();
+motor_control::Vabc_t get_abc_voltages();
+float get_motor_angle_hal();
+motor_control::Idq_ref_t get_idq_ref(float omega_ref_rpm, float omega_fdbck_rpm);
+
+
+
+

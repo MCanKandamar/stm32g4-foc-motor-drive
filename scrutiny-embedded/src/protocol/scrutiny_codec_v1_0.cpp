@@ -1,0 +1,1142 @@
+//    scrutiny_codec_v1_0.cpp
+//        Encode/Decode functions for the Scrutiny Protocol V1.0
+//
+//   - License : MIT - See LICENSE file
+//   - Project : Scrutiny Debugger (github.com/scrutinydebugger/scrutiny-embedded)
+//
+//    Copyright (c) 2021 Scrutiny Debugger
+
+#include <limits.h>
+#include <stdint.h>
+#include <string.h>
+
+#include "protocol/scrutiny_codec_v1_0.hpp"
+#include "scrutiny_common_codecs.hpp"
+#include "scrutiny_main_handler.hpp"
+#include "scrutiny_setup.hpp"
+#include "scrutiny_software_id.hpp"
+#include "scrutiny_tools.hpp"
+#include "scrutiny_types.hpp"
+
+#if defined(_MSC_VER)
+#pragma warning(disable : 4127) // Get rid of constexpr always true condition warning.
+#endif
+
+#define SIZEOF_8BITS(T) (sizeof(T) * (CHAR_BIT / 8))
+
+namespace scrutiny
+{
+    namespace protocol
+    {
+
+        //==============================================================
+        void ReadMemoryBlocksRequestParser::init(Request const *const request)
+        {
+            SCRUTINY_CONSTEXPR unsigned int addr_size = SIZEOF_8BITS(void *);
+            m_buffer = request->data;
+            m_request_datasize = request->data_length;
+            reset();
+            MemoryBlock8Bits block;
+            while (true) // Traverse once for validation
+            {
+                next(&block);
+                if (m_invalid || m_finished)
+                {
+                    break;
+                }
+                m_required_tx_buffer_size += addr_size + 2 + block.length;
+            }
+            m_bytes_read = 0;
+            m_finished = false;
+        }
+
+        void ReadMemoryBlocksRequestParser::next(MemoryBlock8Bits *const memblock_8bits)
+        {
+            SCRUTINY_CONSTEXPR unsigned int addr_size = SIZEOF_8BITS(void *);
+            uint16_t length_8bits;
+            uintptr_t addr;
+            if (m_finished || m_invalid)
+            {
+                return;
+            }
+
+            if (addr_size + 2 > static_cast<uint16_t>(m_request_datasize - m_bytes_read))
+            {
+                m_finished = true;
+                m_invalid = true;
+                return;
+            }
+
+            codecs::decode_address_big_endian_8bits(&m_buffer[m_bytes_read], &addr);
+            m_bytes_read += addr_size;
+            length_8bits = codecs::decode_16_bits_big_endian_8bits(&m_buffer[m_bytes_read]);
+
+#if CHAR_BIT == 16
+            if (length_8bits & 1u > 0)
+            {
+                m_invalid = true;
+                return;
+            }
+#endif
+
+            if (static_cast<uint32_t>(addr_size) + 2u + length_8bits > static_cast<uint16_t>(MAXIMUM_TX_BUFFER_SIZE - m_required_tx_buffer_size))
+            {
+                m_invalid = true;
+                m_finished = true;
+                return;
+            }
+
+            m_bytes_read += 2;
+
+            memblock_8bits->start_address = reinterpret_cast<unsigned char *>(addr);
+            memblock_8bits->length = length_8bits;
+
+            if (m_bytes_read == m_request_datasize)
+            {
+                m_finished = true;
+            }
+        }
+
+        void ReadMemoryBlocksRequestParser::reset(void)
+        {
+            m_bytes_read = 0;
+            m_invalid = false;
+            m_finished = false;
+            m_required_tx_buffer_size = 0;
+        }
+
+        //==============================================================
+
+        void WriteMemoryBlocksRequestParser::init(Request const *const request, bool const masked_write)
+        {
+            SCRUTINY_CONSTEXPR unsigned int addr_size = SIZEOF_8BITS(void *);
+            m_buffer = request->data;
+            m_size_limit = request->data_length;
+            m_masked_write = masked_write;
+            reset();
+            MemoryBlock8Bits block;
+            while (true) // Traverse once for validation
+            {
+                next(&block);
+                if (m_invalid || m_finished)
+                {
+                    break;
+                }
+                m_required_tx_buffer_size += addr_size + 2;
+            }
+            m_bytes_read = 0;
+            m_finished = false;
+        }
+
+        void WriteMemoryBlocksRequestParser::next(MemoryBlock8Bits *const memblock_8bits)
+        {
+            SCRUTINY_CONSTEXPR unsigned int addr_size = SIZEOF_8BITS(void *);
+            uint16_t length_8bits;
+            uintptr_t addr;
+            if (m_finished || m_invalid)
+            {
+                return;
+            }
+
+            if (addr_size + 2 > static_cast<uint16_t>(m_size_limit - m_bytes_read))
+            {
+                m_finished = true;
+                m_invalid = true;
+                return;
+            }
+
+            codecs::decode_address_big_endian_8bits(&m_buffer[m_bytes_read], &addr);
+            m_bytes_read += addr_size;
+            // We expect the length to match the protocol. Therefore, the length should be the number of 8bits block
+            length_8bits = codecs::decode_16_bits_big_endian_8bits(&m_buffer[m_bytes_read]);
+            m_bytes_read += 2;
+
+#if CHAR_BIT == 16
+            if ((length_8bits & 1U) > 0)
+            {
+                m_invalid = true;
+                return;
+            }
+#endif
+
+            if ((length_8bits > static_cast<uint16_t>(m_size_limit - m_bytes_read)) ||
+                (m_masked_write && length_8bits > static_cast<uint16_t>((m_size_limit - m_bytes_read) >> 1)))
+            {
+                m_invalid = true;
+                m_finished = true;
+                return;
+            }
+
+            memblock_8bits->start_address = reinterpret_cast<unsigned char *>(addr);
+            memblock_8bits->source_data = reinterpret_cast<unsigned char *>(&m_buffer[m_bytes_read]);
+            m_bytes_read += length_8bits;
+
+            if (m_bytes_read > m_size_limit) // Sum of block length is bigger than request length
+            {
+                m_invalid = true;
+                return;
+            }
+            if (m_masked_write)
+            {
+                memblock_8bits->mask = reinterpret_cast<unsigned char *>(&m_buffer[m_bytes_read]);
+                m_bytes_read += length_8bits;
+            }
+            else
+            {
+                memblock_8bits->mask = SCRUTINY_NULL;
+            }
+            memblock_8bits->length = length_8bits;
+
+            if (m_bytes_read == m_size_limit)
+            {
+                m_finished = true;
+            }
+        }
+
+        void WriteMemoryBlocksRequestParser::reset(void)
+        {
+            m_bytes_read = 0;
+            m_invalid = false;
+            m_finished = false;
+            m_required_tx_buffer_size = 0;
+        }
+
+        void ReadRPVRequestParser::init(Request const *const request)
+        {
+            m_buffer = request->data;
+            m_request_len = request->data_length;
+            reset();
+            // It's a list of 16 bits value. So we need an even number of bytes
+            if ((m_request_len & 0x01) != 0)
+            {
+                m_invalid = true;
+                return;
+            }
+        }
+
+        bool ReadRPVRequestParser::next(uint16_t *const id)
+        {
+            if (m_finished || m_invalid)
+            {
+                return false;
+            }
+
+            if (2 > m_request_len - m_bytes_read)
+            {
+                m_invalid = true;
+                return false;
+            }
+
+            *id = codecs::decode_16_bits_big_endian_8bits(&m_buffer[m_bytes_read]);
+            m_bytes_read += 2;
+
+            if (m_bytes_read == m_request_len)
+            {
+                m_finished = true;
+            }
+
+            return !m_invalid;
+        }
+
+        void ReadRPVRequestParser::reset(void)
+        {
+            m_bytes_read = 0;
+            m_invalid = false;
+            m_finished = false;
+        }
+
+        // ==================================
+
+        void WriteRPVRequestParser::init(Request const *const request, MainHandler const *const main_handler)
+        {
+            m_buffer = request->data;
+            m_request_len = request->data_length;
+            m_main_handler = main_handler;
+            reset();
+        }
+
+        bool WriteRPVRequestParser::next(RuntimePublishedValue *const rpv, AnyType *const v)
+        {
+            bool ok_to_process = false;
+            // We can't parse the request if a previous entry was not found.
+            if (m_finished || m_invalid)
+            {
+                return false;
+            }
+
+            if (2u > static_cast<uint16_t>(m_request_len - m_bytes_read))
+            {
+                m_invalid = true;
+                return false;
+            }
+
+            uint16_t const id = codecs::decode_16_bits_big_endian_8bits(&m_buffer[m_bytes_read]);
+            m_bytes_read += 2;
+
+            bool const found = m_main_handler->get_rpv(id, rpv);
+
+            // Impossible to know the meaning of the rest of the payload. We need to stop all;
+            if (!found)
+            {
+                m_invalid = true;
+                return false;
+            }
+
+            uint_least8_t const typesize = tools::get_type_size_8bits(rpv->type);
+
+            if (typesize > static_cast<uint16_t>(m_request_len - m_bytes_read))
+            {
+                m_invalid = true;
+                return false;
+            }
+
+            ok_to_process = true;
+            switch (typesize)
+            {
+#if CHAR_BIT == 8
+            case 1:
+                v->uint8 = m_buffer[m_bytes_read];
+                break;
+#endif
+            case 2:
+                v->uint16 = codecs::decode_16_bits_big_endian_8bits(&m_buffer[m_bytes_read]);
+                break;
+            case 4:
+                v->uint32 = codecs::decode_32_bits_big_endian_8bits(&m_buffer[m_bytes_read]);
+                break;
+#if SCRUTINY_SUPPORT_64BITS
+            case 8:
+                v->uint64 = codecs::decode_64_bits_big_endian_8bits(&m_buffer[m_bytes_read]);
+                break;
+#endif
+            default:
+                ok_to_process = false;
+                break;
+            }
+
+            // We don't flag error on unsupported types. We skip them
+            m_bytes_read += typesize;
+
+            if (m_bytes_read == m_request_len)
+            {
+                m_finished = true;
+            }
+
+            return ok_to_process;
+        }
+
+        void WriteRPVRequestParser::reset(void)
+        {
+            m_bytes_read = 0;
+            m_invalid = false;
+            m_finished = false;
+        }
+
+        //==============================================================
+
+        // =================== Encoders ===============
+        void ResponseEncoderBase::init(Response *const response, uint16_t const max_size)
+        {
+            m_size_limit = max_size;
+            m_buffer = response->data;
+            m_response = response;
+            m_cursor = 0;
+            m_overflow = false;
+        }
+
+        void ReadMemoryBlocksResponseEncoder::write(MemoryBlock8Bits const *const memblock_8bits)
+        {
+            SCRUTINY_CONSTEXPR unsigned int addr_size = SIZEOF_8BITS(void *);
+
+            if (memblock_8bits->length > MAXIMUM_TX_BUFFER_SIZE - addr_size - 2) // Make sure that the addition below doesn't blow up
+            {
+                m_overflow = true;
+                return;
+            }
+
+            if (addr_size + 2 + memblock_8bits->length > static_cast<uint16_t>(m_size_limit - m_cursor))
+            {
+                m_overflow = true;
+                return;
+            }
+
+            m_cursor += codecs::encode_address_big_endian_8bits(memblock_8bits->start_address, &m_buffer[m_cursor]);
+            m_cursor += codecs::encode_16_bits_big_endian_8bits(memblock_8bits->length, &m_buffer[m_cursor]);
+            tools::memcpy_dilate_8bits_native(&m_buffer[m_cursor], memblock_8bits->start_address, memblock_8bits->length);
+            m_cursor += memblock_8bits->length;
+
+            m_response->data_length = m_cursor;
+        }
+
+        void WriteMemoryBlocksResponseEncoder::write(MemoryBlock8Bits const *const memblock_8bits)
+        {
+            SCRUTINY_CONSTEXPR unsigned int addr_size = SIZEOF_8BITS(void *);
+
+            if (addr_size + 2u > static_cast<uint16_t>(m_size_limit - m_cursor))
+            {
+                m_overflow = true;
+                return;
+            }
+
+            m_cursor += codecs::encode_address_big_endian_8bits(memblock_8bits->start_address, &m_buffer[m_cursor]);
+            m_cursor += codecs::encode_16_bits_big_endian_8bits(memblock_8bits->length, &m_buffer[m_cursor]);
+            m_response->data_length = static_cast<uint16_t>(m_cursor);
+        }
+
+        void GetRPVDefinitionResponseEncoder::write(RuntimePublishedValue const *const rpv)
+        {
+            // id (2) + type (1) + address size (2,4,8)
+            if (2u + 1u > static_cast<uint16_t>(m_size_limit - m_cursor))
+            {
+                m_overflow = true;
+                return;
+            }
+            VariableType::eVariableType vtype = rpv->type;
+            if (rpv->type == VariableType::boolean)
+            {
+                // The embedded lib user may use "boolean" which has no size.
+                // We need to tell the server the real size of it so it can encode data
+                // while writing. Convert to boolean8, boolean16 or boolean32
+                // bool size is compiler specific. can be 8bits or int.
+                vtype = tools::get_platform_boolean();
+            }
+            m_cursor += codecs::encode_16_bits_big_endian_8bits(rpv->id, &m_buffer[m_cursor]);
+            m_cursor += codecs::encode_8_bits_8bits(static_cast<uint_least8_t>(vtype), &m_buffer[m_cursor]);
+            m_response->data_length = m_cursor;
+        }
+
+        void ReadRPVResponseEncoder::write(RuntimePublishedValue const *const rpv, AnyType const v)
+        {
+            uint_least8_t const typesize = tools::get_type_size_8bits(rpv->type);
+            // id (2) + type (1)
+            if (2u + typesize > static_cast<uint16_t>(m_size_limit - m_cursor))
+            {
+                m_overflow = true;
+                return;
+            }
+
+            if (
+#if CHAR_BIT == 8
+                typesize == 1u ||
+#endif
+                typesize == 2u || typesize == 4u
+#if SCRUTINY_SUPPORT_64BITS
+                || typesize == 8u
+#endif
+            )
+            {
+                m_cursor += codecs::encode_16_bits_big_endian_8bits(rpv->id, &m_buffer[m_cursor]);
+                m_cursor += codecs::encode_anytype_big_endian_8bits(&v, typesize, &m_buffer[m_cursor]);
+                m_response->data_length = m_cursor;
+            }
+        }
+
+        void WriteRPVResponseEncoder::write(RuntimePublishedValue const *const rpv)
+        {
+            uint_least8_t const typesize = tools::get_type_size_8bits(rpv->type);
+            // id (2) + datalen (1)
+            if (2u + 1u > static_cast<uint16_t>(m_size_limit - m_cursor))
+            {
+                m_overflow = true;
+                return;
+            }
+
+            m_cursor += codecs::encode_16_bits_big_endian_8bits(rpv->id, &m_buffer[m_cursor]);
+            m_cursor += codecs::encode_8_bits_8bits(typesize, &m_buffer[m_cursor]);
+
+            m_response->data_length = m_cursor;
+        }
+
+        // =====================
+
+        //==============================================================
+
+        // ===== Encoding =====
+        ResponseCode::eResponseCode CodecV1_0::encode_response_protocol_version(
+            ResponseData::GetInfo::GetProtocolVersion const *const response_data,
+            Response *const response)
+        {
+            SCRUTINY_CONSTEXPR uint16_t datalen = 2;
+            if (datalen > MINIMUM_TX_BUFFER_SIZE && datalen > response->data_max_length)
+            {
+                return ResponseCode::Overflow;
+            }
+
+            response->data_length = datalen;
+            response->data[0] = response_data->major;
+            response->data[1] = response_data->minor;
+
+            return ResponseCode::OK;
+        }
+
+        ResponseCode::eResponseCode CodecV1_0::encode_response_software_id(Response *const response)
+        {
+            SCRUTINY_CONSTEXPR uint16_t datalen = SIZEOF_8BITS(scrutiny::software_id);
+
+            if (datalen > MINIMUM_TX_BUFFER_SIZE && datalen > response->data_max_length)
+            {
+                return ResponseCode::Overflow;
+            }
+
+            response->data_length = datalen;
+            tools::memcpy_dilate_8bits_big_endian(response->data, scrutiny::software_id, SIZEOF_8BITS(scrutiny::software_id));
+            return ResponseCode::OK;
+        }
+
+        ResponseCode::eResponseCode CodecV1_0::encode_response_special_memory_region_count(
+            ResponseData::GetInfo::GetSpecialMemoryRegionCount const *const response_data,
+            Response *const response)
+        {
+            SCRUTINY_CONSTEXPR uint16_t readonly_region_count_size = 1;
+            SCRUTINY_CONSTEXPR uint16_t forbidden_region_count_size = 1;
+            SCRUTINY_CONSTEXPR uint16_t datalen = readonly_region_count_size + forbidden_region_count_size;
+            if (datalen > MINIMUM_TX_BUFFER_SIZE && datalen > response->data_max_length)
+            {
+                return ResponseCode::Overflow;
+            }
+            response->data[0] = response_data->nbr_readonly_region & 0xFF;
+            response->data[1] = response_data->nbr_forbidden_region & 0xFF;
+            response->data_length = 2;
+            return ResponseCode::OK;
+        }
+
+        ResponseCode::eResponseCode CodecV1_0::encode_response_special_memory_region_location(
+            ResponseData::GetInfo::GetSpecialMemoryRegionLocation const *const response_data,
+            Response *response)
+        {
+            SCRUTINY_CONSTEXPR unsigned int addr_size = SIZEOF_8BITS(void *);
+            SCRUTINY_CONSTEXPR uint16_t region_type_size = 1;
+            SCRUTINY_CONSTEXPR uint16_t region_index_size = 1;
+            SCRUTINY_CONSTEXPR uint16_t datalen = region_type_size + region_index_size + 2 * addr_size;
+
+            if (datalen > MINIMUM_TX_BUFFER_SIZE && datalen > response->data_max_length)
+            {
+                return ResponseCode::Overflow;
+            }
+
+            response->data[0] = static_cast<uint_least8_t>(response_data->region_type) & 0xFF;
+            response->data[1] = response_data->region_index & 0xFF;
+            codecs::encode_address_big_endian_8bits(response_data->start, &response->data[2]);
+            codecs::encode_address_big_endian_8bits(response_data->end, &response->data[2 + addr_size]);
+            response->data_length = 1 + 1 + addr_size + addr_size;
+
+            return ResponseCode::OK;
+        }
+
+        ResponseCode::eResponseCode CodecV1_0::encode_response_supported_features(
+            ResponseData::GetInfo::GetSupportedFeatures const *const response_data,
+            Response *const response)
+        {
+            SCRUTINY_CONSTEXPR uint16_t datalen = 1;
+
+            if (datalen > MINIMUM_TX_BUFFER_SIZE && datalen > response->data_max_length)
+            {
+                return ResponseCode::Overflow;
+            }
+
+            response->data[0] = (response_data->memory_write ? 0x80u : 0u) | (response_data->datalogging ? 0x40u : 0u) |
+                                (response_data->user_command ? 0x20u : 0u) | (response_data->_64bits ? 0x10u : 0u);
+
+            response->data_length = 1;
+            return ResponseCode::OK;
+        }
+
+        ResponseCode::eResponseCode CodecV1_0::decode_request_get_special_memory_region_location(
+            Request const *const request,
+            RequestData::GetInfo::GetSpecialMemoryRegionLocation *const request_data)
+        {
+            if (request->data_length != 2)
+            {
+                return ResponseCode::InvalidRequest;
+            }
+            request_data->region_type = request->data[0] & 0xFF;
+            request_data->region_index = request->data[1] & 0xFF;
+            return ResponseCode::OK;
+        }
+
+        ResponseCode::eResponseCode CodecV1_0::decode_request_get_rpv_definition(
+            Request const *const request,
+            RequestData::GetInfo::GetRPVDefinition *const request_data)
+        {
+            SCRUTINY_CONSTEXPR uint16_t start_index_pos = 0;
+            SCRUTINY_CONSTEXPR uint16_t start_index_size = 2;
+            SCRUTINY_CONSTEXPR uint16_t count_pos = start_index_size;
+            SCRUTINY_CONSTEXPR uint16_t count_size = 2;
+
+            SCRUTINY_CONSTEXPR uint16_t datalen = start_index_size + count_size;
+
+            if (request->data_length != datalen)
+            {
+                return ResponseCode::InvalidRequest;
+            }
+
+            request_data->start_index = codecs::decode_16_bits_big_endian_8bits(&request->data[start_index_pos]);
+            request_data->count = codecs::decode_16_bits_big_endian_8bits(&request->data[count_pos]);
+            return ResponseCode::OK;
+        }
+
+        ResponseCode::eResponseCode CodecV1_0::decode_request_get_loop_definition(
+            Request const *const request,
+            RequestData::GetInfo::GetLoopDefinition *const request_data)
+        {
+            SCRUTINY_CONSTEXPR uint16_t loop_id_len = 1; // sizeof(request_data->loop_id);
+            SCRUTINY_CONSTEXPR uint16_t datalen = loop_id_len;
+
+            if (request->data_length != datalen)
+            {
+                return ResponseCode::InvalidRequest;
+            }
+
+            request_data->loop_id = request->data[0];
+            return ResponseCode::OK;
+        }
+
+        ResponseCode::eResponseCode CodecV1_0::encode_response_get_loop_definition(
+            ResponseData::GetInfo::GetLoopDefinition const *const response_data,
+            Response *const response)
+        {
+            SCRUTINY_STATIC_ASSERT(SIZEOF_8BITS(timediff_t) == 4, "Unsupported timediff size");
+            SCRUTINY_CONSTEXPR uint16_t loop_id_size = 1;
+            SCRUTINY_CONSTEXPR uint16_t loop_type_size = 1;
+            SCRUTINY_CONSTEXPR uint16_t attribute_field_size = 1; // datalogging is embedded in bitfield
+            SCRUTINY_CONSTEXPR uint16_t timestep_100ns_size = 4;
+            SCRUTINY_CONSTEXPR uint16_t name_length_size = 1;
+
+            SCRUTINY_CONSTEXPR uint16_t datalen = loop_id_size + loop_type_size + attribute_field_size + name_length_size;
+
+            if (datalen > MINIMUM_TX_BUFFER_SIZE && datalen > response->data_max_length)
+            {
+                return ResponseCode::Overflow;
+            }
+
+            response->data[0] = response_data->loop_id & 0xFF;
+            response->data[1] = response_data->loop_type & 0xFF;
+            response->data[2] = 0;
+
+            if (response_data->support_datalogging)
+            {
+                response->data[2] |= 0x80;
+            }
+
+            uint16_t cursor = 3;
+            switch (static_cast<scrutiny::LoopType::eLoopType>(response_data->loop_type))
+            {
+            case scrutiny::LoopType::FIXED_FREQ:
+                if (cursor + timestep_100ns_size > response->data_max_length)
+                {
+                    return ResponseCode::Overflow;
+                }
+                cursor +=
+                    codecs::encode_32_bits_big_endian_8bits(response_data->loop_type_specific.fixed_freq.timestep_100ns, &response->data[cursor]);
+                break;
+            case scrutiny::LoopType::VARIABLE_FREQ:
+                break;
+            default:
+                return ResponseCode::FailureToProceed;
+            }
+
+            uint_least8_t loop_name_length = response_data->loop_name_length;
+            loop_name_length = (loop_name_length > MAX_LOOP_NAME_LENGTH) ? MAX_LOOP_NAME_LENGTH : loop_name_length;
+
+            if (cursor + name_length_size + loop_name_length > response->data_max_length)
+            {
+                return ResponseCode::Overflow;
+            }
+
+            response->data[cursor++] = loop_name_length;
+            // Strings use 1 char per character. Unless the user uses UTF-16, memcpy is fine with a 16-bit char
+            memcpy(&response->data[cursor], response_data->loop_name, loop_name_length);
+            cursor += loop_name_length;
+
+            response->data_length = cursor;
+            return ResponseCode::OK;
+        }
+
+        ResponseCode::eResponseCode CodecV1_0::encode_response_get_rpv_count(
+            ResponseData::GetInfo::GetRPVCount const *const response_data,
+            Response *const response)
+        {
+            SCRUTINY_CONSTEXPR uint16_t count_size = 2;
+            SCRUTINY_CONSTEXPR uint16_t datalen = count_size;
+            if (datalen > MINIMUM_TX_BUFFER_SIZE && datalen > response->data_max_length)
+            {
+                return ResponseCode::Overflow;
+            }
+
+            codecs::encode_16_bits_big_endian_8bits(response_data->count, &response->data[0]);
+            response->data_length = datalen;
+            return ResponseCode::OK;
+        }
+
+        ResponseCode::eResponseCode CodecV1_0::encode_response_get_loop_count(
+            ResponseData::GetInfo::GetLoopCount const *const response_data,
+            Response *const response)
+        {
+            SCRUTINY_CONSTEXPR uint16_t count_size = 1;
+            SCRUTINY_CONSTEXPR uint16_t datalen = count_size;
+            if (datalen > MINIMUM_TX_BUFFER_SIZE && datalen > response->data_max_length)
+            {
+                return ResponseCode::Overflow;
+            }
+
+            codecs::encode_8_bits_8bits(response_data->count, &response->data[0]);
+            response->data_length = datalen;
+            return ResponseCode::OK;
+        }
+
+        // ============================ CommunicationControl ============================
+
+        ResponseCode::eResponseCode CodecV1_0::encode_response_comm_discover(
+            ResponseData::CommControl::Discover const *const response_data,
+            Response *const response)
+        {
+            SCRUTINY_CONSTEXPR uint16_t software_id_size = SIZEOF_8BITS(scrutiny::software_id);
+            SCRUTINY_CONSTEXPR uint16_t display_name_length_size = 1;
+            SCRUTINY_CONSTEXPR uint16_t proto_maj_pos = 0;
+            SCRUTINY_CONSTEXPR uint16_t proto_maj_size = 1;
+            SCRUTINY_CONSTEXPR uint16_t proto_min_pos = proto_maj_pos + proto_maj_size;
+            SCRUTINY_CONSTEXPR uint16_t proto_min_size = 1;
+
+            SCRUTINY_CONSTEXPR uint16_t firmware_id_pos = proto_min_pos + proto_min_size;
+            SCRUTINY_CONSTEXPR uint16_t display_name_length_pos = firmware_id_pos + software_id_size;
+            SCRUTINY_CONSTEXPR uint16_t display_name_pos = display_name_length_pos + display_name_length_size;
+
+            uint_least8_t display_name_length = response_data->display_name_length;
+            display_name_length = (display_name_length > MAX_DISPLAY_NAME_LENGTH) ? MAX_DISPLAY_NAME_LENGTH : display_name_length;
+
+            uint16_t const datalen = proto_maj_size + proto_min_size + software_id_size + display_name_length_size + display_name_length;
+
+            if (datalen > MINIMUM_TX_BUFFER_SIZE && datalen > response->data_max_length)
+            {
+                return ResponseCode::Overflow;
+            }
+
+            response->data_length = datalen;
+            response->data[proto_maj_pos] = SCRUTINY_PROTOCOL_GET_VERSION_MAJOR(SCRUTINY_ACTUAL_PROTOCOL_VERSION);
+            response->data[proto_min_pos] = SCRUTINY_PROTOCOL_GET_VERSION_MINOR(SCRUTINY_ACTUAL_PROTOCOL_VERSION);
+            tools::memcpy_dilate_8bits_big_endian(&response->data[firmware_id_pos], scrutiny::software_id, software_id_size);
+            response->data[display_name_length_pos] = static_cast<unsigned char>(display_name_length & 0xFF);
+            memcpy(&response->data[display_name_pos], response_data->display_name, display_name_length);
+            return ResponseCode::OK;
+        }
+
+        ResponseCode::eResponseCode CodecV1_0::encode_response_comm_heartbeat(
+            ResponseData::CommControl::Heartbeat const *const response_data,
+            Response *const response)
+        {
+            SCRUTINY_CONSTEXPR uint16_t session_id_size = 4;
+            SCRUTINY_CONSTEXPR uint16_t challenge_response_size = 2;
+            SCRUTINY_CONSTEXPR uint16_t datalen = session_id_size + challenge_response_size;
+
+            if (datalen > MINIMUM_TX_BUFFER_SIZE && datalen > response->data_max_length)
+            {
+                return ResponseCode::Overflow;
+            }
+
+            response->data_length = datalen;
+            codecs::encode_32_bits_big_endian_8bits(response_data->session_id, &response->data[0]);
+            codecs::encode_16_bits_big_endian_8bits(response_data->challenge_response, &response->data[4]);
+
+            return ResponseCode::OK;
+        }
+
+        ResponseCode::eResponseCode CodecV1_0::encode_response_comm_get_params(
+            ResponseData::CommControl::GetParams const *const response_data,
+            Response *const response)
+        {
+            SCRUTINY_CONSTEXPR uint16_t rx_buffer_size_len = 2;
+            SCRUTINY_CONSTEXPR uint16_t tx_buffer_size_len = 2;
+            SCRUTINY_CONSTEXPR uint16_t max_bitrate_size = 4;
+            SCRUTINY_CONSTEXPR uint16_t heartbeat_timeout_size = 4;
+            SCRUTINY_CONSTEXPR uint16_t comm_rx_timeout_size = 4;
+            SCRUTINY_CONSTEXPR uint16_t address_size_size = 1;
+            SCRUTINY_CONSTEXPR uint16_t char_bit_size = 1;
+            SCRUTINY_CONSTEXPR uint16_t datalen = rx_buffer_size_len + tx_buffer_size_len + max_bitrate_size + heartbeat_timeout_size +
+                                                  comm_rx_timeout_size + address_size_size + char_bit_size;
+
+            SCRUTINY_CONSTEXPR uint16_t rx_buffer_size_pos = 0;
+            SCRUTINY_CONSTEXPR uint16_t tx_buffer_size_pos = rx_buffer_size_pos + rx_buffer_size_len;
+            SCRUTINY_CONSTEXPR uint16_t max_bitrate_pos = tx_buffer_size_pos + tx_buffer_size_len;
+            SCRUTINY_CONSTEXPR uint16_t heartbeat_timeout_pos = max_bitrate_pos + max_bitrate_size;
+            SCRUTINY_CONSTEXPR uint16_t comm_rx_timeout_pos = heartbeat_timeout_pos + heartbeat_timeout_size;
+            SCRUTINY_CONSTEXPR uint16_t address_size_pos = comm_rx_timeout_pos + comm_rx_timeout_size;
+            SCRUTINY_CONSTEXPR uint16_t char_bit_pos = address_size_pos + address_size_size;
+
+            if (datalen > MINIMUM_TX_BUFFER_SIZE && datalen > response->data_max_length)
+            {
+                return ResponseCode::Overflow;
+            }
+
+            response->data_length = datalen;
+
+            codecs::encode_16_bits_big_endian_8bits(response_data->data_rx_buffer_size, &response->data[rx_buffer_size_pos]);
+            codecs::encode_16_bits_big_endian_8bits(response_data->data_tx_buffer_size, &response->data[tx_buffer_size_pos]);
+            codecs::encode_32_bits_big_endian_8bits(response_data->max_bitrate, &response->data[max_bitrate_pos]);
+            codecs::encode_32_bits_big_endian_8bits(response_data->heartbeat_timeout, &response->data[heartbeat_timeout_pos]);
+            codecs::encode_32_bits_big_endian_8bits(response_data->comm_rx_timeout, &response->data[comm_rx_timeout_pos]);
+            codecs::encode_8_bits_8bits(response_data->address_size, &response->data[address_size_pos]);
+            codecs::encode_8_bits_8bits(response_data->char_bit, &response->data[char_bit_pos]);
+
+            return ResponseCode::OK;
+        }
+
+        ResponseCode::eResponseCode CodecV1_0::encode_response_comm_connect(
+            ResponseData::CommControl::Connect const *const response_data,
+            Response *const response)
+        {
+            SCRUTINY_CONSTEXPR uint16_t magic_size = sizeof(response_data->magic);
+            SCRUTINY_CONSTEXPR uint16_t session_id_size = 4;
+            SCRUTINY_CONSTEXPR uint16_t datalen = magic_size + session_id_size;
+
+            SCRUTINY_STATIC_ASSERT(
+                sizeof(response_data->magic) == sizeof(CommControl::CONNECT_MAGIC),
+                "Mismatch between codec definition and protocol constant.");
+            if (datalen > MINIMUM_TX_BUFFER_SIZE && datalen > response->data_max_length)
+            {
+                return ResponseCode::Overflow;
+            }
+
+            response->data_length = datalen;
+            memcpy(&response->data[0], response_data->magic, magic_size); // No need to dilate, array not packed
+            codecs::encode_32_bits_big_endian_8bits(response_data->session_id, &response->data[magic_size]);
+
+            return ResponseCode::OK;
+        }
+
+        ResponseCode::eResponseCode CodecV1_0::decode_request_comm_discover(
+            Request const *const request,
+            RequestData::CommControl::Discover *const request_data)
+        {
+            SCRUTINY_CONSTEXPR uint16_t magic_size = sizeof(CommControl::DISCOVER_MAGIC);
+            SCRUTINY_CONSTEXPR uint16_t datalen = magic_size;
+
+            if (request->data_length != datalen)
+            {
+                return ResponseCode::InvalidRequest;
+            }
+
+            memcpy(request_data->magic, request->data, magic_size); // No need to dilate, array not packed
+
+            if (memcmp(CommControl::DISCOVER_MAGIC, request_data->magic, magic_size) != 0)
+            {
+                return ResponseCode::InvalidRequest;
+            }
+
+            return ResponseCode::OK;
+        }
+
+        ResponseCode::eResponseCode CodecV1_0::decode_request_comm_heartbeat(
+            Request const *const request,
+            RequestData::CommControl::Heartbeat *const request_data)
+        {
+            SCRUTINY_CONSTEXPR uint16_t session_id_size = 4;
+            SCRUTINY_CONSTEXPR uint16_t challenge_size = 2;
+            SCRUTINY_CONSTEXPR uint16_t datalen = session_id_size + challenge_size;
+
+            if (request->data_length != datalen)
+            {
+                return ResponseCode::InvalidRequest;
+            }
+
+            request_data->session_id = codecs::decode_32_bits_big_endian_8bits(&request->data[0]);
+            request_data->challenge = codecs::decode_16_bits_big_endian_8bits(&request->data[4]);
+
+            return ResponseCode::OK;
+        }
+
+        ResponseCode::eResponseCode CodecV1_0::decode_request_comm_connect(
+            Request const *const request,
+            RequestData::CommControl::Connect *const request_data)
+        {
+            SCRUTINY_CONSTEXPR uint16_t magic_size = sizeof(CommControl::CONNECT_MAGIC);
+            SCRUTINY_CONSTEXPR uint16_t datalen = magic_size;
+
+            if (request->data_length != datalen)
+            {
+                return ResponseCode::InvalidRequest;
+            }
+
+            memcpy(request_data->magic, request->data, magic_size); // No need to dilate, array not packed
+
+            return ResponseCode::OK;
+        }
+
+        ResponseCode::eResponseCode CodecV1_0::decode_request_comm_disconnect(
+            Request const *const request,
+            RequestData::CommControl::Disconnect *const request_data)
+        {
+            SCRUTINY_CONSTEXPR uint16_t session_id_size = 4;
+            SCRUTINY_CONSTEXPR uint16_t datalen = session_id_size;
+
+            if (request->data_length != datalen)
+            {
+                return ResponseCode::InvalidRequest;
+            }
+
+            request_data->session_id = codecs::decode_32_bits_big_endian_8bits(&request->data[0]);
+            return ResponseCode::OK;
+        }
+
+#if SCRUTINY_ENABLE_DATALOGGING
+        ResponseCode::eResponseCode CodecV1_0::encode_response_datalogging_get_setup(
+            ResponseData::DataLogControl::GetSetup const *const response_data,
+            Response *const response)
+        {
+            SCRUTINY_CONSTEXPR uint16_t datalen = 4 + 1 + 1;
+            if (datalen > MINIMUM_TX_BUFFER_SIZE && datalen > response->data_max_length)
+            {
+                return ResponseCode::Overflow;
+            }
+            uint16_t cursor = 0;
+            cursor += codecs::encode_32_bits_big_endian_8bits(response_data->buffer_size, &response->data[cursor]);
+            cursor += codecs::encode_8_bits_8bits(response_data->data_encoding, &response->data[cursor]);
+            cursor += codecs::encode_8_bits_8bits(response_data->max_signal_count, &response->data[cursor]);
+            response->data_length = cursor;
+
+            return ResponseCode::OK;
+        }
+
+        ResponseCode::eResponseCode CodecV1_0::encode_response_datalogging_status(
+            ResponseData::DataLogControl::GetStatus const *const response_data,
+            Response *const response)
+        {
+            SCRUTINY_CONSTEXPR uint16_t state_len = 1;
+            SCRUTINY_CONSTEXPR uint16_t bytes_to_acquire_len = 4;
+            SCRUTINY_CONSTEXPR uint16_t write_counter_len = 4;
+
+            SCRUTINY_CONSTEXPR uint16_t datalen = state_len + bytes_to_acquire_len + write_counter_len;
+
+            if (datalen > MINIMUM_TX_BUFFER_SIZE && datalen > response->data_max_length)
+            {
+                return ResponseCode::Overflow;
+            }
+
+            uint16_t cursor = 0;
+            cursor += codecs::encode_8_bits_8bits(response_data->state, &response->data[cursor]);
+            cursor += codecs::encode_32_bits_big_endian_8bits(response_data->bytes_to_acquire_from_trigger_to_completion, &response->data[cursor]);
+            cursor += codecs::encode_32_bits_big_endian_8bits(response_data->write_counter_since_trigger, &response->data[cursor]);
+            response->data_length = cursor;
+
+            return ResponseCode::OK;
+        }
+
+        ResponseCode::eResponseCode CodecV1_0::encode_response_datalogging_get_acquisition_metadata(
+            ResponseData::DataLogControl::GetAcquisitionMetadata const *const response_data,
+            Response *const response)
+        {
+            SCRUTINY_CONSTEXPR uint16_t acquisition_id_size = 2;
+            SCRUTINY_CONSTEXPR uint16_t config_id_size = 2;
+            SCRUTINY_CONSTEXPR uint16_t number_of_points_size = 4;
+            SCRUTINY_CONSTEXPR uint16_t data_size_size = 4;
+            SCRUTINY_CONSTEXPR uint16_t points_after_trigger_size = 4;
+
+            SCRUTINY_CONSTEXPR uint16_t datalen =
+                acquisition_id_size + config_id_size + number_of_points_size + data_size_size + points_after_trigger_size;
+
+            if (datalen > MINIMUM_TX_BUFFER_SIZE && datalen > response->data_max_length)
+            {
+                return ResponseCode::Overflow;
+            }
+
+            uint16_t cursor = 0;
+            cursor += codecs::encode_16_bits_big_endian_8bits(response_data->acquisition_id, &response->data[cursor]);
+            cursor += codecs::encode_16_bits_big_endian_8bits(response_data->config_id, &response->data[cursor]);
+            cursor += codecs::encode_32_bits_big_endian_8bits(response_data->number_of_points, &response->data[cursor]);
+            cursor += codecs::encode_32_bits_big_endian_8bits(response_data->data_size, &response->data[cursor]);
+            cursor += codecs::encode_32_bits_big_endian_8bits(response_data->points_after_trigger, &response->data[cursor]);
+            response->data_length = cursor;
+
+            return ResponseCode::OK;
+        }
+
+        ResponseCode::eResponseCode CodecV1_0::encode_response_datalogging_read_acquisition(
+            ResponseData::DataLogControl::ReadAcquisition const *const response_data,
+            Response *const response,
+            bool *const finished)
+        {
+            SCRUTINY_CONSTEXPR uint16_t minimum_datalen = 16;
+            if (minimum_datalen > MINIMUM_TX_BUFFER_SIZE && minimum_datalen > response->data_max_length)
+            {
+                return ResponseCode::Overflow;
+            }
+            *finished = false;
+            // [0] is set at the end.
+            codecs::encode_8_bits_8bits(response_data->rolling_counter, &response->data[1]);
+            codecs::encode_16_bits_big_endian_8bits(response_data->acquisition_id, &response->data[2]);
+
+            uint32_t const nread = response_data->reader->read_dilate_8bits(&response->data[4], response->data_max_length - 4);
+            response->data_length = static_cast<uint16_t>(nread + 4);
+            *response_data->crc = tools::crc32(&response->data[4], nread, *response_data->crc);
+
+            if (response_data->reader->finished() && response->data_length <= response->data_max_length - 4)
+            {
+                codecs::encode_32_bits_big_endian_8bits(*response_data->crc, &response->data[response->data_length]);
+                response->data_length += 4;
+                *finished = true;
+            }
+
+            codecs::encode_8_bits_8bits(static_cast<uint_least8_t>((*finished) ? 1 : 0), &response->data[0]);
+
+            return protocol::ResponseCode::OK;
+        }
+
+        ResponseCode::eResponseCode CodecV1_0::decode_datalogging_configure_request(
+            Request const *const request,
+            RequestData::DataLogControl::Configure *const request_data,
+            datalogging::Configuration *const config)
+        {
+            if (request->data_length < 16)
+            {
+                return ResponseCode::InvalidRequest;
+            }
+
+            request_data->loop_id = request->data[0] & 0xFF;
+            request_data->config_id = codecs::decode_16_bits_big_endian_8bits(&request->data[1]);
+
+            config->decimation = codecs::decode_16_bits_big_endian_8bits(&request->data[3]);
+            config->probe_location = request->data[5] & 0xFF;
+            config->timeout_100ns = codecs::decode_32_bits_big_endian_8bits(&request->data[6]);
+            config->trigger.condition = static_cast<datalogging::SupportedTriggerConditions::eSupportedTriggerConditions>(request->data[10]);
+            config->trigger.hold_time_100ns = codecs::decode_32_bits_big_endian_8bits(&request->data[11]);
+            config->trigger.operand_count = request->data[15] & 0xFF;
+
+            if (config->trigger.operand_count > datalogging::MAX_OPERANDS)
+            {
+                return ResponseCode::Overflow;
+            }
+
+            uint16_t cursor = 16;
+            for (uint_fast8_t i = 0; i < config->trigger.operand_count; i++)
+            {
+                if (request->data_length < cursor + 1)
+                {
+                    return ResponseCode::InvalidRequest;
+                }
+
+                const datalogging::OperandType::eOperandType optype = static_cast<datalogging::OperandType::eOperandType>(request->data[cursor]);
+                config->trigger.operands[i].common.type = optype;
+                cursor++;
+
+                switch (optype)
+                {
+                case datalogging::OperandType::Literal:
+                {
+                    if (request->data_length < cursor + SIZEOF_8BITS(float))
+                    {
+                        return ResponseCode::InvalidRequest;
+                    }
+                    config->trigger.operands[i].literal.val = codecs::decode_float_big_endian_8bits(&request->data[cursor]);
+                    cursor += SIZEOF_8BITS(float);
+                    break;
+                }
+                case datalogging::OperandType::Rpv:
+                {
+                    if (request->data_length < cursor + SIZEOF_8BITS(uint16_t))
+                    {
+                        return ResponseCode::InvalidRequest;
+                    }
+                    config->trigger.operands[i].rpv.id = codecs::decode_16_bits_big_endian_8bits(&request->data[cursor]);
+                    cursor += SIZEOF_8BITS(uint16_t);
+                    break;
+                }
+                case datalogging::OperandType::Var:
+                {
+                    if (request->data_length < cursor + 1 + SIZEOF_8BITS(void *))
+                    {
+                        return ResponseCode::InvalidRequest;
+                    }
+                    config->trigger.operands[i].var.datatype = static_cast<scrutiny::VariableType::eVariableType>(request->data[cursor++]);
+                    cursor += codecs::decode_address_big_endian_8bits(
+                        &request->data[cursor],
+                        reinterpret_cast<uintptr_t *>(&config->trigger.operands[i].var.addr));
+                    break;
+                }
+                case datalogging::OperandType::VarBit:
+                {
+                    if (request->data_length < cursor + 3 + SIZEOF_8BITS(void *))
+                    {
+                        return ResponseCode::InvalidRequest;
+                    }
+
+                    config->trigger.operands[i].varbit.datatype = static_cast<scrutiny::VariableType::eVariableType>(request->data[cursor++]);
+                    cursor += codecs::decode_address_big_endian_8bits(
+                        &request->data[cursor],
+                        reinterpret_cast<uintptr_t *>(&config->trigger.operands[i].varbit.addr));
+                    config->trigger.operands[i].varbit.bitoffset = request->data[cursor++] & 0xFF;
+                    config->trigger.operands[i].varbit.bitsize = request->data[cursor++] & 0xFF;
+                    break;
+                }
+                default:
+                {
+                    return ResponseCode::InvalidRequest;
+                }
+                }
+            }
+
+            if (request->data_length < cursor + 1)
+            {
+                return ResponseCode::InvalidRequest;
+            }
+
+            config->items_count = request->data[cursor++] & 0xFF;
+
+            if (config->items_count > SCRUTINY_DATALOGGING_MAX_SIGNAL)
+            {
+                return ResponseCode::Overflow;
+            }
+
+            for (uint_fast8_t i = 0; i < config->items_count; i++)
+            {
+                if (request->data_length < cursor + 1)
+                {
+                    return ResponseCode::InvalidRequest;
+                }
+
+                config->items_to_log[i].common.type = static_cast<datalogging::LoggableType::eLoggableType>(request->data[cursor++]);
+
+                switch (config->items_to_log[i].common.type)
+                {
+                case datalogging::LoggableType::Memory:
+                {
+                    if (request->data_length < cursor + SIZEOF_8BITS(void *) + 1)
+                    {
+                        return ResponseCode::InvalidRequest;
+                    }
+                    cursor += codecs::decode_address_big_endian_8bits(
+                        &request->data[cursor],
+                        reinterpret_cast<uintptr_t *>(&config->items_to_log[i].memory.address));
+                    config->items_to_log[i].memory.size = request->data[cursor++];
+                    break;
+                }
+                case datalogging::LoggableType::Rpv:
+                {
+                    if (request->data_length < cursor + SIZEOF_8BITS(uint16_t))
+                    {
+                        return ResponseCode::InvalidRequest;
+                    }
+
+                    config->items_to_log[i].rpv.id = codecs::decode_16_bits_big_endian_8bits(&request->data[cursor]);
+                    cursor += SIZEOF_8BITS(uint16_t);
+                    break;
+                }
+                case datalogging::LoggableType::Time:
+                {
+                    break;
+                }
+                default:
+                {
+                    return ResponseCode::InvalidRequest;
+                }
+                }
+            }
+
+            if (cursor != request->data_length)
+            {
+                return ResponseCode::InvalidRequest;
+            }
+
+            return ResponseCode::OK;
+        }
+#endif
+    } // namespace protocol
+} // namespace scrutiny
