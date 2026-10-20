@@ -40,6 +40,7 @@ namespace motor_control
     enum class CtrlMode : uint8_t
     {
         ALIGNMENT,
+        HALL_SENSOR_CAL,
         OPEN_LOOP_CTRL,
         CURRENT_CTRL,
         SPEED_CTRL

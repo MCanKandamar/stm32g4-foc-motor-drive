@@ -23,8 +23,8 @@ constexpr float     I_MAX           = 20.0f;
 constexpr float     VDC_MAX         = 30.0f;
 constexpr float     VDC_MIN         = 12.0f;
 
-constexpr float     I_ALIGN         = 0.5f;
-constexpr uint32_t  ALIGN_MS        = 2000;
+constexpr float     I_ALIGN         = 1.0f;
+constexpr uint32_t  ALIGN_MS        = 1000;
 
 constexpr float SPEED_REF_MAX_RPM = 3560.0f;   // 57BLF02 nominal rated: = 3000 rpm
                                                //                tested: = 3560 rpm
@@ -67,7 +67,7 @@ struct Setpoints
 {
     motor_control::CtrlMode     ctrl_mode;
     motor_control::Idq_ref_t    idq_ref;         
-    motor_control::SinCos_t     align_sc;
+    motor_control::SinCos_t     align_sincos;
     volatile float              speed_ref_rpm = 0.0f;
     uint32_t                    t_state; 
 };
@@ -119,7 +119,7 @@ extern volatile motor_control::FaultCode  fault;
 extern motor_control::HallSensor          hall;
 extern motor_control::current_control     foc;
 extern motor_control::speed_control       speed_ctrl;
-extern motor_control::StateMachine        motor_state;
+extern motor_control::StateMachine        motor_state_machine;
 extern motor_control::AnglePLL            pll;
 extern motor_control::AnglePLL            pll_smo;
 extern motor_control::smo_observer        smo;

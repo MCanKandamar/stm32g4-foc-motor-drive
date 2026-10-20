@@ -1,106 +1,108 @@
 #include "hall_sensor.hpp"
-#include "motor_parameters.hpp"
 #include <algorithm>
+#include <cmath>
 
 namespace motor_control
 {
-    HallSensor::HallSensor(const HallConfig& cfg) 
-    :config(cfg)
+    HallSensor::HallSensor(const HallConfig& cfg)
+    :config_(cfg)
     {
         uint32_t t     = static_cast<uint32_t>(cfg.timeout_s * cfg.f_cnt_hz);
         uint32_t limit = cfg.arr / 5 * 4;
         timeout_cnt_   = std::min(t, limit);
 
-        // s numaralı dilim edge[s] ile edge[s+1] arasında
+        width_ = calcWidths(cfg.edge_angle_rad);
+    }
+
+    // s numaralı dilim edge[s] ile edge[s+1] arasında
+    std::array<float, 6> HallSensor::calcWidths(const std::array<float, 6>& edges)
+    {
+        std::array<float, 6> w;
         for (int s = 0; s < 6; ++s)
         {
-            float w = cfg.edge_angle_rad[(s + 1) % 6] - cfg.edge_angle_rad[s];
-            if (w < 0.0f) w += TWO_PI;
-            width_[s] = w;
+            w[s] = edges[(s + 1) % 6] - edges[s];
+            if (w[s] < 0.0f) w[s] += TWO_PI;
         }
+        return w;
     }
 
-    bool HallSensor::HallSensorInit(uint8_t hall_state)
+    bool HallSensor::init(uint8_t hall_state)
     {
-    SectorInfo.sector = hall_idx[hall_state & 0x7U];
-    if (SectorInfo.sector < 0) return false;                  // 000 / 111: sensor error
+        const int sector = hall_idx[hall_state & 0x7U];
+        if (sector < 0) return false;                             // 000 / 111
 
-    sector_      = SectorInfo.sector;                         // decodeHall ilk kenarda doğru delta bulsun
-    width_cur_   = width_[SectorInfo.sector];
-    theta_edge_  = config.edge_angle_rad[SectorInfo.sector] + width_cur_ / 2.0f;    // sektör ortası
-    theta_       = theta_edge_;
-    k_           = 0.0f;                      // kenar gelene kadar açı sabit
-    omega_e_     = 0.0f;
-    SectorInfo.dir = 0;
-    stoppedFlag  = true;                      // ilk kenarda CCR1 anlamsız
-    return true;
+        last_sector_ = sector;
+        width_cur_   = width_[sector];
+        theta_edge_  = config_.edge_angle_rad[sector] + width_cur_ / 2.0f;    // sektör ortası
+        theta_       = theta_edge_;
+        k_           = 0.0f;                      // kenar gelene kadar açı sabit
+        omega_e_     = 0.0f;
+        dir_         = 0;
+        stopped_     = true;
+        return true;
     }
 
-    HallSensor::SectorInfo_ HallSensor::decodeHall(uint8_t hall_state)
-    {   
-        SectorInfo.sector = hall_idx[hall_state & 0x7U];
-        
-        if (SectorInfo.sector < 0)
-        {
-            SectorInfo.valid = false;
-            return SectorInfo;
-        }
-
-        int delta = ((SectorInfo.sector - sector_) + 6) % 6;    // (diff + 6) % 6
-
-        switch (delta)
-        {
-        case 0:
-            SectorInfo.valid = false;
-            break;
-        case 1:
-            SectorInfo.dir = 1;     // CW direction 
-            sector_ = SectorInfo.sector;
-            SectorInfo.valid = true;
-            break;
-        case 5:
-            SectorInfo.dir = -1;    // CCW direction
-            sector_ = SectorInfo.sector;
-            SectorInfo.valid = true;
-            break;
-        default:
-            sector_ = SectorInfo.sector;
-            SectorInfo.valid = false;
-            break;
-        }
-        return SectorInfo;
-    }
-
-    void HallSensor::onEdge(const SectorInfo_& SectorInfo, uint32_t period_cnt)
+    void HallSensor::update(uint8_t hall_state, uint32_t period_cnt, uint32_t cnt)
     {
-        if (SectorInfo.valid == false || period_cnt == 0) return;
+        const int sector = hall_idx[hall_state & 0x7U];
+        cal_edge_ = -1;
 
-        if (SectorInfo.dir != last_dir_) { resetAverage(); last_dir_ = SectorInfo.dir; }
+        if (sector < 0)
+        {
+            if (cal_active_) cal_errors_++;                 // 000 / 111
+        }
+        else if (sector != last_sector_)
+        {
+            const int delta = (sector - last_sector_ + 6) % 6;
+            last_sector_ = sector;
 
-        const int s = SectorInfo.sector;
-        width_cur_ = width_[s];
+            if (delta == 1)
+            {
+                onEdge(sector, +1, period_cnt);
+                cal_edge_ = sector;                         // ileri: s'ye girilen kenar = edge[s]
+            }
+            else if (delta == 5)
+            {
+                onEdge(sector, -1, period_cnt);
+                cal_edge_ = (sector + 1) % 6;               // geri: s'ye girilen kenar = edge[s+1]
+            }
+            else if (cal_active_) cal_errors_++;            // sektör atlandı (gürültü)
+        }
 
-        if (SectorInfo.dir > 0)
-            theta_edge_ = config.edge_angle_rad[s];
+        if (cnt > timeout_cnt_)  onTimeout();
+
+        updateAngle(cnt);
+    }
+
+    void HallSensor::onEdge(int sector, int dir, uint32_t period_cnt)
+    {
+        if (period_cnt == 0) return;
+
+        if (dir != dir_) { resetAverage(); dir_ = dir; }
+
+        width_cur_ = width_[sector];
+
+        if (dir > 0)
+            theta_edge_ = config_.edge_angle_rad[sector];
         else
-            theta_edge_ = config.edge_angle_rad[(s + 1) % 6];
+            theta_edge_ = config_.edge_angle_rad[(sector + 1) % 6];
 
-        if (stoppedFlag)
+        if (stopped_)
         {
-            stoppedFlag = false;
+            stopped_ = false;
             return;
         }
 
         period_sum_ -= period_buf_[buf_idx_];
         period_buf_[buf_idx_] = period_cnt;
         period_sum_ += period_cnt;
-        buf_idx_ = (buf_idx_ + 1) % 24;
-        if (buf_n_ < 24) buf_n_++;
+        buf_idx_ = (buf_idx_ + 1) % AVG_EDGES;
+        if (buf_n_ < AVG_EDGES) buf_n_++;
 
-        const float angle = buf_n_ * PI_DIV_3;
+        const float angle = buf_n_ * PI_DIV_3;   // buffer'daki toplam açı
 
-        omega_e_ = SectorInfo.dir * angle * config.f_cnt_hz / period_sum_;
-        k_ = omega_e_ / config.f_cnt_hz;
+        omega_e_ = dir * angle * config_.f_cnt_hz / period_sum_;
+        k_ = omega_e_ / config_.f_cnt_hz;
     }
 
     void HallSensor::updateAngle(uint32_t cnt)
@@ -117,18 +119,9 @@ namespace motor_control
     {
         omega_e_ = 0.0f;
         k_ = 0.0f;
-        theta_edge_ = config.edge_angle_rad[sector_] + width_[sector_] / 2.0f;
-        stoppedFlag = true;
+        theta_edge_ = config_.edge_angle_rad[last_sector_] + width_[last_sector_] / 2.0f;
+        stopped_ = true;
         resetAverage();
-    }
-
-    void HallSensor::update(uint8_t hall_state, uint32_t period_cnt, uint32_t cnt)
-    {
-        onEdge(decodeHall(hall_state), period_cnt);
-
-        if (cnt > timeout_cnt_)  onTimeout();
-
-        updateAngle(cnt);
     }
 
     void HallSensor::resetAverage()
@@ -137,5 +130,48 @@ namespace motor_control
         period_sum_ = 0;
         buf_idx_    = 0;
         buf_n_      = 0;
+    }
+
+    void HallSensor::startCalibration()
+    {
+        cal_sum_cos_.fill(0.0f);
+        cal_sum_sin_.fill(0.0f);
+        cal_count_.fill(0);
+        cal_errors_ = 0;
+        cal_active_ = true;
+    }
+
+    // update()'ten sonra çağrılır. Bu adımda kenar geldiyse referans açıyı o kenara ekler.
+    void HallSensor::recordCalibration(float theta_ref)
+    {
+        if (!cal_active_ || cal_edge_ < 0) return;
+
+        cal_sum_cos_[cal_edge_] += cosf(theta_ref);
+        cal_sum_sin_[cal_edge_] += sinf(theta_ref);
+        cal_count_[cal_edge_]++;
+    }
+
+    bool HallSensor::finishCalibration()
+    {
+        cal_active_ = false;
+        if (cal_errors_ > 0) return false;
+
+        std::array<float, 6> edges;
+        for (int i = 0; i < 6; ++i)
+        {
+            if (cal_count_[i] == 0) return false;            // bu kenar hiç görülmedi
+
+            edges[i] = atan2f(cal_sum_sin_[i], cal_sum_cos_[i]);   // vektör ortalaması: 350° ile 10° → 0°
+            if (edges[i] < 0.0f) edges[i] += TWO_PI;
+        }
+
+        // Kenarlar sırayla artmalı; ters sırada (faz/Hall sırası ters) dilimler ~300° çıkar
+        const std::array<float, 6> widths = calcWidths(edges);
+        for (float w : widths)
+            if (w > PI) return false;
+
+        config_.edge_angle_rad = edges;
+        width_ = widths;
+        return true;
     }
 }

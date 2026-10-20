@@ -1,6 +1,7 @@
 #include "Supervisor.h"
 #include "app.hpp"
 #include "tx_api.h"
+#include <cstdint>
 
 static motor_control::MotorState currState;
 static void handle_commands();
@@ -40,7 +41,7 @@ void SupervisorInit(void)
     __HAL_TIM_MOE_DISABLE_UNCONDITIONALLY(&htim8);
 
     meas.hall_state = readHallPins();
-    hall.HallSensorInit(meas.hall_state);
+    hall.init(meas.hall_state);
 }
 
 void SupervisorRun(void)
@@ -49,23 +50,33 @@ void SupervisorRun(void)
     
     handle_commands();
 
-    if (fault != FaultCode::NONE) motor_state.event_handler(MotorEvent::FAULT_DETECTED);
+    if (fault != FaultCode::NONE) motor_state_machine.event_handler(MotorEvent::FAULT_DETECTED);
 
-    MotorState s = motor_state.getState();
+    MotorState motor_state = motor_state_machine.getState();
 
-    if (s != currState) {
-        currState = s; enter_state(s);
+    if (motor_state != currState)
+    {
+        currState = motor_state; enter_state(motor_state);
     }
 
-    if (s == MotorState::ALIGN && HAL_GetTick() - setpoints.t_state >= ALIGN_MS / 2)
-        setpoints.align_sc = {0.0f, 1.0f};
-
-    if (s == MotorState::ALIGN && HAL_GetTick() - setpoints.t_state >= ALIGN_MS)
+    if (motor_state == MotorState::ALIGN && HAL_GetTick() - setpoints.t_state >= ALIGN_MS)
     {
-        if (meas.hall_state != 5) fault = FaultCode::SENSOR_ERROR;   // θ=0 → Hall 5 bekleniyor
-        setpoints.idq_ref   = {0.0f, 0.0f};
-        setpoints.ctrl_mode = CtrlMode::CURRENT_CTRL;
-        motor_state.event_handler(MotorEvent::ALIGNMENT_DONE);
+        setpoints.align_sincos = {0.0f, 1.0f};
+        hall.startCalibration();
+    }
+
+    if (motor_state == MotorState::ALIGN && meas.hall_state == 0)
+    {
+        static uint8_t curr_hall_state = meas.hall_state;
+        static uint8_t count;
+
+        if (curr_hall_state == meas.hall_state) count++;
+
+        if (count >= 3)
+        {
+            setpoints.idq_ref   = {0.0f, 0.0f};
+            motor_state_machine.event_handler(MotorEvent::ALIGNMENT_DONE);
+        }
     }
 }
 
@@ -78,17 +89,17 @@ static void handle_commands()
     if (cmd.stop)
     {
         cmd.stop = false;
-        motor_state.event_handler(MotorEvent::STOP);
+        motor_state_machine.event_handler(MotorEvent::STOP);
     }
     if (cmd.reset_fault)
     { 
         cmd.reset_fault = false; fault = FaultCode::NONE;
-        motor_state.event_handler(MotorEvent::RESET_FAULT);
+        motor_state_machine.event_handler(MotorEvent::RESET_FAULT);
     }
     if (cmd.start)
     {
         cmd.start = false;
-        motor_state.event_handler(MotorEvent::START);
+        motor_state_machine.event_handler(MotorEvent::START);
     }
     //setpoints.speed_ref_rpm = std::clamp(static_cast<float>(cmd.speed_ref_rpm),
     //                                     -SPEED_REF_MAX_RPM, SPEED_REF_MAX_RPM);

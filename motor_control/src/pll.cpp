@@ -1,5 +1,5 @@
 #include "pll.hpp"
-#include "hall_sensor.hpp"
+#include "math_utils.hpp"
 #include <cmath>
 
 namespace motor_control
@@ -38,6 +38,7 @@ namespace motor_control
         float e_norm = err_raw / E;
 
         pll_speed = pll_controller.update(e_norm, 0.0f);
+        pll_speed_filtered = pll_controller.getIntegral();
         return pll_angle;
     }
 

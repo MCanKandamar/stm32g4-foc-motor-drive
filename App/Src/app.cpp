@@ -66,7 +66,7 @@ motor_control::smo_config smo_cfg(
 
 motor_control::current_control    foc(idq_pi_cfg, idq_pi_cfg);
 motor_control::speed_control      speed_ctrl(speed_pi_cfg);
-motor_control::StateMachine       motor_state;
+motor_control::StateMachine       motor_state_machine;
 motor_control::AnglePLL           pll(pll_pi_cfg);
 motor_control::AnglePLL           pll_smo(pll_smo_pi_cfg);
 motor_control::smo_observer       smo(smo_cfg);
@@ -95,12 +95,12 @@ void enter_state(motor_control::MotorState state)
             HAL_ADCEx_InjectedStart_IT(&hadc3);
             __HAL_ADC_DISABLE_IT(&hadc3, ADC_IT_JEOC);
             __HAL_ADC_ENABLE_IT(&hadc3, ADC_IT_JEOS);
-            motor_state.event_handler(MotorEvent::ADC_OFFSET_CAL_DONE);
+            motor_state_machine.event_handler(MotorEvent::ADC_OFFSET_CAL_DONE);
             break;
 
         case MotorState::ALIGN:
             setpoints.idq_ref   = {I_ALIGN, 0.0f};
-            setpoints.align_sc  = {1.0f, 0.0f};
+            setpoints.align_sincos  = {1.0f, 0.0f};
             setpoints.ctrl_mode = CtrlMode::ALIGNMENT;
             setpoints.t_state   = HAL_GetTick();
             powerOn();
@@ -108,11 +108,12 @@ void enter_state(motor_control::MotorState state)
 
         case MotorState::OPEN_LOOP:
             setpoints.ctrl_mode = CtrlMode::OPEN_LOOP_CTRL;
-            motor_state.event_handler(MotorEvent::CLOSED_LOOP_READY);
-            break; 
+            motor_state_machine.event_handler(MotorEvent::CLOSED_LOOP_READY);
+            break;
 
         case MotorState::CLOSED_LOOP:
             speed_ctrl.reset();
+            pll_smo.reset();
             setpoints.ctrl_mode = CtrlMode::SPEED_CTRL;
             powerOn();
             break;
@@ -186,7 +187,7 @@ float get_motor_angle_hal()
     last_read = now_read;
 
     hall.update(meas.hall_state, TIM3->CCR1, TIM3->CNT);
-    return hall.getElectricalAngle_rad();
+    return hall.getElectricalAngleRad();
 }
 
 motor_control::Idq_ref_t get_idq_ref(float omega_ref_rpm, float omega_fdbck_rpm)

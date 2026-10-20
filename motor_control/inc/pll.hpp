@@ -14,7 +14,7 @@ namespace motor_control
             float update(float theta_measured);
             float update_emf(const Z_alphabeta_t& z_alphabeta);
             float get_angle() const {return pll_angle;}
-            float get_speed() const {return pll_speed;}
+            float get_speed() const {return pll_speed_filtered;}
 
             void reset(float theta = 0.0f, float omega = 0.0f);
 
@@ -22,6 +22,7 @@ namespace motor_control
             PiController pll_controller;
             float pll_angle{0.0f};
             float pll_speed{0.0f};
+            float pll_speed_filtered{0.0f};
             float step_time;
     };
 }
