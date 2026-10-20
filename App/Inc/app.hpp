@@ -50,9 +50,15 @@ struct Measurements
     float                    Vabc_phase_divider_voltage[3];
     volatile float           theta_e_rad_hall;
     volatile float           theta_e_rad_pll;
+    volatile float           theta_e_rad_smo;
+
+    volatile float           speed_rpm_hall;
+    volatile float           speed_rpm_smo;
     motor_control::SinCos_t  SinCos;
     motor_control::Idq_ref_t idq_ref;
     motor_control::duties_t  duties;
+    motor_control::V_AlphaBeta_t v_alphabeta;
+    motor_control::I_AlphaBeta_t i_alphabeta;
     uint8_t                  hall_state = 0;
 };
 
@@ -115,6 +121,8 @@ extern motor_control::current_control     foc;
 extern motor_control::speed_control       speed_ctrl;
 extern motor_control::StateMachine        motor_state;
 extern motor_control::AnglePLL            pll;
+extern motor_control::AnglePLL            pll_smo;
+extern motor_control::smo_observer        smo;
 
 motor_control::SinCos_t cordicSinCos(float theta);
 

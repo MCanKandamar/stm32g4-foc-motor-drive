@@ -27,7 +27,8 @@ namespace motor_control
 
 
         // Perform inverse Park and Clarke transforms to convert the d-q voltages back to the a-b-c frame
-        Vabc_t v_abc = inverseClarke(inversePark(V_dq, sin_cos));
+        v_alphabeta = inversePark(V_dq, sin_cos);
+        Vabc_t v_abc = inverseClarke(v_alphabeta);
 
         // Calculate the duty cycles using SVPWM
         duties_t output = svpwm(v_abc, Vdc);

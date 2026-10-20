@@ -1,5 +1,6 @@
 #include "pll.hpp"
 #include "hall_sensor.hpp"
+#include <cmath>
 
 namespace motor_control
 {   
@@ -20,6 +21,23 @@ namespace motor_control
         else if (error < -PI) error += TWO_PI;
 
         pll_speed = pll_controller.update(error, 0.0f);
+        return pll_angle;
+    }
+
+    float AnglePLL::update_emf(const Z_alphabeta_t& z_alphabeta)
+    {
+        pll_angle += pll_speed * step_time;
+
+        if      (pll_angle >= TWO_PI) pll_angle -= TWO_PI;
+        else if (pll_angle <  0.0f)   pll_angle += TWO_PI;
+
+        float err_raw = -z_alphabeta.z_alpha * cosf(pll_angle) - z_alphabeta.z_beta * sinf(pll_angle);
+
+        float E = sqrtf(z_alphabeta.z_alpha * z_alphabeta.z_alpha + z_alphabeta.z_beta * z_alphabeta.z_beta);
+        if (E < 0.01f) E = 0.01f;
+        float e_norm = err_raw / E;
+
+        pll_speed = pll_controller.update(e_norm, 0.0f);
         return pll_angle;
     }
 

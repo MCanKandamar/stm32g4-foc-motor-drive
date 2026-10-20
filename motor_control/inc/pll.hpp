@@ -2,17 +2,17 @@
 
 #include "types.hpp"
 #include "pi_controller.hpp"
+#include "observer.hpp"
 
 namespace motor_control
 {
-
     class AnglePLL
     {
         public:
             AnglePLL(const PiConfig_& pll_config);
 
             float update(float theta_measured);
-
+            float update_emf(const Z_alphabeta_t& z_alphabeta);
             float get_angle() const {return pll_angle;}
             float get_speed() const {return pll_speed;}
 

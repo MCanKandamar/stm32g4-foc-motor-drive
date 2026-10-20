@@ -1,5 +1,6 @@
 #include "app.hpp"
 #include "hall_sensor.hpp"
+#include "observer.hpp"
 #include "pi_controller.hpp"
 #include "pll.hpp"
 #include "tx_api.h"
@@ -34,6 +35,15 @@ namespace
         .out_max        =  5000.0f,  
         .out_min        = -5000.0f,
     });
+
+    motor_control::PiConfig_ pll_smo_pi_cfg(
+    {
+        .Kp             = 2.0f * 0.8f * (motor_control::TWO_PI * 30.0f),
+        .Ki             = (motor_control::TWO_PI * 30.0f) * (motor_control::TWO_PI * 30.0f),
+        .step_time      = 1.0f / 20'000.0f,
+        .out_max        =  2000.0f,  
+        .out_min        = -2000.0f,
+    });
 }
 
 motor_control::HallSensor hall(
@@ -45,10 +55,22 @@ motor_control::HallSensor hall(
     .timeout_s = 0.05f,
 });
 
+motor_control::smo_config smo_cfg(
+{
+    .phase_resistance_ohm = 0.20f,
+    .phase_inductance     = 0.30e-3f,
+    .sample_time          = 1.0f / 20'000.0f,
+    .k_gain               = 20.0f,
+    .phi                  = 3.3f,
+});
+
 motor_control::current_control    foc(idq_pi_cfg, idq_pi_cfg);
 motor_control::speed_control      speed_ctrl(speed_pi_cfg);
 motor_control::StateMachine       motor_state;
 motor_control::AnglePLL           pll(pll_pi_cfg);
+motor_control::AnglePLL           pll_smo(pll_smo_pi_cfg);
+motor_control::smo_observer       smo(smo_cfg);
+
 volatile motor_control::FaultCode fault = motor_control::FaultCode::NONE;
 
 Measurements meas;

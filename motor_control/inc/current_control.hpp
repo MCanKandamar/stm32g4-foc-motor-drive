@@ -15,6 +15,7 @@ namespace motor_control
             PiController iq_controller;
             Idq_fdb_t idq_fdb;
             Vdq_t V_dq;
+            V_AlphaBeta_t v_alphabeta;
 
         public:
             current_control(const PiConfig_& id_config, const PiConfig_& iq_config);
@@ -23,6 +24,7 @@ namespace motor_control
 
             Idq_fdb_t get_idq_feedback() const {return idq_fdb; }
             Vdq_t get_Vdq() const {return V_dq;}
+            V_AlphaBeta_t get_Valphabeta() const {return v_alphabeta;}
 
             void reset();
     };

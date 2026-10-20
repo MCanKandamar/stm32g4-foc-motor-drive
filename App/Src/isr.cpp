@@ -1,7 +1,11 @@
 #include "app.hpp"
+#include "observer.hpp"
 #include "pll.hpp"
 #include "state_machine.hpp"
 #include "scrutiny.h"
+#include "transforms.hpp"
+#include "types.hpp"
+#include <cmath>
 
 /* Interrupt callbacks -------------------------------------------------------*/
 extern "C" void HAL_ADCEx_InjectedConvCpltCallback(ADC_HandleTypeDef *hadc)
@@ -14,13 +18,22 @@ extern "C" void HAL_ADCEx_InjectedConvCpltCallback(ADC_HandleTypeDef *hadc)
         meas.Vabc            = get_abc_voltages();
         meas.theta_e_rad_hall = get_motor_angle_hal();
         meas.theta_e_rad_pll = pll.update(meas.theta_e_rad_hall);
+        meas.i_alphabeta = clarke(meas.Iabc);
+
+        Z_alphabeta_t z_alphabeta = smo.update(meas.i_alphabeta, meas.v_alphabeta);
+        meas.theta_e_rad_smo = pll_smo.update_emf(z_alphabeta);
+
+        meas.speed_rpm_hall = hall.getMechanicalVelocity_rpm();
+        meas.speed_rpm_smo  = pll_smo.get_speed() / 4.0f * motor_control::RAD_TO_RPM;
 
         if (setpoints.ctrl_mode == CtrlMode::SPEED_CTRL)
             meas.idq_ref = get_idq_ref(setpoints.speed_ref_rpm,
-                                       hall.getMechanicalVelocity_rpm());
+                                       meas.speed_rpm_hall);
         else
             meas.idq_ref = setpoints.idq_ref;
-
+        
+        
+        
         switch (setpoints.ctrl_mode)
         {
             case CtrlMode::ALIGNMENT:
@@ -44,9 +57,10 @@ extern "C" void HAL_ADCEx_InjectedConvCpltCallback(ADC_HandleTypeDef *hadc)
                                     meas.Iabc,
                                     meas.SinCos,
                                     status.Vdc      );
-
-        update_duties(meas.duties);
         
+        meas.v_alphabeta = foc.get_Valphabeta();
+        update_duties(meas.duties);
+    
         ScrutinyFocTick();
     }
 }
