@@ -7,6 +7,7 @@
 #include "pi_controller.hpp"
 #include "pll.hpp"
 #include "speed_control.hpp"
+#include "startup.hpp"
 #include "state_machine.hpp"
 #include "types.hpp"
 #include <cmath>
@@ -25,6 +26,16 @@ constexpr float     VDC_MIN         = 12.0f;
 
 constexpr float     I_ALIGN         = 1.0f;
 constexpr uint32_t  ALIGN_MS        = 1000;
+
+constexpr float     TS              = 1.0f / 20'000.0f;           // ISR periyodu [s]
+constexpr float     OMEGA_CAL       = motor_control::TWO_PI;     // Hall kalibrasyonu: 1 Hz elektriksel [rad/s]
+constexpr int       CAL_TURNS       = 4;                         // her yönde 4 elektriksel tur = 1 mekanik tur
+
+constexpr float     SUPERVISOR_DT   = 0.001f;                    // Supervisor periyodu [s]
+constexpr float     I_OL            = 2.0f;                      // open-loop iq [A]
+constexpr float     OMEGA_OL        = 500.0f * motor_control::TWO_PI / 60.0f * 4.0f;  // 500 rpm mekanik ≈ 209 rad/s elektriksel
+constexpr float     OL_RAMP         = OMEGA_OL / 1.0f;           // 1 s'de hedef hıza [rad/s²]
+constexpr uint32_t  OL_HOLD_MS      = 2000;                      // hedef hızda bekleme (SMO'yu izlemek için)
 
 constexpr float SPEED_REF_MAX_RPM = 3560.0f;   // 57BLF02 nominal rated: = 3000 rpm
                                                //                tested: = 3560 rpm
@@ -51,6 +62,7 @@ struct Measurements
     volatile float           theta_e_rad_hall;
     volatile float           theta_e_rad_pll;
     volatile float           theta_e_rad_smo;
+    volatile float           theta_ol;
 
     volatile float           speed_rpm_hall;
     volatile float           speed_rpm_smo;
@@ -69,6 +81,7 @@ struct Setpoints
     motor_control::Idq_ref_t    idq_ref;         
     motor_control::SinCos_t     align_sincos;
     volatile float              speed_ref_rpm = 0.0f;
+    volatile float              ol_speed = 0.0f;     // open-loop açı hızı [rad/s]
     uint32_t                    t_state; 
 };
 
@@ -123,6 +136,7 @@ extern motor_control::StateMachine        motor_state_machine;
 extern motor_control::AnglePLL            pll;
 extern motor_control::AnglePLL            pll_smo;
 extern motor_control::smo_observer        smo;
+extern motor_control::OpenLoopAngle       open_loop;
 
 motor_control::SinCos_t cordicSinCos(float theta);
 

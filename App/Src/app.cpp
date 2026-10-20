@@ -44,25 +44,27 @@ namespace
         .out_max        =  2000.0f,  
         .out_min        = -2000.0f,
     });
+
+    motor_control::HallSensor hall(
+    {
+        .f_cnt_hz = 1'000'000.0f,
+        .pole_pairs = 4,
+        .edge_angle_rad = { 283.8f * DEG, 347.7f * DEG,  39.5f  * DEG,
+                            99.4f  * DEG, 158.2f * DEG,  217.2f * DEG },
+        .timeout_s = 0.05f,
+    });
+
+    motor_control::smo_config smo_cfg(
+    {
+        .phase_resistance_ohm = 0.20f,
+        .phase_inductance     = 0.30e-3f,
+        .sample_time          = 1.0f / 20'000.0f,
+        .k_gain               = 20.0f,
+        .phi                  = 3.3f,
+    });
 }
 
-motor_control::HallSensor hall(
-{
-    .f_cnt_hz = 1'000'000.0f,
-    .pole_pairs = 4,
-    .edge_angle_rad = { 283.8f * DEG, 347.7f * DEG,  39.5f  * DEG,
-                        99.4f  * DEG, 158.2f * DEG,  217.2f * DEG },
-    .timeout_s = 0.05f,
-});
 
-motor_control::smo_config smo_cfg(
-{
-    .phase_resistance_ohm = 0.20f,
-    .phase_inductance     = 0.30e-3f,
-    .sample_time          = 1.0f / 20'000.0f,
-    .k_gain               = 20.0f,
-    .phi                  = 3.3f,
-});
 
 motor_control::current_control    foc(idq_pi_cfg, idq_pi_cfg);
 motor_control::speed_control      speed_ctrl(speed_pi_cfg);
@@ -70,6 +72,7 @@ motor_control::StateMachine       motor_state_machine;
 motor_control::AnglePLL           pll(pll_pi_cfg);
 motor_control::AnglePLL           pll_smo(pll_smo_pi_cfg);
 motor_control::smo_observer       smo(smo_cfg);
+motor_control::OpenLoopAngle      open_loop;
 
 volatile motor_control::FaultCode fault = motor_control::FaultCode::NONE;
 
@@ -80,6 +83,8 @@ AdcCalib     adc_cal;
 AdcDma       adc_dma;
 Commands     cmd;
 
+
+/* Functions -------------------------------------------------------*/
 
 void enter_state(motor_control::MotorState state)
 {   
@@ -107,8 +112,12 @@ void enter_state(motor_control::MotorState state)
             break;
 
         case MotorState::OPEN_LOOP:
+            open_loop.reset(3.0f * PI / 2.0f);      // -90°: q ekseni rotorun durduğu 0°'ye denk gelir, sıçrama olmaz
+            setpoints.ol_speed  = 0.0f;
+            setpoints.idq_ref   = {0.0f, I_OL};
+            pll_smo.reset();
             setpoints.ctrl_mode = CtrlMode::OPEN_LOOP_CTRL;
-            motor_state_machine.event_handler(MotorEvent::CLOSED_LOOP_READY);
+            setpoints.t_state   = HAL_GetTick();
             break;
 
         case MotorState::CLOSED_LOOP:

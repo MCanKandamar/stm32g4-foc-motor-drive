@@ -5,6 +5,12 @@
 
 static motor_control::MotorState currState;
 static void handle_commands();
+static void run_align();
+static void run_open_loop();
+
+
+enum class AlignStep { ALIGN_TO_90_DEG, ALIGN_TO_0_DEG, CALIB_FORWARD, CALIB_BACKWARD };
+static AlignStep align_step;
 
 void SupervisorInit(void)
 {   
@@ -50,34 +56,110 @@ void SupervisorRun(void)
     
     handle_commands();
 
-    if (fault != FaultCode::NONE) motor_state_machine.event_handler(MotorEvent::FAULT_DETECTED);
+    if (fault != FaultCode::NONE)
+    {
+        motor_state_machine.event_handler(MotorEvent::FAULT_DETECTED);
+    }
 
     MotorState motor_state = motor_state_machine.getState();
 
     if (motor_state != currState)
     {
-        currState = motor_state; enter_state(motor_state);
-    }
-
-    if (motor_state == MotorState::ALIGN && HAL_GetTick() - setpoints.t_state >= ALIGN_MS)
-    {
-        setpoints.align_sincos = {0.0f, 1.0f};
-        hall.startCalibration();
-    }
-
-    if (motor_state == MotorState::ALIGN && meas.hall_state == 0)
-    {
-        static uint8_t curr_hall_state = meas.hall_state;
-        static uint8_t count;
-
-        if (curr_hall_state == meas.hall_state) count++;
-
-        if (count >= 3)
+        currState = motor_state;
+        enter_state(motor_state);
+        if (motor_state == MotorState::ALIGN)
         {
-            setpoints.idq_ref   = {0.0f, 0.0f};
-            motor_state_machine.event_handler(MotorEvent::ALIGNMENT_DONE);
+            align_step = AlignStep::ALIGN_TO_90_DEG;
         }
     }
+
+    if (motor_state == MotorState::ALIGN)       run_align();
+    if (motor_state == MotorState::OPEN_LOOP)   run_open_loop();
+}
+
+
+/* Functions ----------------------------------------------------------------*/
+
+static void run_align()
+{
+    using namespace motor_control;
+
+    const uint32_t now     = HAL_GetTick();
+    const float    cal_rad = CAL_TURNS * TWO_PI;
+
+    switch (align_step)
+    {
+        case AlignStep::ALIGN_TO_90_DEG:
+            if (now - setpoints.t_state >= ALIGN_MS)
+            {
+                setpoints.align_sincos = {0.0f, 1.0f};    // 0°
+                setpoints.t_state      = now;
+                align_step             = AlignStep::ALIGN_TO_0_DEG;
+            }
+            break;
+
+        case AlignStep::ALIGN_TO_0_DEG:
+            if (now - setpoints.t_state >= ALIGN_MS)
+            {
+                if (meas.hall_state != 5)         // θ=0 → wait Hall 5
+                {
+                    fault = FaultCode::SENSOR_ERROR;
+                    return;
+                }
+                hall.startCalibration();
+                open_loop.reset(0.0f);
+                setpoints.ol_speed  = OMEGA_CAL;
+                setpoints.ctrl_mode = CtrlMode::HALL_SENSOR_CAL;
+                align_step          = AlignStep::CALIB_FORWARD;
+            }
+            break;
+
+        case AlignStep::CALIB_FORWARD:
+            if (open_loop.get_travelled() >= cal_rad)
+            {
+                open_loop.clear_travelled();
+                setpoints.ol_speed = -OMEGA_CAL;
+                align_step         = AlignStep::CALIB_BACKWARD;
+            }
+            break;
+
+        case AlignStep::CALIB_BACKWARD:
+            if (open_loop.get_travelled() >= cal_rad)
+            {
+                setpoints.ol_speed = 0.0f;
+
+                HAL_NVIC_DisableIRQ(ADC3_IRQn);
+                const bool ok = hall.finishCalibration();
+                HAL_NVIC_EnableIRQ(ADC3_IRQn);
+
+                if (!ok)
+                {
+                    fault = FaultCode::SENSOR_ERROR;
+                    return;
+                }
+
+                setpoints.idq_ref   = {0.0f, 0.0f};
+                setpoints.ctrl_mode = CtrlMode::CURRENT_CTRL;
+                motor_state_machine.event_handler(MotorEvent::ALIGNMENT_DONE);
+            }
+            break;
+    }
+}
+
+
+static void run_open_loop()
+{
+    using namespace motor_control;
+
+    const uint32_t now = HAL_GetTick();
+
+    setpoints.ol_speed = std::min(setpoints.ol_speed + OL_RAMP * SUPERVISOR_DT, OMEGA_OL);
+
+    if (setpoints.ol_speed < OMEGA_OL)
+        setpoints.t_state = now;  
+
+    if (now - setpoints.t_state >= OL_HOLD_MS)
+        motor_state_machine.event_handler(MotorEvent::CLOSED_LOOP_READY);
 }
 
 

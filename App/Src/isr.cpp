@@ -33,14 +33,24 @@ extern "C" void HAL_ADCEx_InjectedConvCpltCallback(ADC_HandleTypeDef *hadc)
             meas.idq_ref = setpoints.idq_ref;
         
         
-        
         switch (setpoints.ctrl_mode)
         {
             case CtrlMode::ALIGNMENT:
                 meas.SinCos = setpoints.align_sincos;
                 break;
+            case CtrlMode::HALL_SENSOR_CAL:
+            {
+                const float theta = open_loop.update(setpoints.ol_speed, TS);
+                hall.recordCalibration(theta);
+                meas.SinCos = cordicSinCos(theta);
+                break;
+            }
             case CtrlMode::OPEN_LOOP_CTRL:
-                setpoints.ctrl_mode = CtrlMode::CURRENT_CTRL;
+            {
+                meas.theta_ol = open_loop.update(setpoints.ol_speed, TS);
+                meas.SinCos   = cordicSinCos(meas.theta_ol);
+                break;
+            }
             case CtrlMode::CURRENT_CTRL:
                 meas.SinCos = cordicSinCos(meas.theta_e_rad_pll);
                 break;
