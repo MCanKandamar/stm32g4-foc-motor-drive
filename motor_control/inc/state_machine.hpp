@@ -10,7 +10,8 @@ namespace motor_control
         ALIGN,
         OPEN_LOOP,
         CLOSED_LOOP,
-        FAULT
+        FAULT,
+        CALIBRATING         // Hall kenar açılarını ölç, bitince IDLE
     };
 
     enum class MotorEvent : uint8_t
@@ -21,7 +22,9 @@ namespace motor_control
         CLOSED_LOOP_READY,
         STOP,
         FAULT_DETECTED,
-        RESET_FAULT
+        RESET_FAULT,
+        CALIBRATE,
+        CALIBRATION_DONE
     };
 
     enum class FaultCode : uint8_t

@@ -85,57 +85,6 @@ Commands     cmd;
 
 /* Functions -------------------------------------------------------*/
 
-void enter_state(motor_control::MotorState state)
-{   
-    using namespace motor_control;
-    switch(state)
-    {
-        case MotorState::IDLE:
-            powerOff();
-            foc_cfg.record_hall_cal = false;
-            set_foc_mode(AngleSource::FIXED, LoopMode::OFF);
-            break;
-
-        case MotorState::ADC_OFFSET_CAL:
-            adcOffsetCalibration();
-            HAL_ADCEx_InjectedStart_IT(&hadc3);
-            __HAL_ADC_DISABLE_IT(&hadc3, ADC_IT_JEOC);
-            __HAL_ADC_ENABLE_IT(&hadc3, ADC_IT_JEOS);
-            motor_state_machine.event_handler(MotorEvent::ADC_OFFSET_CAL_DONE);
-            break;
-
-        case MotorState::ALIGN:
-            foc_cfg.idq_ref      = {I_ALIGN, 0.0f};
-            foc_cfg.fixed_sincos = {1.0f, 0.0f};
-            set_foc_mode(AngleSource::FIXED, LoopMode::CURRENT);
-            powerOn();
-            break;
-
-        case MotorState::OPEN_LOOP:
-            open_loop.reset(3.0f * PI / 2.0f);      // -90°: q ekseni rotorun durduğu 0°'ye denk gelir, sıçrama olmaz
-            foc_cfg.ol_speed = 0.0f;
-            foc_cfg.idq_ref  = {0.0f, I_OL};
-            pll_smo.reset();
-            set_foc_mode(AngleSource::OPEN_LOOP, LoopMode::CURRENT);
-            break;
-
-        case MotorState::CLOSED_LOOP:
-            speed_ctrl.reset(foc_cfg.idq_ref.iq_ref);   // PI, OL'de azaltılmış iq'dan başlasın
-            //pll_smo.reset();
-            HAL_NVIC_DisableIRQ(ADC3_IRQn);         // ofset ve mod aynı ISR örneğine göre
-            foc_cfg.angle_offset = wrap_pi(meas.theta_ol - meas.theta_e_rad_smo);
-            set_foc_mode(AngleSource::SMO, LoopMode::SPEED);   // IRQ'yu tekrar açar
-            //powerOn();
-            break;
-
-        case MotorState::FAULT:
-            powerOff();
-            foc_cfg.record_hall_cal = false;
-            set_foc_mode(AngleSource::FIXED, LoopMode::OFF);
-            break;
-    }
-}
-
 // angle_src ve loop'un tek yazma noktası. ISR iki yazma arasına girip yarım ayar görmesin.
 void set_foc_mode(motor_control::AngleSource angle_src, motor_control::LoopMode loop)
 {

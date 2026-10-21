@@ -109,6 +109,7 @@ struct Commands
     volatile bool  start         = false;
     volatile bool  stop          = false;
     volatile bool  reset_fault   = false;
+    volatile bool  calibrate     = false;   // Hall kalibrasyonu (sadece IDLE'da)
     volatile float speed_ref_rpm = 0.0f;
 };
 
@@ -151,7 +152,6 @@ motor_control::SinCos_t cordicSinCos(float theta);
 
 uint8_t readHallPins();
 float   voltage_divider_get_voltage(float voltage, float kohm_top, float kohm_bottom);
-void    enter_state(motor_control::MotorState state);
 void    set_foc_mode(motor_control::AngleSource angle_src, motor_control::LoopMode loop);
 void    DRV_ENABLE_SET();
 void    DRV_ENABLE_RESET();

@@ -21,6 +21,13 @@ namespace motor_control
             case motor_control::MotorState::IDLE:
                 if (event == MotorEvent::START)
                     motor_state = MotorState::ADC_OFFSET_CAL;
+                else if (event == MotorEvent::CALIBRATE)
+                    motor_state = MotorState::CALIBRATING;
+                break;
+
+            case motor_control::MotorState::CALIBRATING:
+                if (event == MotorEvent::CALIBRATION_DONE)
+                    motor_state = MotorState::IDLE;
                 break;
 
             case motor_control::MotorState::ADC_OFFSET_CAL:
