@@ -1,9 +1,11 @@
 #pragma once
 /* Exported functions prototypes ---------------------------------------------*/
 #include "current_control.hpp"
+#include "foc_mode.hpp"
 #include "main.h"
 #include "hall_sensor.hpp"
 #include "motor_parameters.hpp"
+#include "observer.hpp"
 #include "pi_controller.hpp"
 #include "pll.hpp"
 #include "speed_control.hpp"
@@ -36,6 +38,10 @@ constexpr float     I_OL            = 2.0f;                      // open-loop iq
 constexpr float     OMEGA_OL        = 500.0f * motor_control::TWO_PI / 60.0f * 4.0f;  // 500 rpm mekanik ≈ 209 rad/s elektriksel
 constexpr float     OL_RAMP         = OMEGA_OL / 1.0f;           // 1 s'de hedef hıza [rad/s²]
 constexpr uint32_t  OL_HOLD_MS      = 2000;                      // hedef hızda bekleme (SMO'yu izlemek için)
+constexpr float     IQ_DOWN_STEP    = 0.002f;                    // OL'de iq azaltma adımı [A/ms]: 2 A 1 s'de
+constexpr float     IQ_OL_MIN       = 0.1f;                      // iq azaltmanın alt sınırı [A]
+constexpr float     DELTA_SWITCH    = 0.3f;                      // |θ_ol − θ_smo| bunun altına inince CL'e geç [rad] ≈ 17°
+constexpr float     OFFSET_STEP     = 0.005f;                    // OL→SMO açı ofseti erime adımı [rad/ms]: 1 rad 200 ms'de
 
 constexpr float SPEED_REF_MAX_RPM = 3560.0f;   // 57BLF02 nominal rated: = 3000 rpm
                                                //                tested: = 3560 rpm
@@ -56,8 +62,6 @@ extern "C" DMA_HandleTypeDef    hdma_adc5;
 // Yazar: ADC3 ISR (20 kHz). Thread'ler sadece okur.
 struct Measurements
 {
-    motor_control::Iabc_t    Iabc;
-    motor_control::Vabc_t    Vabc;
     float                    Vabc_phase_divider_voltage[3];
     volatile float           theta_e_rad_hall;
     volatile float           theta_e_rad_pll;
@@ -66,23 +70,28 @@ struct Measurements
 
     volatile float           speed_rpm_hall;
     volatile float           speed_rpm_smo;
+    motor_control::Iabc_t    Iabc;
+    motor_control::Vabc_t    Vabc;
     motor_control::SinCos_t  SinCos;
     motor_control::Idq_ref_t idq_ref;
     motor_control::duties_t  duties;
     motor_control::V_AlphaBeta_t v_alphabeta;
     motor_control::I_AlphaBeta_t i_alphabeta;
+    motor_control::Z_alphabeta_t z_alphabeta;
     uint8_t                  hall_state = 0;
 };
 
-// Yazar: Supervisor. ISR okur.
-struct Setpoints
+// Yazar: Supervisor. ISR okur. angle_src/loop sadece set_foc_mode() ile değişir.
+struct FocConfig
 {
-    motor_control::CtrlMode     ctrl_mode;
-    motor_control::Idq_ref_t    idq_ref;         
-    motor_control::SinCos_t     align_sincos;
-    volatile float              speed_ref_rpm = 0.0f;
-    volatile float              ol_speed = 0.0f;     // open-loop açı hızı [rad/s]
-    uint32_t                    t_state; 
+    motor_control::AngleSource  angle_src       = motor_control::AngleSource::FIXED;
+    motor_control::LoopMode     loop            = motor_control::LoopMode::OFF;
+    volatile bool               record_hall_cal = false;   // OPEN_LOOP açısını Hall kalibrasyonuna kaydet
+    motor_control::Idq_ref_t    idq_ref         = {};
+    motor_control::SinCos_t     fixed_sincos    = {};      // FIXED açı
+    volatile float              speed_ref_rpm   = 0.0f;
+    volatile float              ol_speed        = 0.0f;    // open-loop açı hızı [rad/s]
+    volatile float              angle_offset    = 0.0f;    // SMO açısına eklenir [rad], OL→SMO geçişinde 0'a erir
 };
 
 // Yazar: Monitor. ISR ve diğer thread'ler okur.
@@ -120,11 +129,11 @@ struct AdcDma
 };
 
 extern Measurements meas;
-extern Setpoints    setpoints;
+extern FocConfig    foc_cfg;
 extern Status       status;
 extern AdcCalib     adc_cal;
 extern AdcDma       adc_dma;
-extern Commands cmd;
+extern Commands     cmd;
 
 // Hata mandalı: birden çok yazarı var (ISR'lar, Monitor, Supervisor), bilerek grupların dışında.
 extern volatile motor_control::FaultCode  fault;
@@ -143,6 +152,7 @@ motor_control::SinCos_t cordicSinCos(float theta);
 uint8_t readHallPins();
 float   voltage_divider_get_voltage(float voltage, float kohm_top, float kohm_bottom);
 void    enter_state(motor_control::MotorState state);
+void    set_foc_mode(motor_control::AngleSource angle_src, motor_control::LoopMode loop);
 void    DRV_ENABLE_SET();
 void    DRV_ENABLE_RESET();
 void    powerOn();

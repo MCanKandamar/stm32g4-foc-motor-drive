@@ -4,17 +4,33 @@
 #include <cstdint>
 
 static motor_control::MotorState currState;
+static uint32_t t_state;        // mevcut state/adımın başladığı an [ms]
 static void handle_commands();
-static void run_align();
+static void run_align();    
 static void run_open_loop();
+static void run_closed_loop();
 
 
-enum class AlignStep { ALIGN_TO_90_DEG, ALIGN_TO_0_DEG, CALIB_FORWARD, CALIB_BACKWARD };
+enum class AlignStep
+{
+    ALIGN_TO_90_DEG,
+    ALIGN_TO_0_DEG,
+    CALIB_FORWARD,
+    CALIB_BACKWARD
+};
 static AlignStep align_step;
+
+enum class OlStep
+{
+    RAMP,           // hız OMEGA_OL'e çıkar
+    HOLD,           // SMO açıyı yakalasın
+    IQ_DOWN         // iq'yu azalt, OL açısı rotora otursun
+};
+static OlStep ol_step;
+static float  ol_delta;         // θ_ol − θ_smo [rad], Scrutiny'de izlemek için
 
 void SupervisorInit(void)
 {   
-
     HAL_TIMEx_HallSensor_Start(&htim3);
 
     HAL_ADCEx_Calibration_Start(&hadc3, ADC_SINGLE_ENDED);
@@ -66,15 +82,15 @@ void SupervisorRun(void)
     if (motor_state != currState)
     {
         currState = motor_state;
+        t_state   = HAL_GetTick();
         enter_state(motor_state);
-        if (motor_state == MotorState::ALIGN)
-        {
-            align_step = AlignStep::ALIGN_TO_90_DEG;
-        }
+        if (motor_state == MotorState::ALIGN)      align_step = AlignStep::ALIGN_TO_90_DEG;
+        if (motor_state == MotorState::OPEN_LOOP)  ol_step    = OlStep::RAMP;
     }
 
     if (motor_state == MotorState::ALIGN)       run_align();
     if (motor_state == MotorState::OPEN_LOOP)   run_open_loop();
+    if (motor_state == MotorState::CLOSED_LOOP) run_closed_loop();
 }
 
 
@@ -90,16 +106,16 @@ static void run_align()
     switch (align_step)
     {
         case AlignStep::ALIGN_TO_90_DEG:
-            if (now - setpoints.t_state >= ALIGN_MS)
+            if (now - t_state >= ALIGN_MS)
             {
-                setpoints.align_sincos = {0.0f, 1.0f};    // 0°
-                setpoints.t_state      = now;
-                align_step             = AlignStep::ALIGN_TO_0_DEG;
+                foc_cfg.fixed_sincos = {0.0f, 1.0f};    // 0°
+                t_state              = now;
+                align_step           = AlignStep::ALIGN_TO_0_DEG;
             }
             break;
 
         case AlignStep::ALIGN_TO_0_DEG:
-            if (now - setpoints.t_state >= ALIGN_MS)
+            if (now - t_state >= ALIGN_MS)
             {
                 if (meas.hall_state != 5)         // θ=0 → wait Hall 5
                 {
@@ -108,9 +124,10 @@ static void run_align()
                 }
                 hall.startCalibration();
                 open_loop.reset(0.0f);
-                setpoints.ol_speed  = OMEGA_CAL;
-                setpoints.ctrl_mode = CtrlMode::HALL_SENSOR_CAL;
-                align_step          = AlignStep::CALIB_FORWARD;
+                foc_cfg.ol_speed        = OMEGA_CAL;
+                foc_cfg.record_hall_cal = true;
+                set_foc_mode(AngleSource::OPEN_LOOP, LoopMode::CURRENT);
+                align_step              = AlignStep::CALIB_FORWARD;
             }
             break;
 
@@ -118,7 +135,7 @@ static void run_align()
             if (open_loop.get_travelled() >= cal_rad)
             {
                 open_loop.clear_travelled();
-                setpoints.ol_speed = -OMEGA_CAL;
+                foc_cfg.ol_speed   = -OMEGA_CAL;
                 align_step         = AlignStep::CALIB_BACKWARD;
             }
             break;
@@ -126,9 +143,10 @@ static void run_align()
         case AlignStep::CALIB_BACKWARD:
             if (open_loop.get_travelled() >= cal_rad)
             {
-                setpoints.ol_speed = 0.0f;
+                foc_cfg.ol_speed = 0.0f;
 
                 HAL_NVIC_DisableIRQ(ADC3_IRQn);
+                foc_cfg.record_hall_cal = false;     // finish'ten sonra ISR kayıt eklemesin
                 const bool ok = hall.finishCalibration();
                 HAL_NVIC_EnableIRQ(ADC3_IRQn);
 
@@ -138,14 +156,13 @@ static void run_align()
                     return;
                 }
 
-                setpoints.idq_ref   = {0.0f, 0.0f};
-                setpoints.ctrl_mode = CtrlMode::CURRENT_CTRL;
+                foc_cfg.idq_ref = {0.0f, 0.0f};
+                set_foc_mode(AngleSource::HALL, LoopMode::CURRENT);
                 motor_state_machine.event_handler(MotorEvent::ALIGNMENT_DONE);
             }
             break;
     }
 }
-
 
 static void run_open_loop()
 {
@@ -153,13 +170,49 @@ static void run_open_loop()
 
     const uint32_t now = HAL_GetTick();
 
-    setpoints.ol_speed = std::min(setpoints.ol_speed + OL_RAMP * SUPERVISOR_DT, OMEGA_OL);
+    ol_delta = wrap_pi(meas.theta_ol - meas.theta_e_rad_smo);
 
-    if (setpoints.ol_speed < OMEGA_OL)
-        setpoints.t_state = now;  
+    switch (ol_step)
+    {
+        case OlStep::RAMP:
+            foc_cfg.ol_speed = std::min(foc_cfg.ol_speed + OL_RAMP * SUPERVISOR_DT, OMEGA_OL);
+            if (foc_cfg.ol_speed >= OMEGA_OL)
+            {
+                t_state = now;
+                ol_step = OlStep::HOLD;
+            }
+            break;
 
-    if (now - setpoints.t_state >= OL_HOLD_MS)
-        motor_state_machine.event_handler(MotorEvent::CLOSED_LOOP_READY);
+        case OlStep::HOLD:
+            if (now - t_state >= OL_HOLD_MS)
+                ol_step = OlStep::IQ_DOWN;
+            break;
+
+        case OlStep::IQ_DOWN:
+        {
+            // iq azaldıkça δ küçülür; δ≈0'da OL açısı rotorla çakışır, iq = yükün ihtiyacı.
+            // δ=0 maksimum tork noktası, altına inersek senkron kaçar → payla geç.
+            // IQ_OL_MIN'e inildiyse yük çok hafif: yine geç, kalan farkı angle_offset eritir.
+            const float iq = foc_cfg.idq_ref.iq_ref;
+
+            if (std::fabs(ol_delta) < DELTA_SWITCH || iq <= IQ_OL_MIN)
+                motor_state_machine.event_handler(MotorEvent::CLOSED_LOOP_READY);
+            else
+                foc_cfg.idq_ref.iq_ref = std::max(iq - IQ_DOWN_STEP, IQ_OL_MIN);
+            break;
+        }
+    }
+}
+
+static void run_closed_loop()
+{
+    // OL→SMO açı farkını yavaşça 0'a erit
+    const float offset = foc_cfg.angle_offset;
+
+    if (std::fabs(offset) <= OFFSET_STEP)
+        foc_cfg.angle_offset = 0.0f;
+    else
+        foc_cfg.angle_offset = offset - std::copysign(OFFSET_STEP, offset);
 }
 
 
@@ -183,6 +236,6 @@ static void handle_commands()
         cmd.start = false;
         motor_state_machine.event_handler(MotorEvent::START);
     }
-    //setpoints.speed_ref_rpm = std::clamp(static_cast<float>(cmd.speed_ref_rpm),
+    //foc_cfg.speed_ref_rpm = std::clamp(static_cast<float>(cmd.speed_ref_rpm),
     //                                     -SPEED_REF_MAX_RPM, SPEED_REF_MAX_RPM);
 }

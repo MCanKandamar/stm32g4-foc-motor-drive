@@ -55,6 +55,8 @@ namespace motor_control {
 
             void setLimits(float out_min, float out_max);
 
+            void setIntegral(float value)   {integral = value; }
+
             void reset();
 
             float getIntegral() const;

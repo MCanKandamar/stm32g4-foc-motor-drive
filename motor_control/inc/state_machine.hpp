@@ -37,15 +37,6 @@ namespace motor_control
         SENSOR_ERROR
     };
 
-    enum class CtrlMode : uint8_t
-    {
-        ALIGNMENT,
-        HALL_SENSOR_CAL,
-        OPEN_LOOP_CTRL,
-        CURRENT_CTRL,
-        SPEED_CTRL
-    };
-
     class StateMachine
     {
         public:

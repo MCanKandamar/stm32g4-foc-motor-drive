@@ -19,7 +19,9 @@ namespace motor_control
 
             Idq_ref_t update(float speed_reference, float speed_feedback);
 
-            void reset();
+            Idq_ref_t get_output() const { return idq_ref; }   // son update() çıktısı
+
+            void reset(float iq_init = 0.0f);   // iq_init: geçişte kesintisiz başlangıç için
     };
 }
 

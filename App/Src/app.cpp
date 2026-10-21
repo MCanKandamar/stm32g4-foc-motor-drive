@@ -45,15 +45,6 @@ namespace
         .out_min        = -2000.0f,
     });
 
-    motor_control::HallSensor hall(
-    {
-        .f_cnt_hz = 1'000'000.0f,
-        .pole_pairs = 4,
-        .edge_angle_rad = { 283.8f * DEG, 347.7f * DEG,  39.5f  * DEG,
-                            99.4f  * DEG, 158.2f * DEG,  217.2f * DEG },
-        .timeout_s = 0.05f,
-    });
-
     motor_control::smo_config smo_cfg(
     {
         .phase_resistance_ohm = 0.20f,
@@ -64,20 +55,28 @@ namespace
     });
 }
 
+motor_control::HallSensor hall(
+{
+    .f_cnt_hz = 1'000'000.0f,
+    .pole_pairs = 4,
+    .edge_angle_rad = { 283.8f * DEG, 347.7f * DEG,  39.5f  * DEG,
+                        99.4f  * DEG, 158.2f * DEG,  217.2f * DEG },
+    .timeout_s = 0.05f,
+});
 
 
 motor_control::current_control    foc(idq_pi_cfg, idq_pi_cfg);
 motor_control::speed_control      speed_ctrl(speed_pi_cfg);
 motor_control::StateMachine       motor_state_machine;
 motor_control::AnglePLL           pll(pll_pi_cfg);
-motor_control::AnglePLL           pll_smo(pll_smo_pi_cfg);
+motor_control::AnglePLL           pll_smo(pll_smo_pi_cfg, cordicSinCos);
 motor_control::smo_observer       smo(smo_cfg);
 motor_control::OpenLoopAngle      open_loop;
 
 volatile motor_control::FaultCode fault = motor_control::FaultCode::NONE;
 
 Measurements meas;
-Setpoints    setpoints;
+FocConfig    foc_cfg;
 Status       status;
 AdcCalib     adc_cal;
 AdcDma       adc_dma;
@@ -91,8 +90,10 @@ void enter_state(motor_control::MotorState state)
     using namespace motor_control;
     switch(state)
     {
-        case MotorState::IDLE:      
+        case MotorState::IDLE:
             powerOff();
+            foc_cfg.record_hall_cal = false;
+            set_foc_mode(AngleSource::FIXED, LoopMode::OFF);
             break;
 
         case MotorState::ADC_OFFSET_CAL:
@@ -104,33 +105,44 @@ void enter_state(motor_control::MotorState state)
             break;
 
         case MotorState::ALIGN:
-            setpoints.idq_ref   = {I_ALIGN, 0.0f};
-            setpoints.align_sincos  = {1.0f, 0.0f};
-            setpoints.ctrl_mode = CtrlMode::ALIGNMENT;
-            setpoints.t_state   = HAL_GetTick();
+            foc_cfg.idq_ref      = {I_ALIGN, 0.0f};
+            foc_cfg.fixed_sincos = {1.0f, 0.0f};
+            set_foc_mode(AngleSource::FIXED, LoopMode::CURRENT);
             powerOn();
             break;
 
         case MotorState::OPEN_LOOP:
             open_loop.reset(3.0f * PI / 2.0f);      // -90°: q ekseni rotorun durduğu 0°'ye denk gelir, sıçrama olmaz
-            setpoints.ol_speed  = 0.0f;
-            setpoints.idq_ref   = {0.0f, I_OL};
+            foc_cfg.ol_speed = 0.0f;
+            foc_cfg.idq_ref  = {0.0f, I_OL};
             pll_smo.reset();
-            setpoints.ctrl_mode = CtrlMode::OPEN_LOOP_CTRL;
-            setpoints.t_state   = HAL_GetTick();
+            set_foc_mode(AngleSource::OPEN_LOOP, LoopMode::CURRENT);
             break;
 
         case MotorState::CLOSED_LOOP:
-            speed_ctrl.reset();
-            pll_smo.reset();
-            setpoints.ctrl_mode = CtrlMode::SPEED_CTRL;
-            powerOn();
+            speed_ctrl.reset(foc_cfg.idq_ref.iq_ref);   // PI, OL'de azaltılmış iq'dan başlasın
+            //pll_smo.reset();
+            HAL_NVIC_DisableIRQ(ADC3_IRQn);         // ofset ve mod aynı ISR örneğine göre
+            foc_cfg.angle_offset = wrap_pi(meas.theta_ol - meas.theta_e_rad_smo);
+            set_foc_mode(AngleSource::SMO, LoopMode::SPEED);   // IRQ'yu tekrar açar
+            //powerOn();
             break;
 
         case MotorState::FAULT:
             powerOff();
+            foc_cfg.record_hall_cal = false;
+            set_foc_mode(AngleSource::FIXED, LoopMode::OFF);
             break;
     }
+}
+
+// angle_src ve loop'un tek yazma noktası. ISR iki yazma arasına girip yarım ayar görmesin.
+void set_foc_mode(motor_control::AngleSource angle_src, motor_control::LoopMode loop)
+{
+    HAL_NVIC_DisableIRQ(ADC3_IRQn);
+    foc_cfg.angle_src = angle_src;
+    foc_cfg.loop      = loop;
+    HAL_NVIC_EnableIRQ(ADC3_IRQn);
 }
 
 void DRV_ENABLE_SET()
@@ -203,15 +215,12 @@ motor_control::Idq_ref_t get_idq_ref(float omega_ref_rpm, float omega_fdbck_rpm)
 {
     using namespace motor_control;
     static uint8_t div = 0;
-    static Idq_ref_t idq_reference = {0, 0};
-    if (setpoints.ctrl_mode == CtrlMode::SPEED_CTRL && ++div >= 20)   // 1 kHz
+    if (++div >= 20)   // 1 kHz
     {
         div = 0;
-        idq_reference = speed_ctrl.update(
-            omega_ref_rpm,
-            omega_fdbck_rpm);
+        speed_ctrl.update(omega_ref_rpm, omega_fdbck_rpm);
     }
-    return idq_reference;
+    return speed_ctrl.get_output();     // ara örneklerde son çıktı (geçişte reset(iq_init) değeri)
 }
 
 void update_duties(motor_control::duties_t duties)

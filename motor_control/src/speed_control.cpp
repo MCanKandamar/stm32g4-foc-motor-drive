@@ -17,8 +17,10 @@ namespace motor_control
         return idq_ref;
     }
 
-    void speed_control::reset()
+    void speed_control::reset(float iq_init)
     {
         SpeedController.reset();
+        SpeedController.setIntegral(iq_init);
+        idq_ref = {0.0f, iq_init};
     }
 }

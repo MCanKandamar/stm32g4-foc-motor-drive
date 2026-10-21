@@ -3,13 +3,14 @@
 #include "types.hpp"
 #include "pi_controller.hpp"
 #include "observer.hpp"
+#include "math_utils.hpp"
 
 namespace motor_control
 {
     class AnglePLL
     {
         public:
-            AnglePLL(const PiConfig_& pll_config);
+            AnglePLL(const PiConfig_& pll_config, SinCosFn sincos = sincos_std);
 
             float update(float theta_measured);
             float update_emf(const Z_alphabeta_t& z_alphabeta);
@@ -24,5 +25,6 @@ namespace motor_control
             float pll_speed{0.0f};
             float pll_speed_filtered{0.0f};
             float step_time;
+            SinCosFn sincos_;
     };
 }

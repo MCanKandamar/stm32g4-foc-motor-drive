@@ -1,13 +1,12 @@
 #include "app.hpp"
 #include "observer.hpp"
 #include "pll.hpp"
-#include "state_machine.hpp"
 #include "scrutiny.h"
 #include "transforms.hpp"
 #include "types.hpp"
 #include <cmath>
 
-/* Interrupt callbacks -------------------------------------------------------*/
+/* Interrupt Callbacks -------------------------------------------------------*/
 extern "C" void HAL_ADCEx_InjectedConvCpltCallback(ADC_HandleTypeDef *hadc)
 {
     using namespace motor_control;
@@ -18,49 +17,47 @@ extern "C" void HAL_ADCEx_InjectedConvCpltCallback(ADC_HandleTypeDef *hadc)
         meas.Vabc               = get_abc_voltages();
         meas.theta_e_rad_hall   = get_motor_angle_hal();
         meas.theta_e_rad_pll    = pll.update(meas.theta_e_rad_hall);
-        meas.i_alphabeta = clarke(meas.Iabc);
+        meas.i_alphabeta        = clarke(meas.Iabc);
+        meas.z_alphabeta        = smo.update(meas.i_alphabeta, meas.v_alphabeta);
+        meas.theta_e_rad_smo    = pll_smo.update_emf(meas.z_alphabeta);
+        meas.speed_rpm_hall     = hall.getMechanicalSpeedRpm();
+        meas.speed_rpm_smo      = pll_smo.get_speed() / 4.0f * RAD_TO_RPM;
 
-        Z_alphabeta_t z_alphabeta = smo.update(meas.i_alphabeta, meas.v_alphabeta);
-        meas.theta_e_rad_smo = pll_smo.update_emf(z_alphabeta);
-
-        meas.speed_rpm_hall = hall.getMechanicalSpeedRpm();
-        meas.speed_rpm_smo  = pll_smo.get_speed() / 4.0f * motor_control::RAD_TO_RPM;
-
-        if (setpoints.ctrl_mode == CtrlMode::SPEED_CTRL)
-            meas.idq_ref = get_idq_ref(setpoints.speed_ref_rpm,
-                                       meas.speed_rpm_hall);
-        else
-            meas.idq_ref = setpoints.idq_ref;
-        
-        
-        switch (setpoints.ctrl_mode)
+        if (foc_cfg.loop == LoopMode::OFF)      // PWM'i Supervisor kapattı
         {
-            case CtrlMode::ALIGNMENT:
-                meas.SinCos = setpoints.align_sincos;
-                break;
-            case CtrlMode::HALL_SENSOR_CAL:
-            {
-                const float theta = open_loop.update(setpoints.ol_speed, TS);
-                hall.recordCalibration(theta);
-                meas.SinCos = cordicSinCos(theta);
-                break;
-            }
-            case CtrlMode::OPEN_LOOP_CTRL:
-            {
-                meas.theta_ol = open_loop.update(setpoints.ol_speed, TS);
-                meas.SinCos   = cordicSinCos(meas.theta_ol);
-                break;
-            }
-            case CtrlMode::CURRENT_CTRL:
-                meas.SinCos = cordicSinCos(meas.theta_e_rad_pll);
-                break;
-            case CtrlMode::SPEED_CTRL:
-                meas.SinCos = cordicSinCos(meas.theta_e_rad_pll);
-                break;
-            default:
-                powerOff();
-                return;
+            ScrutinyFocTick();
+            return;
         }
+
+        /* Angle Source -----------------------------------------------*/
+        float speed_fb_rpm = 0.0f;
+        switch (foc_cfg.angle_src)
+        {
+            case AngleSource::FIXED:
+                meas.SinCos = foc_cfg.fixed_sincos;
+                break;
+            case AngleSource::OPEN_LOOP:
+                meas.theta_ol = open_loop.update(foc_cfg.ol_speed, TS);
+                if (foc_cfg.record_hall_cal)
+                    hall.recordCalibration(meas.theta_ol);
+                meas.SinCos = cordicSinCos(meas.theta_ol);
+                break;
+            case AngleSource::HALL:
+                meas.SinCos  = cordicSinCos(meas.theta_e_rad_pll);
+                speed_fb_rpm = meas.speed_rpm_hall;
+                break;
+            case AngleSource::SMO:
+                meas.SinCos  = cordicSinCos(wrap_2pi(meas.theta_e_rad_smo + foc_cfg.angle_offset));
+                speed_fb_rpm = meas.speed_rpm_smo;
+                break;
+        }
+
+        /* Loop Mode --------------------------------------------------*/
+        if (foc_cfg.loop == LoopMode::SPEED)
+            meas.idq_ref = get_idq_ref( foc_cfg.speed_ref_rpm,
+                                        speed_fb_rpm );
+        else
+            meas.idq_ref = foc_cfg.idq_ref;
 
         /* Calculate Dutiess ------------------------------------------*/
         meas.duties = foc.update(   meas.idq_ref,
