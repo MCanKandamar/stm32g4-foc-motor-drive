@@ -73,6 +73,7 @@ target_link_directories(${CMAKE_PROJECT_NAME} PRIVATE
 target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     App/Src/app.cpp
     App/Src/Supervisor.cpp
+    App/Src/StartupSeq.cpp
     App/Src/Monitor.cpp
 )
 
