@@ -33,6 +33,8 @@ namespace motor_control
             case motor_control::MotorState::ADC_OFFSET_CAL:
                 if (event == MotorEvent::ADC_OFFSET_CAL_DONE)
                     motor_state = MotorState::ALIGN;
+                else if (event == MotorEvent::HALL_READY)
+                    motor_state = MotorState::CLOSED_LOOP;
                 break;
             
             case motor_control::MotorState::ALIGN:

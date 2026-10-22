@@ -24,7 +24,8 @@ namespace motor_control
         FAULT_DETECTED,
         RESET_FAULT,
         CALIBRATE,
-        CALIBRATION_DONE
+        CALIBRATION_DONE,
+        HALL_READY          // Hall modunda ADC ofsetten doğrudan CL'e
     };
 
     enum class FaultCode : uint8_t
@@ -37,7 +38,8 @@ namespace motor_control
         UNDER_VOLTAGE,
         MOTOR_OVER_TEMP,
         DRIVER_OVER_TEMP,
-        SENSOR_ERROR
+        SENSOR_ERROR,
+        SENSORLESS_LOST     // SMO hızı SL_LOST_RPM altında: açı tahmini güvenilmez
     };
 
     class StateMachine

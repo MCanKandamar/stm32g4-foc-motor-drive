@@ -19,4 +19,11 @@ namespace motor_control
         CURRENT,        // idq_ref doğrudan
         SPEED           // idq_ref hız PI'dan
     };
+
+    // Kullanıcının seçtiği açı kaynağı (START'ta sabitlenir)
+    enum class SensorMode : uint8_t
+    {
+        HALL,           // ADC → CL, açı Hall
+        SENSORLESS      // ADC → ALIGN → OL → CL, açı SMO
+    };
 }

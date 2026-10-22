@@ -16,7 +16,7 @@
 #include <cstdint>
 #include <algorithm>
 
-constexpr uint32_t  LED_PERIOD_MS   = 101;
+constexpr uint32_t  LED_PERIOD_MS   = 100;
 constexpr float     DEG             = motor_control::PI / 180.0f;
 constexpr uint8_t   ADC_BIT         = 12;
 constexpr float     SHUNT_AMP_GAIN  = 20.0f;
@@ -42,6 +42,12 @@ constexpr float     IQ_DOWN_STEP    = 0.002f;                    // OL'de iq aza
 constexpr float     IQ_OL_MIN       = 0.1f;                      // iq azaltmanın alt sınırı [A]
 constexpr float     DELTA_SWITCH    = 0.3f;                      // |θ_ol − θ_smo| bunun altına inince CL'e geç [rad] ≈ 17°
 constexpr float     OFFSET_STEP     = 0.005f;                    // OL→SMO açı ofseti erime adımı [rad/ms]: 1 rad 200 ms'de
+
+constexpr float     IQ_REF_MAX      = 5.0f;                      // CURRENT modunda iq sınırı [A]
+
+constexpr float     SL_MIN_RPM      = 300.0f;                    // sensörsüz modda en düşük hız ref'i [rpm]
+constexpr float     SL_LOST_RPM     = 200.0f;                    // SMO hızı bunun altında → kilit kayıp sayılır [rpm]
+constexpr uint32_t  SL_LOST_MS      = 50;                        // bu kadar süre altında kalırsa hata [ms]
 
 constexpr float SPEED_REF_MAX_RPM = 3560.0f;   // 57BLF02 nominal rated: = 3000 rpm
                                                //                tested: = 3560 rpm
@@ -110,7 +116,10 @@ struct Commands
     volatile bool  stop          = false;
     volatile bool  reset_fault   = false;
     volatile bool  calibrate     = false;   // Hall kalibrasyonu (sadece IDLE'da)
-    volatile float speed_ref_rpm = 0.0f;
+    volatile motor_control::SensorMode sensor = motor_control::SensorMode::SENSORLESS;  // START'ta sabitlenir
+    volatile motor_control::LoopMode   loop   = motor_control::LoopMode::SPEED;         // START'ta sabitlenir
+    volatile float speed_ref_rpm = 0.0f;    // SPEED modunda
+    volatile float iq_ref        = 0.0f;    // CURRENT modunda [A]
 };
 
 // Yazar: Supervisor, sadece init ve ADC_OFFSET_CAL sırasında. ISR okur.

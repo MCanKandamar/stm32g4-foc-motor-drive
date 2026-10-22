@@ -122,6 +122,4 @@ static void handle_commands()
         cmd.calibrate = false;
         motor_state_machine.event_handler(MotorEvent::CALIBRATE);
     }
-    //foc_cfg.speed_ref_rpm = std::clamp(static_cast<float>(cmd.speed_ref_rpm),
-    //                                     -SPEED_REF_MAX_RPM, SPEED_REF_MAX_RPM);
 }

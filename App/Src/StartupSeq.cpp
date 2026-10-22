@@ -6,6 +6,14 @@ using namespace motor_control;
 
 static uint32_t t_state;        // mevcut adımın başladığı an [ms]
 
+struct RunMode
+{
+    SensorMode sensor;
+    LoopMode   loop;
+};
+static RunMode run_mode;        // START anında cmd'den kopyalanır, çalışırken değişmez
+static uint32_t t_sl_ok;        // SMO hızının en son SL_LOST_RPM üstünde görüldüğü an [ms]
+
 enum class AlignStep
 {
     TO_90_DEG,
@@ -76,12 +84,24 @@ static bool align_done()
 
 void enter_adc_cal()
 {
+    run_mode = { cmd.sensor, cmd.loop };            // START anında sabitle
+    if (run_mode.loop == LoopMode::OFF)
+        run_mode.loop = LoopMode::SPEED;            // OFF geçersiz → SPEED
+
     start_current_sensing();
 }
 
 void run_adc_cal()
 {
-    motor_state_machine.event_handler(MotorEvent::ADC_OFFSET_CAL_DONE);
+    if (run_mode.sensor == SensorMode::HALL)
+    {
+        foc_cfg.idq_ref = {0.0f, 0.0f};             // iq = 0 ile güvenli başla
+        set_foc_mode(AngleSource::HALL, LoopMode::CURRENT);
+        powerOn();
+        motor_state_machine.event_handler(MotorEvent::HALL_READY);           // → CLOSED_LOOP
+    }
+    else
+        motor_state_machine.event_handler(MotorEvent::ADC_OFFSET_CAL_DONE);  // → ALIGN
 }
 
 
@@ -154,10 +174,16 @@ void run_open_loop()
 
 void enter_closed_loop()
 {
-    speed_ctrl.reset(foc_cfg.idq_ref.iq_ref);   // PI, OL'de azaltılmış iq'dan başlasın
+    const AngleSource src = (run_mode.sensor == SensorMode::HALL) ? AngleSource::HALL
+                                                                  : AngleSource::SMO;
+
+    speed_ctrl.reset(foc_cfg.idq_ref.iq_ref);   // PI, o anki iq'dan başlasın (OL'de azaltılmış, Hall'da 0)
     HAL_NVIC_DisableIRQ(ADC3_IRQn);             // ofset ve mod aynı ISR örneğine göre
-    foc_cfg.angle_offset = wrap_pi(meas.theta_ol - meas.theta_e_rad_smo);
-    set_foc_mode(AngleSource::SMO, LoopMode::SPEED);   // IRQ'yu tekrar açar
+    foc_cfg.angle_offset = (src == AngleSource::SMO)
+                         ? wrap_pi(meas.theta_ol - meas.theta_e_rad_smo)   // OL'den geliyoruz
+                         : 0.0f;                                           // Hall'da ofset yok
+    set_foc_mode(src, run_mode.loop);           // IRQ'yu tekrar açar
+    t_sl_ok = HAL_GetTick();
 }
 
 void run_closed_loop()
@@ -169,6 +195,30 @@ void run_closed_loop()
         foc_cfg.angle_offset = 0.0f;
     else
         foc_cfg.angle_offset = offset - std::copysign(OFFSET_STEP, offset);
+
+    // Sensörsüz: düşük hızda EMF küçük, SMO açısı güvenilmez.
+    // 1) ref en az SL_MIN_RPM (OL sadece ileri kalkar, yön değişimi yok)
+    // 2) SMO hızı SL_LOST_MS boyunca SL_LOST_RPM altında (ya da ters) → hata, güç kesilir
+    float ref_min = -SPEED_REF_MAX_RPM;
+
+    if (run_mode.sensor == SensorMode::SENSORLESS)
+    {
+        ref_min = SL_MIN_RPM;
+
+        const uint32_t now = HAL_GetTick();
+        if (meas.speed_rpm_smo >= SL_LOST_RPM)
+            t_sl_ok = now;
+        else if (now - t_sl_ok >= SL_LOST_MS)
+            fault = FaultCode::SENSORLESS_LOST;
+    }
+
+    // Kullanıcı referansı (cmd) → foc_cfg
+    if (run_mode.loop == LoopMode::SPEED)
+        foc_cfg.speed_ref_rpm = std::clamp(static_cast<float>(cmd.speed_ref_rpm),
+                                           ref_min, SPEED_REF_MAX_RPM);
+    else
+        foc_cfg.idq_ref = {0.0f, std::clamp(static_cast<float>(cmd.iq_ref),
+                                            -IQ_REF_MAX, IQ_REF_MAX)};
 }
 
 

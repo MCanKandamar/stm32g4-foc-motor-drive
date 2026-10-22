@@ -11,7 +11,6 @@ static scrutiny::FixedFrequencyLoopHandler foc_loop(500, "FOC 20kHz");
 static scrutiny::LoopHandler* loops[] = { &foc_loop };
 static ULONG t_last;
 
-
 static uint8_t rx_ring[512];
 static std::atomic<uint16_t> rx_head{0};
 static std::atomic<uint16_t> rx_tail{0};
@@ -45,7 +44,7 @@ void ScrutinyRxRun(void)
         return;
     }
 
-    if (ux_device_class_cdc_acm_read(cdc_acm,
+    if (ux_device_class_cdc_acm_read(   cdc_acm,
                                         buf,
                                         sizeof(buf),
                                         &n) != UX_SUCCESS)
@@ -83,7 +82,7 @@ void ScrutinyRun(void)
     {
         ULONG len = scrutiny_main.pop_data(buf, sizeof(buf));
         ULONG sent;
-        if (ux_device_class_cdc_acm_write(cdc_acm,
+        if (ux_device_class_cdc_acm_write(  cdc_acm,
                                             buf,
                                             len,
                                             &sent) != UX_SUCCESS) break;
