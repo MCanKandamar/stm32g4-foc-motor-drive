@@ -832,7 +832,10 @@ static void MX_GPIO_Init(void)
   HAL_GPIO_WritePin(DRV_CS_GPIO_Port, DRV_CS_Pin, GPIO_PIN_SET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOD, DRV_ENABLE_Pin|CAN_LED_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(DRV_ENABLE_GPIO_Port, DRV_ENABLE_Pin, GPIO_PIN_RESET);
+
+  /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(CAN_LED_GPIO_Port, CAN_LED_Pin, GPIO_PIN_SET);
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(PROCCESS_LED_GPIO_Port, PROCCESS_LED_Pin, GPIO_PIN_RESET);
