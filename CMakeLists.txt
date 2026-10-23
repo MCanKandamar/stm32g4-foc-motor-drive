@@ -46,6 +46,9 @@ add_subdirectory(cmake/stm32cubemx)
 # Add hardware-independent motor control library
 add_subdirectory(motor_control)
 
+# CANopen stack (CANopenNode + STM32 FDCAN driver + Object Dictionary)
+add_subdirectory(canopen)
+
 # Scrutiny debugger: scrutiny_build_config.hpp bu değerlerle .in şablonundan üretilir
 set(SCRUTINY_ENABLE_DATALOGGING           ON)
 set(SCRUTINY_SUPPORT_64BITS               ON)
@@ -75,6 +78,7 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     App/Src/Supervisor.cpp
     App/Src/StartupSeq.cpp
     App/Src/Monitor.cpp
+    App/Src/canopen_app.c
 )
 
 # Add include paths
@@ -98,6 +102,7 @@ target_link_libraries(${CMAKE_PROJECT_NAME}
     # Add user defined libraries
     motor_control
     scrutiny-embedded
+    canopen
 )
 
 # Scrutiny post-build: .sfd (değişken haritası) + firmware ID'si gömülmüş <proje>_tagged.elf
