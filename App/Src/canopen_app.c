@@ -1,4 +1,5 @@
 #include "canopen_app.h"
+#include "canopen_bridge.h"
 #include "CO_app_STM32.h"
 
 #define CO_NODE_ID      13       // node id (1..127)
@@ -22,6 +23,7 @@ void CanopenInit(void)
 void CanopenRun(void)
 {
     canopen_app_process();      // NMT, Heartbeat, SDO, EMCY
+    CanopenBridgeUpdate();      // OD <-> motor verisi
     canopen_app_interrupt();    // SYNC, RPDO, TPDO
 
     // handles standard LED indicators

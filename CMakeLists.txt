@@ -79,6 +79,7 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     App/Src/StartupSeq.cpp
     App/Src/Monitor.cpp
     App/Src/canopen_app.c
+    App/Src/canopen_bridge.cpp
 )
 
 # Add include paths
