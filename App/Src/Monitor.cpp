@@ -24,10 +24,12 @@ void MonitorRun(void)
                                         
     if (status.Vdc > VDC_MAX) {
         powerOff();
-        fault = FaultCode::OVER_VOLTAGE; }
+        fault = FaultCode::OVER_VOLTAGE;
+    }
     else if (status.Vdc < VDC_MIN) {
         powerOff();
-        fault = FaultCode::UNDER_VOLTAGE; }
+        fault = FaultCode::UNDER_VOLTAGE; 
+    }
 
     uint32_t now = HAL_GetTick();
     if (now - t_led >= LED_PERIOD_MS)

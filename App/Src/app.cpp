@@ -19,8 +19,8 @@ namespace
 
     motor_control::PidConfig_ speed_pi_cfg(
     {
-        .Kp            = 0.001f,
-        .Ki            = 0.0015f,
+        .Kp            = 0.003f,
+        .Ki            = 0.003f,
         .Kd            = 0.0f,
         .step_time     = 0.001f,
         .out_max       = 9.0f,
