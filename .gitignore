@@ -3,9 +3,8 @@ build/
 mx.scratch
 __pycache__/
 
-# Firmware dışı içerik
-foc_smo_kitapcik/
-smo_kitap/
+# Firmware dışı içerik (dökümanlar, kılavuzlar)
+doc/
 .claude/
 
 # Kişisel Scrutiny dashboard düzeni
