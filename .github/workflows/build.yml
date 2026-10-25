@@ -27,3 +27,12 @@ jobs:
 
       - name: Memory usage
         run: arm-none-eabi-size build/Debug/015_BLDC_FOC_RTOS_MotorDrive.elf
+        
+      - name: Upload firmware
+        uses: actions/upload-artifact@v4
+        with:
+          name: firmware-Debug
+          path: |
+            build/Debug/015_BLDC_FOC_RTOS_MotorDrive.elf
+            build/Debug/015_BLDC_FOC_RTOS_MotorDrive.map
+          retention-days: 14
