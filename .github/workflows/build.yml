@@ -38,6 +38,6 @@ jobs:
         with:
           name: firmware-${{ matrix.preset }}
           path: |
-            build/${{ matrix.preset }}/015_BLDC_FOC_RTOS_MotorDrive.elf   # ← değişti
-            build/${{ matrix.preset }}/015_BLDC_FOC_RTOS_MotorDrive.map   # ← değişti
+            build/${{ matrix.preset }}/015_BLDC_FOC_RTOS_MotorDrive.elf
+            build/${{ matrix.preset }}/015_BLDC_FOC_RTOS_MotorDrive.map
           retention-days: 14
