@@ -7,6 +7,11 @@ jobs:
   build:
     runs-on: ubuntu-latest
 
+    strategy:
+      fail-fast: false
+      matrix:
+        preset: [Debug, Release]
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v5
@@ -20,19 +25,19 @@ jobs:
         run: sudo apt-get update && sudo apt-get install -y ninja-build
 
       - name: Configure
-        run: cmake --preset Debug
+        run: cmake --preset ${{ matrix.preset }}
 
       - name: Build
-        run: cmake --build --preset Debug
+        run: cmake --build --preset ${{ matrix.preset }}
 
       - name: Memory usage
-        run: arm-none-eabi-size build/Debug/015_BLDC_FOC_RTOS_MotorDrive.elf
-        
+        run: arm-none-eabi-size build/${{ matrix.preset }}/015_BLDC_FOC_RTOS_MotorDrive.elf
+
       - name: Upload firmware
         uses: actions/upload-artifact@v4
         with:
-          name: firmware-Debug
+          name: firmware-${{ matrix.preset }}
           path: |
-            build/Debug/015_BLDC_FOC_RTOS_MotorDrive.elf
-            build/Debug/015_BLDC_FOC_RTOS_MotorDrive.map
+            build/${{ matrix.preset }}/015_BLDC_FOC_RTOS_MotorDrive.elf   # ← değişti
+            build/${{ matrix.preset }}/015_BLDC_FOC_RTOS_MotorDrive.map   # ← değişti
           retention-days: 14
