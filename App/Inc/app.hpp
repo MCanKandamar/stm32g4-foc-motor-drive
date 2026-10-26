@@ -116,6 +116,7 @@ struct Commands
     volatile bool  stop          = false;
     volatile bool  reset_fault   = false;
     volatile bool  calibrate     = false;   // Hall kalibrasyonu (sadece IDLE'da)
+    volatile bool  offset_cal    = false;   // akım ofsetini ölç (sadece IDLE'da, CiA 402 Switch On)
     volatile motor_control::SensorMode sensor = motor_control::SensorMode::SENSORLESS;  // START'ta sabitlenir
     volatile motor_control::LoopMode   loop   = motor_control::LoopMode::SPEED;         // START'ta sabitlenir
     volatile float speed_ref_rpm = 0.0f;    // SPEED modunda
@@ -129,6 +130,7 @@ struct AdcCalib
     float    volt_per_lsb            = adc_ref_voltage / ((1U << ADC_BIT) - 1U);
     float    amp_per_lsb             = volt_per_lsb / SHUNT_RES_OHM / SHUNT_AMP_GAIN;
     uint16_t amplifier_offset_raw[3] = {2048, 2048, 2048};
+    bool     offset_valid            = false;   // ofset ölçüldü, sonraki START kullanır
 };
 
 // Yazar: DMA (ADC4, ADC5).

@@ -41,10 +41,12 @@ static float  ol_delta;         // θ_ol − θ_smo [rad], Scrutiny'de izlemek i
 
 /* Ortak yardımcılar --------------------------------------------------------*/
 
-// Akım ofsetini ölç, ADC3 enjekte kesmesini (FOC ISR) başlat
+// Akım ofsetini ölç (Switch On'da ölçülmediyse), ADC3 enjekte kesmesini (FOC ISR) başlat
 static void start_current_sensing()
 {
-    adcOffsetCalibration();
+    if (!adc_cal.offset_valid)
+        adcOffsetCalibration();
+    adc_cal.offset_valid = false;               // her çalıştırma taze ofset ister
     HAL_ADCEx_InjectedStart_IT(&hadc3);
     __HAL_ADC_DISABLE_IT(&hadc3, ADC_IT_JEOC);
     __HAL_ADC_ENABLE_IT(&hadc3, ADC_IT_JEOS);

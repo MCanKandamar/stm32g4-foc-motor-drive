@@ -112,6 +112,15 @@ static void handle_commands()
         cmd.reset_fault = false; fault = FaultCode::NONE;
         motor_state_machine.event_handler(MotorEvent::RESET_FAULT);
     }
+    if (cmd.offset_cal)                         // start'tan önce: ikisi aynı anda gelirse ofset hazır olsun
+    {
+        cmd.offset_cal = false;
+        if (motor_state_machine.getState() == MotorState::IDLE)
+        {
+            adcOffsetCalibration();             // güç katı kapalı, akım sıfır
+            adc_cal.offset_valid = true;
+        }
+    }
     if (cmd.start)
     {
         cmd.start = false;
