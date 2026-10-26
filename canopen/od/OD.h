@@ -248,6 +248,9 @@ typedef struct {
     uint8_t x2003_faultCode;
     int32_t x2010_speedRefRpm;
     uint8_t x2011_command;
+    uint16_t x603F_errorCode;
+    uint16_t x6040_controlword;
+    uint16_t x6041_statusword;
 } OD_RAM_t;
 
 #ifndef OD_ATTR_PERSIST_COMM
@@ -308,6 +311,9 @@ extern OD_ATTR_OD OD_t *OD;
 #define OD_ENTRY_H2003 &OD->list[36]
 #define OD_ENTRY_H2010 &OD->list[37]
 #define OD_ENTRY_H2011 &OD->list[38]
+#define OD_ENTRY_H603F &OD->list[39]
+#define OD_ENTRY_H6040 &OD->list[40]
+#define OD_ENTRY_H6041 &OD->list[41]
 
 
 /*******************************************************************************
@@ -352,6 +358,9 @@ extern OD_ATTR_OD OD_t *OD;
 #define OD_ENTRY_H2003_faultCode &OD->list[36]
 #define OD_ENTRY_H2010_speedRefRpm &OD->list[37]
 #define OD_ENTRY_H2011_command &OD->list[38]
+#define OD_ENTRY_H603F_errorCode &OD->list[39]
+#define OD_ENTRY_H6040_controlword &OD->list[40]
+#define OD_ENTRY_H6041_statusword &OD->list[41]
 
 
 /*******************************************************************************

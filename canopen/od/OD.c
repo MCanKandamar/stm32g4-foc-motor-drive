@@ -207,7 +207,10 @@ OD_ATTR_RAM OD_RAM_t OD_RAM = {
     .x2002_motorState = 0x00,
     .x2003_faultCode = 0x00,
     .x2010_speedRefRpm = 0,
-    .x2011_command = 0x00
+    .x2011_command = 0x00,
+    .x603F_errorCode = 0x0000,
+    .x6040_controlword = 0x0000,
+    .x6041_statusword = 0x0000
 };
 
 
@@ -255,6 +258,9 @@ typedef struct {
     OD_obj_var_t o_2003_faultCode;
     OD_obj_var_t o_2010_speedRefRpm;
     OD_obj_var_t o_2011_command;
+    OD_obj_var_t o_603F_errorCode;
+    OD_obj_var_t o_6040_controlword;
+    OD_obj_var_t o_6041_statusword;
 } ODObjs_t;
 
 static CO_PROGMEM ODObjs_t ODObjs = {
@@ -1151,6 +1157,21 @@ static CO_PROGMEM ODObjs_t ODObjs = {
         .dataOrig = &OD_RAM.x2011_command,
         .attribute = ODA_SDO_RW,
         .dataLength = 1
+    },
+    .o_603F_errorCode = {
+        .dataOrig = &OD_RAM.x603F_errorCode,
+        .attribute = ODA_SDO_R | ODA_TPDO | ODA_MB,
+        .dataLength = 2
+    },
+    .o_6040_controlword = {
+        .dataOrig = &OD_RAM.x6040_controlword,
+        .attribute = ODA_SDO_RW | ODA_RPDO | ODA_MB,
+        .dataLength = 2
+    },
+    .o_6041_statusword = {
+        .dataOrig = &OD_RAM.x6041_statusword,
+        .attribute = ODA_SDO_R | ODA_TPDO | ODA_MB,
+        .dataLength = 2
     }
 };
 
@@ -1198,6 +1219,9 @@ static OD_ATTR_OD OD_entry_t ODList[] = {
     {0x2003, 0x01, ODT_VAR, &ODObjs.o_2003_faultCode, NULL},
     {0x2010, 0x01, ODT_VAR, &ODObjs.o_2010_speedRefRpm, NULL},
     {0x2011, 0x01, ODT_VAR, &ODObjs.o_2011_command, NULL},
+    {0x603F, 0x01, ODT_VAR, &ODObjs.o_603F_errorCode, NULL},
+    {0x6040, 0x01, ODT_VAR, &ODObjs.o_6040_controlword, NULL},
+    {0x6041, 0x01, ODT_VAR, &ODObjs.o_6041_statusword, NULL},
     {0x0000, 0x00, 0, NULL, NULL}
 };
 
