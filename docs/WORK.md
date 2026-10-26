@@ -14,10 +14,12 @@ Task: Password reset · branch: feature/reset · started: 2026-10-25
 Task: CANopen phase 4 — CiA 402 state machine (0x6040/0x6041/0x603F + EMCY) · branch: feature/canopen-cia402 · plan agreed 2026-10-25
 Context: phases 0–3 done and HW verified (56258fd): node-ID 13, heartbeat 0x70D, SDO 0x60D/0x58D, objects 0x2000–0x2011 bridged in `App/Src/canopen_bridge.cpp`. CANviz writing 0x6040 currently gets an SDO abort (object missing).
 The user is learning CANopen: explain each step from basics with byte/frame examples first, then guide; the user writes the code (and edits the OD) unless they say "kodu yaz" / "sen yaz".
-- [ ] 1. Concept: CiA 402 states (Switch On Disabled, Ready to Switch On, Switched On, Operation Enabled, Quick Stop Active, Fault), controlword commands (0x06 Shutdown, 0x07 Switch On, 0x0F Enable Operation, 0x02 Quick Stop, 0x00 Disable Voltage, 0x80 Fault Reset on rising edge), statusword bits — with CANviz byte examples
-- [ ] 2. Mapping design: CiA 402 state kept in its own variable in the bridge (our `MotorState` has no Ready/Switched On split); Operation Enabled ↔ `cmd.start` → CLOSED_LOOP, Switched On ↔ IDLE, Fault ↔ FAULT, fault reset ↔ `cmd.reset_fault`. Decide 0x2011 command's role (proposal: keep for calibrate only)
+- [x] 1. Concept: CiA 402 states (Switch On Disabled, Ready to Switch On, Switched On, Operation Enabled, Quick Stop Active, Fault), controlword commands (0x06 Shutdown, 0x07 Switch On, 0x0F Enable Operation, 0x02 Quick Stop, 0x00 Disable Voltage, 0x80 Fault Reset on rising edge), statusword bits — with CANviz byte examples — explained 2026-10-26
+- [ ] 2. (in progress) Mapping design: CiA 402 state kept in its own variable in the bridge (our `MotorState` has no Ready/Switched On split); Operation Enabled ↔ `cmd.start` → CLOSED_LOOP, Switched On ↔ IDLE, Fault ↔ FAULT, fault reset ↔ `cmd.reset_fault`. Decide 0x2011 command's role (proposal: keep for calibrate only)
+  2026-10-26 agreed with the user: startup flow stays as is (Hall: ADC → CL; sensorless: ADC → ALIGN → OL → CL, align needed because SMO sees no back-EMF at standstill); ADC offset moves to the CiA 402 Switch On transition (step 4b). Decisions K1–K8 proposed, awaiting approval.
 - [ ] 3. OD (user, CANopenEditor; needs user approval): 0x6040 controlword u16 rw RPDO-mappable, 0x6041 statusword u16 ro TPDO-mappable, 0x603F error code u16 ro; regenerate `OD.c/h` and `bldc_drive.eds`
 - [ ] 4. Bridge: decode controlword, run the CiA 402 transitions, build the statusword in `CanopenBridgeUpdate()`
+- [ ] 4b. Supervisor: measure the ADC offset on Switch On (0x07) while idle (`cmd.offset_cal`, `adc_cal.offset_valid`); START skips the measurement when the offset is valid, otherwise measures as today (Scrutiny start)
 - [ ] 5. Fault: map `FaultCode` → CiA 402 error code in 0x603F (e.g. over-current 0x2310, over-voltage 0x3210, under-voltage 0x3220) and send EMCY (COB-ID 0x08D)
 - [ ] 6. Debug build with no new warnings + memory use; CI green on GitHub
 - [ ] 7. HW test (user, CANviz): SDO write 0x6040 = 06 → 07 → 0F, read 0x6041 and see the motor run; provoke a fault → statusword fault bit, 0x603F code, EMCY; 0x80 clears it
@@ -25,11 +27,12 @@ The user is learning CANopen: explain each step from basics with byte/frame exam
 
 ## Next
 <!-- CANopen roadmap (fixed list, agreed with the user 2026-10-22) -->
-1. CANopen phase 5: modes 0x6060/0x6061 — Profile Velocity (accel/decel ramp 0x6083/0x6084) and Profile Torque (kt ≈ 0.036 Nm/A); sensor mode / calibrate as 0x2xxx objects
-2. CANopen phase 6: PDO mapping (RPDO1 controlword + target, TPDO1 statusword + actual) and SYNC; DBC file for CANviz decoding
-3. CANopen phase 7: robustness — heartbeat consumer / 0x6007, bus-off recovery, error register 0x1001
-4. CANopen phase 8: EDS export and parameter storage (0x1010)
-5. Host build for the `tests/` GoogleTest suite, then run it in CI (see Open questions)
+1. Persistent calibration (added by the user 2026-10-26): Hall edge table saved to a reserved flash page after CALIBRATING and loaded at boot, like a real drive's commissioning (today it lives in RAM, reset → ideal table). Needs approval for the linker-script flash region; becomes the storage backend for 0x1010 in phase 8
+2. CANopen phase 5: modes 0x6060/0x6061 — Profile Velocity (accel/decel ramp 0x6083/0x6084) and Profile Torque (kt ≈ 0.036 Nm/A); sensor mode / calibrate as 0x2xxx objects
+3. CANopen phase 6: PDO mapping (RPDO1 controlword + target, TPDO1 statusword + actual) and SYNC; DBC file for CANviz decoding
+4. CANopen phase 7: robustness — heartbeat consumer / 0x6007, bus-off recovery, error register 0x1001
+5. CANopen phase 8: EDS export and 0x1010 store parameters (uses the flash storage from item 1)
+6. Host build for the `tests/` GoogleTest suite, then run it in CI (see Open questions)
 Parked by the user: USB command refactor steps 4–6 (command queue, USB parser, telemetry); DC-bus sag and regen/over-voltage control.
 
 ## Done
