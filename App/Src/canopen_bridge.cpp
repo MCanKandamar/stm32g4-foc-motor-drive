@@ -2,11 +2,60 @@
 #include "app.hpp"
 
 extern "C" {
+#include "CANopen.h"
 #include "301/CO_ODinterface.h"
 #include "OD.h"
+
+extern CO_t* CO;                    // CO_app_STM32.c
 }
 
 using namespace motor_control;
+
+/* Fault → CiA 402 hata kodu (0x603F) ve EMCY -------------------------------*/
+
+// EMCY'de hangi hatanın aktif olduğunu tutan bit: üretici "kritik" aralığı (0x40..),
+// error register 0x1001'de bit 7 (manufacturer) ve bit 0 (generic) yanar.
+static constexpr uint8_t EM_FAULT_BIT_BASE = 0x40U;
+
+// CiA 301 / CiA 402 emergency error code
+static uint16_t cia402_error_code(FaultCode f)
+{
+    switch (f)
+    {
+        case FaultCode::NONE:                return 0x0000U;
+        case FaultCode::DRIVER_FAULT:        return 0x5000U;    // device hardware (gate driver nFAULT)
+        case FaultCode::MOTOR_OVER_CURRENT:  return 0x2310U;    // continuous over current, output side
+        case FaultCode::DRIVER_OVER_CURRENT: return 0x2300U;    // current, device output side
+        case FaultCode::OVER_VOLTAGE:        return 0x3210U;    // DC link over-voltage
+        case FaultCode::UNDER_VOLTAGE:       return 0x3220U;    // DC link under-voltage
+        case FaultCode::MOTOR_OVER_TEMP:     return 0x4310U;    // excess temperature drive (motor)
+        case FaultCode::DRIVER_OVER_TEMP:    return 0x4210U;    // excess temperature device
+        case FaultCode::SENSOR_ERROR:        return 0x7300U;    // sensor
+        case FaultCode::SENSORLESS_LOST:     return 0xFF01U;    // device specific: SMO kilidi kayıp
+    }
+    return 0xFF00U;
+}
+
+// fault değişince: eski hatayı EMCY "error reset" ile kapat, yenisini EMCY ile bildir
+static void fault_update()
+{
+    static FaultCode last_fault = FaultCode::NONE;
+    const FaultCode  f          = fault;
+
+    if (f == last_fault)
+        return;
+
+    if (CO != nullptr)
+    {
+        if (last_fault != FaultCode::NONE)
+            CO_errorReset(CO->em, EM_FAULT_BIT_BASE + static_cast<uint8_t>(last_fault), 0U);
+        if (f != FaultCode::NONE)
+            CO_errorReport(CO->em, EM_FAULT_BIT_BASE + static_cast<uint8_t>(f), cia402_error_code(f), 0U);
+    }
+
+    OD_RAM.x603F_errorCode = cia402_error_code(f);
+    last_fault             = f;
+}
 
 /* CiA 402 durum makinesi ---------------------------------------------------*/
 
@@ -192,5 +241,6 @@ void CanopenBridgeUpdate(void)
     }
     OD_RAM.x2011_command = 0;
 
+    fault_update();
     cia402_update();
 }

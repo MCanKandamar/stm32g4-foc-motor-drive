@@ -26,6 +26,8 @@ target_compile_definitions(canopen PUBLIC
     CO_USE_GLOBALS                  # CANopen nesneleri statik bellekte (heap sadece 512 B)
     CO_LOCK_BASEPRI_ENABLE=1        # kilitte tüm kesmeler değil, sadece öncelik >= 5 kapanır
     CO_LOCK_BASEPRI_PRIO_LEVEL=5    # FDCAN = 5; ADC3 (FOC, 1) ve EXTI0 (nFAULT, 0) etkilenmez
+    # 0x1001 bit 0 (generic): yığının kendi hatalarına ek olarak motor hataları (EMCY bit 0x40..0x4F) da yaksın
+    "CO_CONFIG_ERR_CONDITION_GENERIC=((em->errorStatusBits[5] != 0U) || (em->errorStatusBits[8] != 0U) || (em->errorStatusBits[9] != 0U))"
 )
 
 # main.h ve HAL başlıkları (sadece include + define, kaynak eklemez)
