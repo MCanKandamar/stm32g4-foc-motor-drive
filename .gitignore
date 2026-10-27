@@ -9,3 +9,6 @@ doc/
 
 # Kişisel Scrutiny dashboard düzeni
 cfg.scdb
+
+# Donanım testi (HIL) çıktıları
+tools/hil/logs/

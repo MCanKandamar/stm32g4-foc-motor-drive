@@ -27,6 +27,7 @@
 #include "Supervisor.h"
 #include "ux_api.h"
 #include "scrutiny.h"
+#include "canopen_app.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -43,21 +44,26 @@
 #define INIT_THREAD_STACK_SIZE          1024 * 2
 #define SUPERVISOR_THREAD_STACK_SIZE    1024 * 2
 #define MONITOR_THREAD_STACK_SIZE       1024
+#define CANOPEN_THREAD_STACK_SIZE       1024 * 2
 
 #define INIT_THREAD_PRIO          1
 #define SUPERVISOR_THREAD_PRIO    3
+#define CANOPEN_THREAD_PRIO       5
 #define MONITOR_THREAD_PRIO       8
 
 #define INIT_THREAD_PREEMPTION_THRESHOLD        1
 #define SUPERVISOR_THREAD_PREEMPTION_THRESHOLD  3
+#define CANOPEN_THREAD_PREEMPTION_THRESHOLD     5
 #define MONITOR_THREAD_PREEMPTION_THRESHOLD     8
 
 #define INIT_THREAD_TIME_SLICE            TX_NO_TIME_SLICE
 #define SUPERVISOR_THREAD_TIME_SLICE      TX_NO_TIME_SLICE
+#define CANOPEN_THREAD_TIME_SLICE         TX_NO_TIME_SLICE
 #define MONITOR_THREAD_TIME_SLICE         TX_NO_TIME_SLICE
 
 #define INIT_THREAD_START_OPTION          TX_AUTO_START
 #define SUPERVISOR_THREAD_START_OPTION    TX_DONT_START
+#define CANOPEN_THREAD_START_OPTION       TX_DONT_START
 #define MONITOR_THREAD_START_OPTION       TX_DONT_START
 
 /* USER CODE END PD */
@@ -72,10 +78,12 @@
 ULONG init_thread_stack[INIT_THREAD_STACK_SIZE / sizeof(ULONG)];
 ULONG supervisor_thread_stack[SUPERVISOR_THREAD_STACK_SIZE / sizeof(ULONG)];
 ULONG monitor_thread_stack[MONITOR_THREAD_STACK_SIZE / sizeof(ULONG)];
+ULONG canopen_thread_stack[CANOPEN_THREAD_STACK_SIZE / sizeof(ULONG)];
 
 TX_THREAD init_thread_pointer;
 TX_THREAD supervisor_thread_pointer;
 TX_THREAD monitor_thread_pointer;
+TX_THREAD canopen_thread_pointer;
 
 /* USER CODE END PV */
 
@@ -84,6 +92,7 @@ TX_THREAD monitor_thread_pointer;
 VOID init_thread_entry(ULONG init_input);
 VOID supervisor_thread_entry(ULONG init_input);
 VOID monitor_thread_entry(ULONG init_input);
+VOID canopen_thread_entry(ULONG init_input);
 /* USER CODE END PFP */
 
 /**
@@ -132,7 +141,18 @@ UINT App_ThreadX_Init(VOID *memory_ptr)
                         MONITOR_THREAD_TIME_SLICE,
                         MONITOR_THREAD_START_OPTION))   { return TX_THREAD_ERROR; }
 
-  
+  if(tx_thread_create( &canopen_thread_pointer,
+                        "CanopenThread",
+                        canopen_thread_entry,
+                        0x0,
+                        canopen_thread_stack,
+                        CANOPEN_THREAD_STACK_SIZE,
+                        CANOPEN_THREAD_PRIO,
+                        CANOPEN_THREAD_PREEMPTION_THRESHOLD,
+                        CANOPEN_THREAD_TIME_SLICE,
+                        CANOPEN_THREAD_START_OPTION))   { return TX_THREAD_ERROR; }
+
+
   /* USER CODE END App_ThreadX_Init */
 
   return ret;
@@ -164,6 +184,7 @@ VOID init_thread_entry(ULONG init_input)
     MonitorInit();
     tx_thread_resume(&supervisor_thread_pointer);
     tx_thread_resume(&monitor_thread_pointer);
+    tx_thread_resume(&canopen_thread_pointer);
 }
 
 VOID supervisor_thread_entry(ULONG init_input)
@@ -181,6 +202,16 @@ VOID monitor_thread_entry(ULONG init_input)
     {
       MonitorRun();
       tx_thread_sleep(MS_TO_TICKS(10));
+    }
+}
+
+VOID canopen_thread_entry(ULONG init_input)
+{
+    CanopenInit();
+    while (1)
+    {
+      CanopenRun();
+      tx_thread_sleep(MS_TO_TICKS(1));
     }
 }
 

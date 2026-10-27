@@ -2,20 +2,70 @@
 #include "types.hpp"
 #include "filters.hpp"
 
-void adcOffsetCalibration()
+/* Akım ofseti: güç katı kapalıyken ADC3 enjekte örneklerinin ortalaması ------*/
+
+constexpr uint16_t OFFSET_SAMPLES = 128;        // 128 / 20 kHz = 6.4 ms
+
+// Yazar: başlatma → Supervisor (busy = false iken), örnekler → ADC3 ISR (busy = true iken)
+struct OffsetAcc
 {
-    uint32_t sum[3] = {0,0,0};
-    for (int i = 0; i < 100; i++) {
-        HAL_ADC_Start(&hadc3);
-        for (int j = 0; j < 3; j++) {
-            HAL_ADC_PollForConversion(&hadc3, 10);
-            sum[j] += HAL_ADC_GetValue(&hadc3);
-        }
+    volatile uint32_t sum[3];
+    volatile uint16_t n;
+    volatile bool     busy;
+};
+static OffsetAcc offset_acc;
+
+// Sadece güç katı kapalıyken çağrılır
+void offsetCalStart()
+{
+    if (offset_acc.busy)
+        return;                                 // ölçüm zaten sürüyor
+
+    for (int i = 0; i < 3; i++)
+        offset_acc.sum[i] = 0;
+    offset_acc.n    = 0;
+    offset_acc.busy = true;                     // en son: ISR ancak bundan sonra toplar
+}
+
+bool offsetCalBusy()
+{
+    return offset_acc.busy;
+}
+
+// ADC3 ISR, her enjekte dizisinde
+void offsetCalSample()
+{
+    if (!offset_acc.busy)
+        return;
+
+    // volatile üzerinde ++ / += C++20'de kullanımdan kalktı: açık oku-yaz
+    offset_acc.sum[0] = offset_acc.sum[0] + HAL_ADCEx_InjectedGetValue(&hadc3, ADC_INJECTED_RANK_1);
+    offset_acc.sum[1] = offset_acc.sum[1] + HAL_ADCEx_InjectedGetValue(&hadc3, ADC_INJECTED_RANK_2);
+    offset_acc.sum[2] = offset_acc.sum[2] + HAL_ADCEx_InjectedGetValue(&hadc3, ADC_INJECTED_RANK_3);
+
+    const uint16_t n = offset_acc.n + 1U;
+    offset_acc.n     = n;
+    if (n >= OFFSET_SAMPLES)
+        offset_acc.busy = false;
+}
+
+// Supervisor, her 1 ms: ölçüm yeni bittiyse ofseti yaz
+void offsetCalPoll()
+{
+    static bool was_busy = false;
+
+    if (offset_acc.busy)
+    {
+        was_busy = true;
+        return;
     }
-    HAL_ADC_Stop(&hadc3);
-    for (int i = 0; i < 3; i++) {
-        adc_cal.amplifier_offset_raw[i] = sum[i] / 100;
-    } 
+    if (!was_busy)
+        return;
+
+    for (int i = 0; i < 3; i++)
+        adc_cal.amplifier_offset_raw[i] = static_cast<uint16_t>(offset_acc.sum[i] / OFFSET_SAMPLES);
+    adc_cal.offset_valid = true;
+    was_busy             = false;
 }
 
 motor_control::Iabc_t get_abc_currents()
