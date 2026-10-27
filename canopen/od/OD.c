@@ -208,9 +208,20 @@ OD_ATTR_RAM OD_RAM_t OD_RAM = {
     .x2003_faultCode = 0x00,
     .x2010_speedRefRpm = 0,
     .x2011_command = 0x00,
+    .x2012_sensorMode = 0x00,
     .x603F_errorCode = 0x0000,
     .x6040_controlword = 0x0000,
-    .x6041_statusword = 0x0000
+    .x6041_statusword = 0x0000,
+    .x6060_modesOfOperation = 3,
+    .x6061_modesOfOperationDisplay = 3,
+    .x606C_velocityActualValue = 0,
+    .x6071_targetTorque = 0,
+    .x6076_motorRatedTorque = 0x00000190,
+    .x6077_torqueActualValue = 0,
+    .x6083_profileAcceleration = 0x000003E8,
+    .x6084_profileDeceleration = 0x000003E8,
+    .x6087_torqueSlope = 0x000003E8,
+    .x60FF_targetVelocity = 0
 };
 
 
@@ -258,9 +269,20 @@ typedef struct {
     OD_obj_var_t o_2003_faultCode;
     OD_obj_var_t o_2010_speedRefRpm;
     OD_obj_var_t o_2011_command;
+    OD_obj_var_t o_2012_sensorMode;
     OD_obj_var_t o_603F_errorCode;
     OD_obj_var_t o_6040_controlword;
     OD_obj_var_t o_6041_statusword;
+    OD_obj_var_t o_6060_modesOfOperation;
+    OD_obj_var_t o_6061_modesOfOperationDisplay;
+    OD_obj_var_t o_606C_velocityActualValue;
+    OD_obj_var_t o_6071_targetTorque;
+    OD_obj_var_t o_6076_motorRatedTorque;
+    OD_obj_var_t o_6077_torqueActualValue;
+    OD_obj_var_t o_6083_profileAcceleration;
+    OD_obj_var_t o_6084_profileDeceleration;
+    OD_obj_var_t o_6087_torqueSlope;
+    OD_obj_var_t o_60FF_targetVelocity;
 } ODObjs_t;
 
 static CO_PROGMEM ODObjs_t ODObjs = {
@@ -1158,6 +1180,11 @@ static CO_PROGMEM ODObjs_t ODObjs = {
         .attribute = ODA_SDO_RW,
         .dataLength = 1
     },
+    .o_2012_sensorMode = {
+        .dataOrig = &OD_RAM.x2012_sensorMode,
+        .attribute = ODA_SDO_RW,
+        .dataLength = 1
+    },
     .o_603F_errorCode = {
         .dataOrig = &OD_RAM.x603F_errorCode,
         .attribute = ODA_SDO_R | ODA_TPDO | ODA_MB,
@@ -1172,6 +1199,56 @@ static CO_PROGMEM ODObjs_t ODObjs = {
         .dataOrig = &OD_RAM.x6041_statusword,
         .attribute = ODA_SDO_R | ODA_TPDO | ODA_MB,
         .dataLength = 2
+    },
+    .o_6060_modesOfOperation = {
+        .dataOrig = &OD_RAM.x6060_modesOfOperation,
+        .attribute = ODA_SDO_RW | ODA_RPDO,
+        .dataLength = 1
+    },
+    .o_6061_modesOfOperationDisplay = {
+        .dataOrig = &OD_RAM.x6061_modesOfOperationDisplay,
+        .attribute = ODA_SDO_R | ODA_TPDO,
+        .dataLength = 1
+    },
+    .o_606C_velocityActualValue = {
+        .dataOrig = &OD_RAM.x606C_velocityActualValue,
+        .attribute = ODA_SDO_R | ODA_TPDO | ODA_MB,
+        .dataLength = 4
+    },
+    .o_6071_targetTorque = {
+        .dataOrig = &OD_RAM.x6071_targetTorque,
+        .attribute = ODA_SDO_RW | ODA_RPDO | ODA_MB,
+        .dataLength = 2
+    },
+    .o_6076_motorRatedTorque = {
+        .dataOrig = &OD_RAM.x6076_motorRatedTorque,
+        .attribute = ODA_SDO_R | ODA_MB,
+        .dataLength = 4
+    },
+    .o_6077_torqueActualValue = {
+        .dataOrig = &OD_RAM.x6077_torqueActualValue,
+        .attribute = ODA_SDO_R | ODA_TPDO | ODA_MB,
+        .dataLength = 2
+    },
+    .o_6083_profileAcceleration = {
+        .dataOrig = &OD_RAM.x6083_profileAcceleration,
+        .attribute = ODA_SDO_RW | ODA_MB,
+        .dataLength = 4
+    },
+    .o_6084_profileDeceleration = {
+        .dataOrig = &OD_RAM.x6084_profileDeceleration,
+        .attribute = ODA_SDO_RW | ODA_MB,
+        .dataLength = 4
+    },
+    .o_6087_torqueSlope = {
+        .dataOrig = &OD_RAM.x6087_torqueSlope,
+        .attribute = ODA_SDO_RW | ODA_MB,
+        .dataLength = 4
+    },
+    .o_60FF_targetVelocity = {
+        .dataOrig = &OD_RAM.x60FF_targetVelocity,
+        .attribute = ODA_SDO_RW | ODA_RPDO | ODA_MB,
+        .dataLength = 4
     }
 };
 
@@ -1219,9 +1296,20 @@ static OD_ATTR_OD OD_entry_t ODList[] = {
     {0x2003, 0x01, ODT_VAR, &ODObjs.o_2003_faultCode, NULL},
     {0x2010, 0x01, ODT_VAR, &ODObjs.o_2010_speedRefRpm, NULL},
     {0x2011, 0x01, ODT_VAR, &ODObjs.o_2011_command, NULL},
+    {0x2012, 0x01, ODT_VAR, &ODObjs.o_2012_sensorMode, NULL},
     {0x603F, 0x01, ODT_VAR, &ODObjs.o_603F_errorCode, NULL},
     {0x6040, 0x01, ODT_VAR, &ODObjs.o_6040_controlword, NULL},
     {0x6041, 0x01, ODT_VAR, &ODObjs.o_6041_statusword, NULL},
+    {0x6060, 0x01, ODT_VAR, &ODObjs.o_6060_modesOfOperation, NULL},
+    {0x6061, 0x01, ODT_VAR, &ODObjs.o_6061_modesOfOperationDisplay, NULL},
+    {0x606C, 0x01, ODT_VAR, &ODObjs.o_606C_velocityActualValue, NULL},
+    {0x6071, 0x01, ODT_VAR, &ODObjs.o_6071_targetTorque, NULL},
+    {0x6076, 0x01, ODT_VAR, &ODObjs.o_6076_motorRatedTorque, NULL},
+    {0x6077, 0x01, ODT_VAR, &ODObjs.o_6077_torqueActualValue, NULL},
+    {0x6083, 0x01, ODT_VAR, &ODObjs.o_6083_profileAcceleration, NULL},
+    {0x6084, 0x01, ODT_VAR, &ODObjs.o_6084_profileDeceleration, NULL},
+    {0x6087, 0x01, ODT_VAR, &ODObjs.o_6087_torqueSlope, NULL},
+    {0x60FF, 0x01, ODT_VAR, &ODObjs.o_60FF_targetVelocity, NULL},
     {0x0000, 0x00, 0, NULL, NULL}
 };
 

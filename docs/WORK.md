@@ -11,15 +11,16 @@ Task: Password reset · branch: feature/reset · started: 2026-10-25
 - [x] Token table + migration — verified: `npm test` ✓
 - [ ] (in progress) Send reset e-mail
 - [ ] Reset form -->
-Task: CANopen phase 5 — modes of operation 0x6060/0x6061: Profile Velocity (pv = 3) and Profile Torque (tq = 4) · branch: feature/canopen-cia402 · started: 2026-10-27
-The user is learning CANopen: explain each step from basics with byte/frame examples first; the user decides per step who writes the code.
+Task: CANopen phase 5 — modes of operation 0x6060/0x6061: Profile Velocity (pv = 3) and Profile Torque (tq = 4) · branch: main (user 2026-10-27: work on main for now; cloud agent commits unsigned in the user's name, the user re-signs and force-pushes) · started: 2026-10-27
+The user is learning CANopen: explain each step from basics with byte/frame examples first. Cloud agent has no Arm toolchain: firmware build = CI on push.
 - [x] 1. Concept: 0x6060/0x6061, pv objects (0x60FF, 0x606C, 0x6083/0x6084), tq objects (0x6071 ‰ of 0x6076, 0x6077, 0x6087), statusword bits 10/12, units — explained 2026-10-27
-- [ ] 2. (in progress) Mapping design — approved by the user 2026-10-27: velocity in rpm; pv ↔ LoopMode::SPEED + ramp; tq ↔ LoopMode::CURRENT, iq = T / kt with kt = 0.066 Nm/A (datasheet, `motor_parameters.hpp`), 0x6076 = 400 mNm, |iq| ≤ `IQ_REF_MAX` = 5 A for now (user will revisit); 0x6060 accepted only outside Operation Enabled, else SDO abort. Still open: sensor mode as a 0x2xxx object, fate of 0x2010
-- [ ] 3. OD: new 0x60xx objects + sensor-mode object (needs approval)
-- [ ] 4. Ramp generator in `motor_control/` (hardware-free) + bridge: mode handling, targets → cmd, actuals, statusword bits 10/12
-- [ ] 5. Host checks + CI build with memory use
-- [ ] 6. HW test (user / local agent)
-- [ ] 7. WORK.md / PROJECT.md, commit
+- [x] 2. Mapping design — approved by the user 2026-10-27 (PROJECT.md › Decisions): rpm; pv ↔ SPEED + ramp; tq ↔ CURRENT, iq = T / kt; 0x6060 only outside Operation Enabled; sensor mode 0x2012 (0 = sensorless, 1 = Hall) used by pv only, tq always runs on Hall; 0x2010 kept as a direct speed reference without ramp
+- [x] 3. OD: 0x2012, 0x6060 (default 3), 0x6061, 0x606C, 0x6071, 0x6076 (400 mNm, ro), 0x6077, 0x6083/0x6084 (default 1000 rpm/s), 0x6087 (default 1000 ‰/s), 0x60FF in OD.c/h, .eds, .xdd (hand-edited in CANopenEditor format, like 318c03f) — verified: host `gcc -fsyntax-only OD.c` ✓, xdd XML parse ✓; firmware build: see step 6
+- [ ] 4. (in progress) Ramp generator in `motor_control/` (hardware-free) + host check
+- [ ] 5. Bridge: mode/sensor write guard (SDO abort), targets → ramp → cmd, actuals, statusword bits 10/12
+- [ ] 6. CI build with memory use
+- [ ] 7. HW test (user)
+- [ ] 8. WORK.md / PROJECT.md wrap-up
 
 ## Next
 <!-- CANopen roadmap (fixed list, agreed with the user 2026-10-22) -->

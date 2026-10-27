@@ -2304,6 +2304,12 @@
             <USINT />
             <q1:defaultValue value="0" />
           </q1:parameter>
+          <q1:parameter uniqueID="UID_OBJ_2012" access="readWrite">
+            <label lang="en">Sensor mode</label>
+            <description lang="en">Angle source for Profile Velocity: 0 = sensorless (SMO), 1 = Hall. Profile Torque always uses Hall. Writable only outside Operation Enabled</description>
+            <USINT />
+            <q1:defaultValue value="0" />
+          </q1:parameter>
           <q1:parameter uniqueID="UID_OBJ_603F">
             <label lang="en">Error code</label>
             <description lang="en">CiA 402 code of the last active fault, 0 = no fault</description>
@@ -2320,6 +2326,66 @@
             <label lang="en">Statusword</label>
             <description lang="en">CiA 402 statusword: bit 0 ready to switch on, bit 1 switched on, bit 2 operation enabled, bit 3 fault, bit 4 voltage enabled, bit 5 quick stop (0 = active), bit 6 switch on disabled, bit 9 remote</description>
             <UINT />
+            <q1:defaultValue value="0" />
+          </q1:parameter>
+          <q1:parameter uniqueID="UID_OBJ_6060" access="readWriteOutput">
+            <label lang="en">Modes of operation</label>
+            <description lang="en">CiA 402 mode: 3 = profile velocity, 4 = profile torque. Writable only outside Operation Enabled</description>
+            <SINT />
+            <q1:defaultValue value="3" />
+          </q1:parameter>
+          <q1:parameter uniqueID="UID_OBJ_6061">
+            <label lang="en">Modes of operation display</label>
+            <description lang="en">Active CiA 402 mode, see 0x6060</description>
+            <SINT />
+            <q1:defaultValue value="3" />
+          </q1:parameter>
+          <q1:parameter uniqueID="UID_OBJ_606C">
+            <label lang="en">Velocity actual value</label>
+            <description lang="en">Actual speed [rpm]</description>
+            <DINT />
+            <q1:defaultValue value="0" />
+          </q1:parameter>
+          <q1:parameter uniqueID="UID_OBJ_6071" access="readWriteOutput">
+            <label lang="en">Target torque</label>
+            <description lang="en">Profile torque target [per mille of 0x6076]</description>
+            <INT />
+            <q1:defaultValue value="0" />
+          </q1:parameter>
+          <q1:parameter uniqueID="UID_OBJ_6076">
+            <label lang="en">Motor rated torque</label>
+            <description lang="en">Motor rated (continuous) torque [mNm], 57BLF02 datasheet</description>
+            <UDINT />
+            <q1:defaultValue value="400" />
+          </q1:parameter>
+          <q1:parameter uniqueID="UID_OBJ_6077">
+            <label lang="en">Torque actual value</label>
+            <description lang="en">Actual torque from iq feedback [per mille of 0x6076]</description>
+            <INT />
+            <q1:defaultValue value="0" />
+          </q1:parameter>
+          <q1:parameter uniqueID="UID_OBJ_6083" access="readWrite">
+            <label lang="en">Profile acceleration</label>
+            <description lang="en">Profile velocity ramp when the speed magnitude grows [rpm/s]</description>
+            <UDINT />
+            <q1:defaultValue value="1000" />
+          </q1:parameter>
+          <q1:parameter uniqueID="UID_OBJ_6084" access="readWrite">
+            <label lang="en">Profile deceleration</label>
+            <description lang="en">Profile velocity ramp when the speed magnitude shrinks [rpm/s]</description>
+            <UDINT />
+            <q1:defaultValue value="1000" />
+          </q1:parameter>
+          <q1:parameter uniqueID="UID_OBJ_6087" access="readWrite">
+            <label lang="en">Torque slope</label>
+            <description lang="en">Profile torque ramp [per mille of 0x6076 per s]</description>
+            <UDINT />
+            <q1:defaultValue value="1000" />
+          </q1:parameter>
+          <q1:parameter uniqueID="UID_OBJ_60FF" access="readWriteOutput">
+            <label lang="en">Target velocity</label>
+            <description lang="en">Profile velocity target [rpm]</description>
+            <DINT />
             <q1:defaultValue value="0" />
           </q1:parameter>
         </q1:parameterList>
@@ -2659,9 +2725,20 @@
           <CANopenObject index="2003" name="Fault code" objectType="7" PDOmapping="TPDO" uniqueIDRef="UID_OBJ_2003" />
           <CANopenObject index="2010" name="Speed ref rpm" objectType="7" PDOmapping="RPDO" uniqueIDRef="UID_OBJ_2010" />
           <CANopenObject index="2011" name="Command" objectType="7" PDOmapping="no" uniqueIDRef="UID_OBJ_2011" />
+          <CANopenObject index="2012" name="Sensor mode" objectType="7" PDOmapping="no" uniqueIDRef="UID_OBJ_2012" />
           <CANopenObject index="603F" name="Error code" objectType="7" PDOmapping="TPDO" uniqueIDRef="UID_OBJ_603F" />
           <CANopenObject index="6040" name="Controlword" objectType="7" PDOmapping="RPDO" uniqueIDRef="UID_OBJ_6040" />
           <CANopenObject index="6041" name="Statusword" objectType="7" PDOmapping="TPDO" uniqueIDRef="UID_OBJ_6041" />
+          <CANopenObject index="6060" name="Modes of operation" objectType="7" PDOmapping="RPDO" uniqueIDRef="UID_OBJ_6060" />
+          <CANopenObject index="6061" name="Modes of operation display" objectType="7" PDOmapping="TPDO" uniqueIDRef="UID_OBJ_6061" />
+          <CANopenObject index="606C" name="Velocity actual value" objectType="7" PDOmapping="TPDO" uniqueIDRef="UID_OBJ_606C" />
+          <CANopenObject index="6071" name="Target torque" objectType="7" PDOmapping="RPDO" uniqueIDRef="UID_OBJ_6071" />
+          <CANopenObject index="6076" name="Motor rated torque" objectType="7" PDOmapping="no" uniqueIDRef="UID_OBJ_6076" />
+          <CANopenObject index="6077" name="Torque actual value" objectType="7" PDOmapping="TPDO" uniqueIDRef="UID_OBJ_6077" />
+          <CANopenObject index="6083" name="Profile acceleration" objectType="7" PDOmapping="no" uniqueIDRef="UID_OBJ_6083" />
+          <CANopenObject index="6084" name="Profile deceleration" objectType="7" PDOmapping="no" uniqueIDRef="UID_OBJ_6084" />
+          <CANopenObject index="6087" name="Torque slope" objectType="7" PDOmapping="no" uniqueIDRef="UID_OBJ_6087" />
+          <CANopenObject index="60FF" name="Target velocity" objectType="7" PDOmapping="RPDO" uniqueIDRef="UID_OBJ_60FF" />
         </q2:CANopenObjectList>
         <dummyUsage>
           <dummy entry="Dummy0001=0" />
