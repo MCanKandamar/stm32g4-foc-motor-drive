@@ -18,8 +18,8 @@ The user is learning CANopen: explain each step from basics with byte/frame exam
 - [x] 3. OD: 0x2012, 0x6060 (default 3), 0x6061, 0x606C, 0x6071, 0x6076 (400 mNm, ro), 0x6077, 0x6083/0x6084 (default 1000 rpm/s), 0x6087 (default 1000 ‰/s), 0x60FF in OD.c/h, .eds, .xdd (hand-edited in CANopenEditor format, like 318c03f) — verified: host `gcc -fsyntax-only OD.c` ✓, xdd XML parse ✓; firmware build: see step 6
 - [x] 4. Ramp generator `motor_control::Ramp` (inc/ramp.hpp, src/ramp.cpp) + `tests/test_ramp.cpp` — verified: host g++ -Wall -Wextra -Wpedantic -Wdouble-promotion -Wfloat-conversion, no warnings in ramp.cpp ✓; test_ramp 6/6 ✓ (run with a minimal gtest stand-in, real GoogleTest not available in the cloud container)
 - [x] 5. Bridge: 0x6060/0x2012 write guard (OD extension, SDO abort 0x08000022), 0x60FF/0x2010/0x6071 → ramp → cmd, 0x6061/0x606C/0x6077 actuals, statusword bits 10/12, `CanopenBridgeInit()` — verified: host `g++ -fsyntax-only -Wall -Wextra -Wdouble-promotion -Wfloat-conversion` on canopen_bridge.cpp and canopen_app.c, no warnings in project files ✓ (HAL headers need -fpermissive on 64-bit host); firmware build: step 6
-- [ ] 6. (in progress) CI build with memory use
-- [ ] 7. HW test (user)
+- [x] 6. CI build — built ✓ (CI run 26 on dc88c01, Debug + Release green, no compiler warnings in changed files; Debug flash 177.5/512 KB, RAM 66.5/128 KB)
+- [ ] 7. (in progress) HW test (user): pv Hall/sensorless ramp, tq on Hall, 0x6060/0x2012 abort in OE, 0x2010 jump — built ✓, needs HW test
 - [ ] 8. WORK.md / PROJECT.md wrap-up
 
 ## Next
