@@ -6,7 +6,9 @@ __pycache__/
 # Firmware dışı içerik (dökümanlar, kılavuzlar)
 doc/
 .claude/
-CLAUDE.md
 
 # Kişisel Scrutiny dashboard düzeni
 cfg.scdb
+
+# Donanım testi (HIL) çıktıları
+tools/hil/logs/
