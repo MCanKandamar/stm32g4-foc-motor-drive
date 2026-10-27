@@ -13,6 +13,7 @@ extern "C" void HAL_ADCEx_InjectedConvCpltCallback(ADC_HandleTypeDef *hadc)
 
     if (hadc->Instance == ADC3)
     {   
+        offsetCalSample();                      // ofset ölçümü sürüyorsa örneği topla
         meas.Iabc               = get_abc_currents();
         meas.Vabc               = get_abc_voltages();
         meas.theta_e_rad_hall   = get_motor_angle_hal();

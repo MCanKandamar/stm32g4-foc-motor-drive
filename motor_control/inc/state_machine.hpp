@@ -5,8 +5,8 @@ namespace motor_control
 {
     enum class MotorState : uint8_t
     {
+        INIT,               // açılış: cihaz hazırlığı ve akım ofseti, bitince IDLE
         IDLE,
-        ADC_OFFSET_CAL,
         ALIGN,
         OPEN_LOOP,
         CLOSED_LOOP,
@@ -16,16 +16,16 @@ namespace motor_control
 
     enum class MotorEvent : uint8_t
     {
-        START,
-        ADC_OFFSET_CAL_DONE,
+        INIT_DONE,
+        START_HALL,         // IDLE → CLOSED_LOOP
+        START_SENSORLESS,   // IDLE → ALIGN → OPEN_LOOP → CLOSED_LOOP
         ALIGNMENT_DONE,
         CLOSED_LOOP_READY,
         STOP,
         FAULT_DETECTED,
         RESET_FAULT,
         CALIBRATE,
-        CALIBRATION_DONE,
-        HALL_READY          // Hall modunda ADC ofsetten doğrudan CL'e
+        CALIBRATION_DONE
     };
 
     enum class FaultCode : uint8_t
@@ -51,7 +51,8 @@ namespace motor_control
             MotorState getState() const { return motor_state;}
 
         private:
-            volatile MotorState motor_state = MotorState::IDLE;
+            volatile MotorState motor_state = MotorState::INIT;
+            bool                init_done   = false;    // INIT bir kez bitti; fault reset'ten sonra IDLE'a dönülür
 
     };
 }

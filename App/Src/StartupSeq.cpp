@@ -41,17 +41,6 @@ static float  ol_delta;         // θ_ol − θ_smo [rad], Scrutiny'de izlemek i
 
 /* Ortak yardımcılar --------------------------------------------------------*/
 
-// Akım ofsetini ölç (Switch On'da ölçülmediyse), ADC3 enjekte kesmesini (FOC ISR) başlat
-static void start_current_sensing()
-{
-    if (!adc_cal.offset_valid)
-        adcOffsetCalibration();
-    adc_cal.offset_valid = false;               // her çalıştırma taze ofset ister
-    HAL_ADCEx_InjectedStart_IT(&hadc3);
-    __HAL_ADC_DISABLE_IT(&hadc3, ADC_IT_JEOC);
-    __HAL_ADC_ENABLE_IT(&hadc3, ADC_IT_JEOS);
-}
-
 // Gücü aç, rotoru 90°'ye çekmeye başla. Devamı align_done().
 static void start_align()
 {
@@ -82,28 +71,16 @@ static bool align_done()
 }
 
 
-/* ADC_OFFSET_CAL -----------------------------------------------------------*/
+/* START: modu sabitle, IDLE'dan hangi duruma gidileceğini seç --------------*/
 
-void enter_adc_cal()
+MotorEvent prepare_start()
 {
     run_mode = { cmd.sensor, cmd.loop };            // START anında sabitle
     if (run_mode.loop == LoopMode::OFF)
         run_mode.loop = LoopMode::SPEED;            // OFF geçersiz → SPEED
 
-    start_current_sensing();
-}
-
-void run_adc_cal()
-{
-    if (run_mode.sensor == SensorMode::HALL)
-    {
-        foc_cfg.idq_ref = {0.0f, 0.0f};             // iq = 0 ile güvenli başla
-        set_foc_mode(AngleSource::HALL, LoopMode::CURRENT);
-        powerOn();
-        motor_state_machine.event_handler(MotorEvent::HALL_READY);           // → CLOSED_LOOP
-    }
-    else
-        motor_state_machine.event_handler(MotorEvent::ADC_OFFSET_CAL_DONE);  // → ALIGN
+    return (run_mode.sensor == SensorMode::HALL) ? MotorEvent::START_HALL           // → CLOSED_LOOP
+                                                 : MotorEvent::START_SENSORLESS;    // → ALIGN
 }
 
 
@@ -179,6 +156,13 @@ void enter_closed_loop()
     const AngleSource src = (run_mode.sensor == SensorMode::HALL) ? AngleSource::HALL
                                                                   : AngleSource::SMO;
 
+    if (src == AngleSource::HALL)                   // IDLE'dan doğrudan: iq = 0 ile güvenli başla
+    {
+        foc_cfg.idq_ref = {0.0f, 0.0f};
+        set_foc_mode(AngleSource::HALL, LoopMode::CURRENT);
+        powerOn();
+    }
+
     speed_ctrl.reset(foc_cfg.idq_ref.iq_ref);   // PI, o anki iq'dan başlasın (OL'de azaltılmış, Hall'da 0)
     HAL_NVIC_DisableIRQ(ADC3_IRQn);             // ofset ve mod aynı ISR örneğine göre
     foc_cfg.angle_offset = (src == AngleSource::SMO)
@@ -228,7 +212,6 @@ void run_closed_loop()
 
 void enter_calibrating()
 {
-    start_current_sensing();
     start_align();
     cal_step = CalStep::ALIGN;
 }

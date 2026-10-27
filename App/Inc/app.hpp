@@ -116,21 +116,21 @@ struct Commands
     volatile bool  stop          = false;
     volatile bool  reset_fault   = false;
     volatile bool  calibrate     = false;   // Hall kalibrasyonu (sadece IDLE'da)
-    volatile bool  offset_cal    = false;   // akım ofsetini ölç (sadece IDLE'da, CiA 402 Switch On)
+    volatile bool  offset_cal    = false;   // akım ofsetini tazele (sadece IDLE'da, CiA 402 Switch On)
     volatile motor_control::SensorMode sensor = motor_control::SensorMode::SENSORLESS;  // START'ta sabitlenir
     volatile motor_control::LoopMode   loop   = motor_control::LoopMode::SPEED;         // START'ta sabitlenir
     volatile float speed_ref_rpm = 0.0f;    // SPEED modunda
     volatile float iq_ref        = 0.0f;    // CURRENT modunda [A]
 };
 
-// Yazar: Supervisor, sadece init ve ADC_OFFSET_CAL sırasında. ISR okur.
+// Yazar: Supervisor (init ve offsetCalPoll). ISR okur.
 struct AdcCalib
 {
     float    adc_ref_voltage         = 3.3f;
     float    volt_per_lsb            = adc_ref_voltage / ((1U << ADC_BIT) - 1U);
     float    amp_per_lsb             = volt_per_lsb / SHUNT_RES_OHM / SHUNT_AMP_GAIN;
     uint16_t amplifier_offset_raw[3] = {2048, 2048, 2048};
-    bool     offset_valid            = false;   // ofset ölçüldü, sonraki START kullanır
+    bool     offset_valid            = false;   // en az bir ofset ölçümü bitti (INIT bunu bekler)
 };
 
 // Yazar: DMA (ADC4, ADC5).
@@ -168,7 +168,10 @@ void    DRV_ENABLE_SET();
 void    DRV_ENABLE_RESET();
 void    powerOn();
 void    powerOff();
-void    adcOffsetCalibration();
+void    offsetCalStart();
+bool    offsetCalBusy();
+void    offsetCalSample();
+void    offsetCalPoll();
 void    update_duties(motor_control::duties_t duties);
 motor_control::Iabc_t get_abc_currents();
 motor_control::Vabc_t get_abc_voltages();

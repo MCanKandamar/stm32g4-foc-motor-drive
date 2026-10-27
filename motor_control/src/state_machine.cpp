@@ -11,16 +11,28 @@ namespace motor_control
             motor_state = MotorState::FAULT;
         }
 
-        if (event == MotorEvent::STOP && motor_state != MotorState::FAULT)
+        // INIT yarıda kalmasın: STOP orada geçersiz
+        if (event == MotorEvent::STOP && motor_state != MotorState::FAULT
+                                      && motor_state != MotorState::INIT)
         {
             motor_state = MotorState::IDLE;
         }
 
         switch (motor_state)
         {
+            case motor_control::MotorState::INIT:
+                if (event == MotorEvent::INIT_DONE)
+                {
+                    init_done   = true;
+                    motor_state = MotorState::IDLE;
+                }
+                break;
+
             case motor_control::MotorState::IDLE:
-                if (event == MotorEvent::START)
-                    motor_state = MotorState::ADC_OFFSET_CAL;
+                if (event == MotorEvent::START_HALL)
+                    motor_state = MotorState::CLOSED_LOOP;
+                else if (event == MotorEvent::START_SENSORLESS)
+                    motor_state = MotorState::ALIGN;
                 else if (event == MotorEvent::CALIBRATE)
                     motor_state = MotorState::CALIBRATING;
                 break;
@@ -30,13 +42,6 @@ namespace motor_control
                     motor_state = MotorState::IDLE;
                 break;
 
-            case motor_control::MotorState::ADC_OFFSET_CAL:
-                if (event == MotorEvent::ADC_OFFSET_CAL_DONE)
-                    motor_state = MotorState::ALIGN;
-                else if (event == MotorEvent::HALL_READY)
-                    motor_state = MotorState::CLOSED_LOOP;
-                break;
-            
             case motor_control::MotorState::ALIGN:
                 if (event == MotorEvent::ALIGNMENT_DONE)
                     motor_state = MotorState::OPEN_LOOP;
@@ -53,8 +58,8 @@ namespace motor_control
                 break;
 
             case motor_control::MotorState::FAULT:
-                if (event == MotorEvent::RESET_FAULT)
-                    motor_state = MotorState::IDLE;
+                if (event == MotorEvent::RESET_FAULT)       // init bitmediyse baştan
+                    motor_state = init_done ? MotorState::IDLE : MotorState::INIT;
                 break;
         }
     }
