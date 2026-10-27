@@ -1,5 +1,6 @@
 #include "canopen_bridge.h"
 #include "app.hpp"
+#include "ramp.hpp"
 
 extern "C" {
 #include "CANopen.h"
@@ -86,6 +87,134 @@ static Cia402State cia_state = Cia402State::NOT_READY_TO_SWITCH_ON;
 static bool        run_seen  = false;     // OE'de motorun IDLE'dan çıktığı görüldü
 static bool        last_fault_reset_bit = false;
 
+
+/* Modes of operation (0x6060): profile velocity ve profile torque ----------*/
+
+static constexpr int8_t  MODE_PV          = 3;        // profile velocity → LoopMode::SPEED
+static constexpr int8_t  MODE_TQ          = 4;        // profile torque   → LoopMode::CURRENT, her zaman Hall
+static constexpr uint8_t SENSOR_MODE_HALL = 1U;       // 0x2012: 0 = sensörsüz, 1 = Hall (sadece pv)
+
+static constexpr float   BRIDGE_DT        = 0.001f;   // CanopenBridgeUpdate periyodu [s]
+static constexpr float   VEL_WINDOW_RPM   = 30.0f;    // pv bit 10: |gerçek − hedef| bunun altında
+static constexpr float   VEL_ZERO_RPM     = 10.0f;    // pv bit 12: hız sıfır sayılır
+
+static Ramp  vel_ramp;                  // [rpm]
+static Ramp  trq_ramp;                  // [‰ of 0x6076]
+static float vel_target = 0.0f;         // sınırlanmış 0x60FF [rpm]
+static float trq_target = 0.0f;         // sınırlanmış 0x6071 [‰]
+
+// ‰ (0x6076'ya göre) ↔ iq [A]: T = iq · kt. 1000 ‰ = 400 mNm = 6.06 A
+static float permille_per_amp()
+{
+    const float rated_nm = static_cast<float>(OD_RAM.x6076_motorRatedTorque) / 1000.0f;
+    return BLF02.torque_constant / rated_nm * 1000.0f;
+}
+
+// 0x6060 ve 0x2012 yazma kontrolü (SDO ve RPDO). Mod START'ta sabitlenir;
+// Operation Enabled'da farklı değer yazmak SDO abort 0x08000022 verir.
+static ODR_t write_mode_guard(OD_stream_t* stream, const void* buf, OD_size_t count, OD_size_t* countWritten)
+{
+    if (count != 1U)
+        return ODR_TYPE_MISMATCH;
+
+    const uint8_t raw = *static_cast<const uint8_t*>(buf);
+    uint8_t       now = 0U;
+
+    if (stream->index == 0x6060U)
+    {
+        const int8_t mode = static_cast<int8_t>(raw);
+        if (mode != MODE_PV && mode != MODE_TQ)
+            return ODR_INVALID_VALUE;
+        now = static_cast<uint8_t>(OD_RAM.x6060_modesOfOperation);
+    }
+    else
+    {
+        if (raw > SENSOR_MODE_HALL)
+            return ODR_INVALID_VALUE;
+        now = OD_RAM.x2012_sensorMode;
+    }
+
+    if (cia_state == Cia402State::OPERATION_ENABLED && raw != now)
+        return ODR_DATA_DEV_STATE;
+
+    return OD_writeOriginal(stream, buf, count, countWritten);
+}
+
+static OD_extension_t mode_guard_ext;          // CanopenBridgeInit doldurur
+
+// Hedef → rampa → cmd. Sadece Operation Enabled'da; dışında rampalar ve ref'ler 0.
+static void profile_update(float speed_rpm, MotorState ms)
+{
+    // 0x2010: rampasız hız ref'i. Yazılınca rampa o değere atlar, 0x60FF de aynı değeri alır
+    // (rampa geri çekmesin). 0x2010 ve 0x60FF'ten son yazılan geçerli.
+    static int32_t last_speed_ref = 0;
+
+    if (OD_RAM.x2010_speedRefRpm != last_speed_ref)
+    {
+        last_speed_ref              = OD_RAM.x2010_speedRefRpm;
+        OD_RAM.x60FF_targetVelocity = last_speed_ref;
+        vel_ramp.reset(std::clamp(static_cast<float>(last_speed_ref), -SPEED_REF_MAX_RPM, SPEED_REF_MAX_RPM));
+    }
+
+    vel_target = std::clamp(static_cast<float>(OD_RAM.x60FF_targetVelocity), -SPEED_REF_MAX_RPM, SPEED_REF_MAX_RPM);
+
+    const float trq_max = IQ_REF_MAX * permille_per_amp();     // 5 A ≈ ‰825
+    trq_target = std::clamp(static_cast<float>(OD_RAM.x6071_targetTorque), -trq_max, trq_max);
+
+    if (cia_state != Cia402State::OPERATION_ENABLED)
+    {
+        vel_ramp.reset();
+        trq_ramp.reset();
+        return;
+    }
+
+    if (OD_RAM.x6060_modesOfOperation == MODE_TQ)
+    {
+        if (ms != MotorState::CLOSED_LOOP)
+            trq_ramp.reset();                   // kalkış bitene kadar 0'da bekle
+        else
+        {
+            const float slope = std::max(static_cast<float>(OD_RAM.x6087_torqueSlope), 1.0f);
+            trq_ramp.update(trq_target, slope, slope, BRIDGE_DT);
+        }
+        cmd.iq_ref = trq_ramp.get_output() / permille_per_amp();
+    }
+    else
+    {
+        if (ms != MotorState::CLOSED_LOOP)
+            vel_ramp.reset(speed_rpm);          // sensörsüz kalkışta (ALIGN, OL) rampa gerçek hızdan başlasın
+        else
+        {
+            const float acc = std::max(static_cast<float>(OD_RAM.x6083_profileAcceleration), 1.0f);
+            const float dec = std::max(static_cast<float>(OD_RAM.x6084_profileDeceleration), 1.0f);
+            vel_ramp.update(vel_target, acc, dec, BRIDGE_DT);
+        }
+        cmd.speed_ref_rpm = vel_ramp.get_output();
+    }
+}
+
+// Statusword'ün moda bağlı bitleri (sadece Operation Enabled'da)
+static uint16_t profile_status_bits()
+{
+    uint16_t sw = 0U;
+
+    if (OD_RAM.x6060_modesOfOperation == MODE_TQ)
+    {
+        if (trq_ramp.get_output() == trq_target)
+            sw |= 0x0400U;                      // bit 10: target reached
+    }
+    else
+    {
+        const float actual = static_cast<float>(OD_RAM.x606C_velocityActualValue);
+
+        if (vel_ramp.get_output() == vel_target && std::fabs(actual - vel_target) <= VEL_WINDOW_RPM)
+            sw |= 0x0400U;                      // bit 10: target reached
+        if (std::fabs(actual) <= VEL_ZERO_RPM)
+            sw |= 0x1000U;                      // bit 12: speed = 0
+    }
+    return sw;
+}
+
 // CiA 402 komut tablosu: bit 7 3 2 1 0, x = bakılmaz
 static Cia402Cmd decode_controlword(uint16_t cw)
 {
@@ -97,10 +226,25 @@ static Cia402Cmd decode_controlword(uint16_t cw)
     return Cia402Cmd::NONE;
 }
 
+// Modu START'tan önce cmd'ye yaz; Supervisor START'ta sabitler.
 static void enter_operation_enabled()
 {
     cia_state = Cia402State::OPERATION_ENABLED;
     run_seen  = false;
+
+    if (OD_RAM.x6060_modesOfOperation == MODE_TQ)
+    {
+        cmd.iq_ref = 0.0f;
+        cmd.loop   = LoopMode::CURRENT;
+        cmd.sensor = SensorMode::HALL;          // tork kontrolü sensörsüz olmaz
+    }
+    else
+    {
+        cmd.speed_ref_rpm = 0.0f;
+        cmd.loop          = LoopMode::SPEED;
+        cmd.sensor        = (OD_RAM.x2012_sensorMode == SENSOR_MODE_HALL) ? SensorMode::HALL
+                                                                          : SensorMode::SENSORLESS;
+    }
     cmd.start = true;
 }
 
@@ -218,8 +362,19 @@ static void cia402_update()
     if (status.Vdc > VDC_MIN && status.Vdc < VDC_MAX)
         sw |= 0x0010U;                      // bit 4: voltage enabled
     sw |= 0x0200U;                          // bit 9: remote, controlword dinleniyor
+    if (cia_state == Cia402State::OPERATION_ENABLED)
+        sw |= profile_status_bits();        // bit 10, 12
 
     OD_RAM.x6041_statusword = sw;
+}
+
+
+void CanopenBridgeInit(void)
+{
+    mode_guard_ext.read  = OD_readOriginal;
+    mode_guard_ext.write = write_mode_guard;
+    OD_extension_init(OD_ENTRY_H6060, &mode_guard_ext);
+    OD_extension_init(OD_ENTRY_H2012, &mode_guard_ext);
 }
 
 
@@ -234,14 +389,12 @@ void CanopenBridgeUpdate(void)
     OD_RAM.x2002_motorState  = static_cast<uint8_t>(motor_state_machine.getState());
     OD_RAM.x2003_faultCode   = static_cast<uint8_t>(fault);
 
-    // speed ref: OD → cmd
-    static int32_t last_speed_ref = 0;
+    OD_RAM.x6061_modesOfOperationDisplay = OD_RAM.x6060_modesOfOperation;      // OE'de değişmez
+    OD_RAM.x606C_velocityActualValue     = static_cast<int32_t>(lroundf(speed_rpm));
+    OD_RAM.x6077_torqueActualValue       = static_cast<int16_t>(lroundf(status.idq_fdb.iq_fdb * permille_per_amp()));
 
-    if (OD_RAM.x2010_speedRefRpm != last_speed_ref)
-    {
-        last_speed_ref     = OD_RAM.x2010_speedRefRpm;
-        cmd.speed_ref_rpm  = static_cast<float>(last_speed_ref);
-    }
+    // hedefler (0x60FF / 0x2010 / 0x6071): OD → rampa → cmd
+    profile_update(speed_rpm, motor_state_machine.getState());
 
     // command: OD → cmd. Start ve fault reset sadece CiA 402 controlword'den.
     switch (OD_RAM.x2011_command)

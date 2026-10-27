@@ -18,6 +18,7 @@ void CanopenInit(void)
     co_node.baudrate       = CO_BAUDRATE;
 
     canopen_app_init(&co_node);
+    CanopenBridgeInit();
 }
 
 void CanopenRun(void)
