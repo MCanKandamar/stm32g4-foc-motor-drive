@@ -13,8 +13,8 @@ Task: Password reset · branch: feature/reset · started: 2026-10-25
 - [ ] Reset form -->
 Task: CANopen phase 5 — modes of operation 0x6060/0x6061: Profile Velocity (pv = 3) and Profile Torque (tq = 4) · branch: feature/canopen-cia402 · started: 2026-10-27
 The user is learning CANopen: explain each step from basics with byte/frame examples first; the user decides per step who writes the code.
-- [ ] 1. (in progress) Concept: 0x6060/0x6061, pv objects (0x60FF target velocity, 0x606C velocity actual, 0x6083/0x6084 profile accel/decel), tq objects (0x6071 target torque in ‰ of 0x6076 rated torque, 0x6077 torque actual, 0x6087 torque slope), statusword bit 10 target reached / bit 12 speed (pv), units
-- [ ] 2. Mapping design (needs approval): units (rpm vs inc/s), pv ↔ LoopMode::SPEED + ramp, tq ↔ LoopMode::CURRENT with iq = T / kt (kt ≈ 0.036 Nm/A), when 0x6060 may change (not in Operation Enabled), sensor mode as a 0x2xxx object, fate of 0x2010
+- [x] 1. Concept: 0x6060/0x6061, pv objects (0x60FF, 0x606C, 0x6083/0x6084), tq objects (0x6071 ‰ of 0x6076, 0x6077, 0x6087), statusword bits 10/12, units — explained 2026-10-27
+- [ ] 2. (in progress) Mapping design — approved by the user 2026-10-27: velocity in rpm; pv ↔ LoopMode::SPEED + ramp; tq ↔ LoopMode::CURRENT, iq = T / kt with kt = 0.066 Nm/A (datasheet, `motor_parameters.hpp`), 0x6076 = 400 mNm, |iq| ≤ `IQ_REF_MAX` = 5 A for now (user will revisit); 0x6060 accepted only outside Operation Enabled, else SDO abort. Still open: sensor mode as a 0x2xxx object, fate of 0x2010
 - [ ] 3. OD: new 0x60xx objects + sensor-mode object (needs approval)
 - [ ] 4. Ramp generator in `motor_control/` (hardware-free) + bridge: mode handling, targets → cmd, actuals, statusword bits 10/12
 - [ ] 5. Host checks + CI build with memory use
