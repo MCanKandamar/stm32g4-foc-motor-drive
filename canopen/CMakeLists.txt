@@ -28,6 +28,9 @@ target_compile_definitions(canopen PUBLIC
     CO_LOCK_BASEPRI_PRIO_LEVEL=5    # FDCAN = 5; ADC3 (FOC, 1) ve EXTI0 (nFAULT, 0) etkilenmez
     # 0x1001 bit 0 (generic): yığının kendi hatalarına ek olarak motor hataları (EMCY bit 0x40..0x4F) da yaksın
     "CO_CONFIG_ERR_CONDITION_GENERIC=((em->errorStatusBits[5] != 0U) || (em->errorStatusBits[8] != 0U) || (em->errorStatusBits[9] != 0U))"
+    # NMT'yi sadece haberleşme hatası pre-operational'a alsın; motor hatası (generic bit) CiA 402 Fault ile bildirilir,
+    # TPDO'lar durmasın. Port'taki varsayılan GENERIC'i de içeriyordu (CO_app_STM32.c, #ifndef NMT_CONTROL).
+    "NMT_CONTROL=(CO_NMT_STARTUP_TO_OPERATIONAL | CO_NMT_ERR_ON_ERR_REG | CO_ERR_REG_COMMUNICATION)"
 )
 
 # main.h ve HAL başlıkları (sadece include + define, kaynak eklemez)
