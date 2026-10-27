@@ -59,13 +59,14 @@ static void fault_update()
 
 /* CiA 402 durum makinesi ---------------------------------------------------*/
 
-// "Not Ready to Switch On" ve "Fault Reaction Active" yok: ikisi de bizde anlık.
+// "Fault Reaction Active" yok: bizde anlık (güç hemen kesilir).
 enum class Cia402State : uint8_t
 {
+    NOT_READY_TO_SWITCH_ON, // MotorState::INIT: cihaz hazırlanıyor, controlword dinlenmez
     SWITCH_ON_DISABLED,
     READY_TO_SWITCH_ON,
     SWITCHED_ON,            // IDLE + akım ofseti ölçülmüş, güç katı kapalı
-    OPERATION_ENABLED,      // motor çalışıyor (ADC_OFFSET_CAL … CLOSED_LOOP)
+    OPERATION_ENABLED,      // motor çalışıyor (ALIGN … CLOSED_LOOP)
     QUICK_STOP_ACTIVE,
     FAULT
 };
@@ -81,7 +82,7 @@ enum class Cia402Cmd : uint8_t
     QUICK_STOP              // 0x02
 };
 
-static Cia402State cia_state = Cia402State::SWITCH_ON_DISABLED;
+static Cia402State cia_state = Cia402State::NOT_READY_TO_SWITCH_ON;
 static bool        run_seen  = false;     // OE'de motorun IDLE'dan çıktığı görüldü
 static bool        last_fault_reset_bit = false;
 
@@ -121,9 +122,13 @@ static void cia402_update()
     {
         cia_state = Cia402State::FAULT;
     }
-    else if (cia_state == Cia402State::FAULT)
+    else if (ms == MotorState::INIT)
     {
-        cia_state = Cia402State::SWITCH_ON_DISABLED;    // fault reset tamamlandı
+        cia_state = Cia402State::NOT_READY_TO_SWITCH_ON;
+    }
+    else if (cia_state == Cia402State::FAULT || cia_state == Cia402State::NOT_READY_TO_SWITCH_ON)
+    {
+        cia_state = Cia402State::SWITCH_ON_DISABLED;    // fault reset ya da INIT tamamlandı
     }
     else if (cia_state == Cia402State::OPERATION_ENABLED)
     {
@@ -147,6 +152,9 @@ static void cia402_update()
     // 3) Geçişler
     switch (cia_state)
     {
+        case Cia402State::NOT_READY_TO_SWITCH_ON:
+            break;                          // INIT bitene kadar komut yok
+
         case Cia402State::SWITCH_ON_DISABLED:
             if (c == Cia402Cmd::SHUTDOWN)
                 cia_state = Cia402State::READY_TO_SWITCH_ON;
@@ -197,6 +205,9 @@ static void cia402_update()
     uint16_t sw = 0U;
     switch (cia_state)
     {
+        case Cia402State::NOT_READY_TO_SWITCH_ON:
+            OD_RAM.x6041_statusword = 0x0000U;      // standart: hazır değil, ek bit yok
+            return;
         case Cia402State::SWITCH_ON_DISABLED: sw = 0x0040U; break;
         case Cia402State::READY_TO_SWITCH_ON: sw = 0x0021U; break;
         case Cia402State::SWITCHED_ON:        sw = 0x0023U; break;
