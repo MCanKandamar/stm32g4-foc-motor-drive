@@ -1,0 +1,47 @@
+VERSION ""
+
+NS_ :
+
+BS_:
+
+BU_: Master Drive
+
+BO_ 128 SYNC: 0 Master
+
+BO_ 525 RPDO1_ControlVelocity: 6 Master
+ SG_ Controlword : 0|16@1+ (1,0) [0|65535] "" Drive
+ SG_ TargetVelocity : 16|32@1- (1,0) [-2147483648|2147483647] "rpm" Drive
+
+BO_ 781 RPDO2_ControlTorque: 4 Master
+ SG_ Controlword : 0|16@1+ (1,0) [0|65535] "" Drive
+ SG_ TargetTorque : 16|16@1- (1,0) [-32768|32767] "permille" Drive
+
+BO_ 397 TPDO1_StatusVelocity: 6 Drive
+ SG_ Statusword : 0|16@1+ (1,0) [0|65535] "" Master
+ SG_ VelocityActual : 16|32@1- (1,0) [-2147483648|2147483647] "rpm" Master
+
+BO_ 653 TPDO2_StatusTorque: 5 Drive
+ SG_ Statusword : 0|16@1+ (1,0) [0|65535] "" Master
+ SG_ TorqueActual : 16|16@1- (1,0) [-32768|32767] "permille" Master
+ SG_ ModeDisplay : 32|8@1- (1,0) [-128|127] "" Master
+
+BO_ 141 EMCY: 8 Drive
+ SG_ ErrorCode : 0|16@1+ (1,0) [0|65535] "" Master
+ SG_ ErrorRegister : 16|8@1+ (1,0) [0|255] "" Master
+
+BO_ 1805 Heartbeat: 1 Drive
+ SG_ NMTState : 0|8@1+ (1,0) [0|127] "" Master
+
+CM_ "CANopen node 13 (BLDC drive). PDO mapping: canopen/od/bldc_drive.eds (0x1600-0x1601, 0x1A00-0x1A01).";
+CM_ BO_ 128 "SYNC from the master; TPDOs follow it only when 0x1800/0x1801 sub 2 is 1..240.";
+CM_ SG_ 525 Controlword "0x6040";
+CM_ SG_ 525 TargetVelocity "0x60FF, profile velocity (mode 3)";
+CM_ SG_ 781 TargetTorque "0x6071, permille of 0x6076 rated torque (mode 4)";
+CM_ SG_ 397 Statusword "0x6041";
+CM_ SG_ 397 VelocityActual "0x606C";
+CM_ SG_ 653 TorqueActual "0x6077";
+CM_ SG_ 653 ModeDisplay "0x6061";
+CM_ SG_ 141 ErrorCode "0x603F / CiA 402 error code";
+
+VAL_ 653 ModeDisplay 3 "Profile velocity" 4 "Profile torque" ;
+VAL_ 1805 NMTState 0 "Boot-up" 4 "Stopped" 5 "Operational" 127 "Pre-operational" ;

@@ -47,13 +47,13 @@ OD_ATTR_PERSIST_COMM OD_PERSIST_COMM_t OD_PERSIST_COMM = {
     },
     .x1400_RPDOCommunicationParameter = {
         .highestSub_indexSupported = 0x05,
-        .COB_IDUsedByRPDO = 0x80000200,
+        .COB_IDUsedByRPDO = 0x00000200,
         .transmissionType = 0xFE,
         .eventTimer = 0x0000
     },
     .x1401_RPDOCommunicationParameter = {
         .highestSub_indexSupported = 0x05,
-        .COB_IDUsedByRPDO = 0x80000300,
+        .COB_IDUsedByRPDO = 0x00000300,
         .transmissionType = 0xFE,
         .eventTimer = 0x0000
     },
@@ -70,9 +70,9 @@ OD_ATTR_PERSIST_COMM OD_PERSIST_COMM_t OD_PERSIST_COMM = {
         .eventTimer = 0x0000
     },
     .x1600_RPDOMappingParameter = {
-        .numberOfMappedApplicationObjectsInPDO = 0x00,
-        .applicationObject1 = 0x00000000,
-        .applicationObject2 = 0x00000000,
+        .numberOfMappedApplicationObjectsInPDO = 0x02,
+        .applicationObject1 = 0x60400010,
+        .applicationObject2 = 0x60FF0020,
         .applicationObject3 = 0x00000000,
         .applicationObject4 = 0x00000000,
         .applicationObject5 = 0x00000000,
@@ -81,9 +81,9 @@ OD_ATTR_PERSIST_COMM OD_PERSIST_COMM_t OD_PERSIST_COMM = {
         .applicationObject8 = 0x00000000
     },
     .x1601_RPDOMappingParameter = {
-        .numberOfMappedApplicationObjectsInPDO = 0x00,
-        .applicationObject1 = 0x00000000,
-        .applicationObject2 = 0x00000000,
+        .numberOfMappedApplicationObjectsInPDO = 0x02,
+        .applicationObject1 = 0x60400010,
+        .applicationObject2 = 0x60710010,
         .applicationObject3 = 0x00000000,
         .applicationObject4 = 0x00000000,
         .applicationObject5 = 0x00000000,
@@ -115,18 +115,18 @@ OD_ATTR_PERSIST_COMM OD_PERSIST_COMM_t OD_PERSIST_COMM = {
     },
     .x1800_TPDOCommunicationParameter = {
         .highestSub_indexSupported = 0x06,
-        .COB_IDUsedByTPDO = 0xC0000180,
+        .COB_IDUsedByTPDO = 0x40000180,
         .transmissionType = 0xFE,
         .inhibitTime = 0x0000,
-        .eventTimer = 0x0000,
+        .eventTimer = 0x0064,
         .SYNCStartValue = 0x00
     },
     .x1801_TPDOCommunicationParameter = {
         .highestSub_indexSupported = 0x06,
-        .COB_IDUsedByTPDO = 0xC0000280,
+        .COB_IDUsedByTPDO = 0x40000280,
         .transmissionType = 0xFE,
         .inhibitTime = 0x0000,
-        .eventTimer = 0x0000,
+        .eventTimer = 0x0064,
         .SYNCStartValue = 0x00
     },
     .x1802_TPDOCommunicationParameter = {
@@ -146,9 +146,9 @@ OD_ATTR_PERSIST_COMM OD_PERSIST_COMM_t OD_PERSIST_COMM = {
         .SYNCStartValue = 0x00
     },
     .x1A00_TPDOMappingParameter = {
-        .numberOfMappedApplicationObjectsInPDO = 0x00,
-        .applicationObject1 = 0x00000000,
-        .applicationObject2 = 0x00000000,
+        .numberOfMappedApplicationObjectsInPDO = 0x02,
+        .applicationObject1 = 0x60410010,
+        .applicationObject2 = 0x606C0020,
         .applicationObject3 = 0x00000000,
         .applicationObject4 = 0x00000000,
         .applicationObject5 = 0x00000000,
@@ -157,10 +157,10 @@ OD_ATTR_PERSIST_COMM OD_PERSIST_COMM_t OD_PERSIST_COMM = {
         .applicationObject8 = 0x00000000
     },
     .x1A01_TPDOMappingParameter = {
-        .numberOfMappedApplicationObjectsInPDO = 0x00,
-        .applicationObject1 = 0x00000000,
-        .applicationObject2 = 0x00000000,
-        .applicationObject3 = 0x00000000,
+        .numberOfMappedApplicationObjectsInPDO = 0x03,
+        .applicationObject1 = 0x60410010,
+        .applicationObject2 = 0x60770010,
+        .applicationObject3 = 0x60610008,
         .applicationObject4 = 0x00000000,
         .applicationObject5 = 0x00000000,
         .applicationObject6 = 0x00000000,
