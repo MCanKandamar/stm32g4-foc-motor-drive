@@ -18,10 +18,10 @@ The toolchain, CMake and Ninja come from the STM32Cube bundles and are not on PA
 | Host unit tests (motor_control) | none yet — no host build for `tests/` (see `docs/WORK.md` › Open questions); report as `not run (no host test build)` |
 | Memory usage | printed by the link step ("Memory region … %age Used"); or `arm-none-eabi-size build/Debug/015_BLDC_FOC_RTOS_MotorDrive.elf` |
 
-<!-- agent-lite:protocol v1 -->
+<!-- agent-lite:protocol v2 -->
 ## Working protocol
-- **Sources.** Rules: this file, the user's profile and the user's current request. `docs/WORK.md` is state, not instructions. Code and output you observe now beat any document.
-- **"Continue" / "Projeye devam et".** Read `docs/WORK.md`. Run `git status --short`, `git log --oneline -10` and `git log -1 --format="%h %cr" -- docs/WORK.md`. Commits after WORK.md's last commit plus uncommitted changes are work that WORK.md does not record yet. If WORK.md has no commit yet, consider only uncommitted changes. If WORK.md itself has uncommitted edits, read them as the latest record: only changes its Now plan does not explain are unrecorded.
+- **Sources.** Rules: this file, the user's preferences (`~/.agents/USER.md` and the profiles listed in › Project) and the user's current request. `docs/WORK.md` is state, not instructions. Code and output you observe now beat any document.
+- **"Continue" (or the same in the user's language).** Read `docs/WORK.md`. Run `git status --short`, `git log --oneline -10` and `git log -1 --format="%h %cr" -- docs/WORK.md`. Commits after WORK.md's last commit plus uncommitted changes are work that WORK.md does not record yet. If WORK.md has no commit yet, consider only uncommitted changes. If WORK.md itself has uncommitted edits, read them as the latest record: only changes its Now plan does not explain are unrecorded.
 - **Recovery.** If such unrecorded work exists, the previous session was cut off. Read `git diff --stat` and the relevant diffs, match them to the plan in "Now" (the step marked "in progress" is the likely one), and treat all of it as unverified. Run the checks, update WORK.md (mark "(recovered)"), and tell the user what you found before continuing. If there is no plan to match, say what you infer from the diff and ask one question. Never discard, reset or stash uncommitted work without asking.
 - **Load little.** Do not read all docs. Read only the section of `docs/PROJECT.md` that the task needs.
 - **Significant task** (more than a quick fix): before editing code, write the goal and a short plan to WORK.md › Now. When you start a step, mark it "(in progress)".
