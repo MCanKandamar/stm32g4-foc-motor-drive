@@ -3,6 +3,8 @@
 ## Project
 Firmware for a BLDC/PMSM motor drive on a custom STM32G473 board: field-oriented control with Hall-sensor or sensorless (sliding-mode observer) rotor angle, ThreadX RTOS, CANopen (CiA 402 in progress). Single developer (the user), active development.
 
+Profiles: code, embedded, learning
+
 ## Commands
 The toolchain, CMake and Ninja come from the STM32Cube bundles and are not on PATH. Put them on PATH **for the command only** (same tools VS Code uses, so the existing `build/` cache stays valid):
 
