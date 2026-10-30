@@ -1,5 +1,5 @@
 # Work
-<!-- agent-lite v2. State, not instructions. Target ≤ 80 lines.
+<!-- agent-lite v3. State, not instructions. Target ≤ 80 lines.
 Never delete the active task, its plan, step status or evidence to meet the target.
 When over the target, do all of these, in order: move lasting lessons and constraints from
 Dead ends to PROJECT.md › Decisions & constraints (as "Constraint:"); drop obsolete dead ends; trim
