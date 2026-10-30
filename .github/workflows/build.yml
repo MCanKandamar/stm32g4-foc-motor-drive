@@ -41,3 +41,22 @@ jobs:
             build/${{ matrix.preset }}/015_BLDC_FOC_RTOS_MotorDrive.elf
             build/${{ matrix.preset }}/015_BLDC_FOC_RTOS_MotorDrive.map
           retention-days: 14
+
+  host-tests:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+
+      - name: Install Ninja
+        run: sudo apt-get update && sudo apt-get install -y ninja-build
+
+      - name: Configure
+        run: cmake --preset HostTests
+
+      - name: Build
+        run: cmake --build --preset HostTests
+
+      - name: Run unit tests
+        run: ctest --preset HostTests
