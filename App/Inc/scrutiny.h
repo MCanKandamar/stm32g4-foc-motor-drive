@@ -5,7 +5,6 @@ extern "C" {
 
 
 void ScrutinyInit(void);
-void ScrutinyRxRun(void);
 void ScrutinyRun(void);
 void ScrutinyFocTick(void);
 

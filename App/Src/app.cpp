@@ -3,7 +3,8 @@
 #include "observer.hpp"
 #include "pi_controller.hpp"
 #include "pll.hpp"
-#include "tx_api.h"
+#include "FreeRTOS.h"
+#include "task.h"
 #include "types.hpp"
 
 namespace
@@ -115,7 +116,7 @@ void powerOn()
     foc.reset();
     HAL_NVIC_DisableIRQ(EXTI0_IRQn);  
     DRV_ENABLE_SET();
-    tx_thread_sleep(2);  
+    vTaskDelay(pdMS_TO_TICKS(2));
     __HAL_GPIO_EXTI_CLEAR_IT(FAULT_N_Pin);
     HAL_NVIC_ClearPendingIRQ(EXTI0_IRQn);
     HAL_NVIC_EnableIRQ(EXTI0_IRQn);

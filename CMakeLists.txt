@@ -58,6 +58,9 @@ add_subdirectory(motor_control)
 # CANopen stack (CANopenNode + STM32 FDCAN driver + Object Dictionary)
 add_subdirectory(canopen)
 
+# USB device stack (TinyUSB, CDC class for Scrutiny)
+add_subdirectory(tinyusb)
+
 # Scrutiny debugger: scrutiny_build_config.hpp is made from the .in template with these values
 set(SCRUTINY_ENABLE_DATALOGGING           ON)
 set(SCRUTINY_SUPPORT_64BITS               ON)
@@ -89,6 +92,7 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     App/Src/Monitor.cpp
     App/Src/canopen_app.c
     App/Src/canopen_bridge.cpp
+    App/Src/usb_descriptors.c
 )
 
 # Add include paths
@@ -113,6 +117,7 @@ target_link_libraries(${CMAKE_PROJECT_NAME}
     motor_control
     scrutiny-embedded
     canopen
+    tinyusb
 )
 
 # Scrutiny post-build: .sfd (variable map) + <project>_tagged.elf with the firmware ID inside

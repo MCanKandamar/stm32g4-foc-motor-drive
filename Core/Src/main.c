@@ -17,8 +17,8 @@
   */
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
-#include "app_threadx.h"
 #include "main.h"
+#include "cmsis_os.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
@@ -59,6 +59,9 @@ TIM_HandleTypeDef htim8;
 
 PCD_HandleTypeDef hpcd_USB_FS;
 
+osThreadId initTaskHandle;
+uint32_t initTaskBuffer[ 512 ];
+osStaticThreadDef_t initTaskControlBlock;
 /* USER CODE BEGIN PV */
 
 /* USER CODE END PV */
@@ -74,6 +77,8 @@ static void MX_SPI2_Init(void);
 static void MX_TIM8_Init(void);
 static void MX_TIM3_Init(void);
 static void MX_CORDIC_Init(void);
+extern void InitTask(void const * argument);
+
 /* USER CODE BEGIN PFP */
 
 /* USER CODE END PFP */
@@ -125,7 +130,33 @@ int main(void)
 
   /* USER CODE END 2 */
 
-  MX_ThreadX_Init();
+  /* USER CODE BEGIN RTOS_MUTEX */
+  /* add mutexes, ... */
+  /* USER CODE END RTOS_MUTEX */
+
+  /* USER CODE BEGIN RTOS_SEMAPHORES */
+  /* add semaphores, ... */
+  /* USER CODE END RTOS_SEMAPHORES */
+
+  /* USER CODE BEGIN RTOS_TIMERS */
+  /* start timers, add new ones, ... */
+  /* USER CODE END RTOS_TIMERS */
+
+  /* USER CODE BEGIN RTOS_QUEUES */
+  /* add queues, ... */
+  /* USER CODE END RTOS_QUEUES */
+
+  /* Create the thread(s) */
+  /* definition and creation of initTask */
+  osThreadStaticDef(initTask, InitTask, osPriorityRealtime, 0, 512, initTaskBuffer, &initTaskControlBlock);
+  initTaskHandle = osThreadCreate(osThread(initTask), NULL);
+
+  /* USER CODE BEGIN RTOS_THREADS */
+  /* add threads, ... */
+  /* USER CODE END RTOS_THREADS */
+
+  /* Start scheduler */
+  osKernelStart();
 
   /* We should never get here as control is now taken by the scheduler */
 
@@ -879,6 +910,24 @@ static void MX_GPIO_Init(void)
 /* USER CODE BEGIN 4 */
 
 /* USER CODE END 4 */
+
+/* USER CODE BEGIN Header_InitTask */
+/**
+  * @brief  Function implementing the initTask thread.
+  * @param  argument: Not used
+  * @retval None
+  */
+/* USER CODE END Header_InitTask */
+__weak void InitTask(void const * argument)
+{
+  /* USER CODE BEGIN 5 */
+  /* Infinite loop */
+  for(;;)
+  {
+    osDelay(1);
+  }
+  /* USER CODE END 5 */
+}
 
 /**
   * @brief  Period elapsed callback in non blocking mode
