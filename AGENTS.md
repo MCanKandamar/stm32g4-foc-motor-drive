@@ -1,7 +1,7 @@
 # AGENTS.md
 
 ## Project
-Firmware for a BLDC/PMSM motor drive on a custom STM32G473 board: field-oriented control with Hall-sensor or sensorless (sliding-mode observer) rotor angle, ThreadX RTOS, CANopen (CiA 402 in progress). Single developer (the user), active development.
+Firmware for a BLDC/PMSM motor drive on a custom STM32G473 board: field-oriented control with Hall-sensor or sensorless (sliding-mode observer) rotor angle, FreeRTOS, CANopen (CiA 402 in progress). Single developer (the user), active development.
 
 Profiles: code, embedded, learning
 

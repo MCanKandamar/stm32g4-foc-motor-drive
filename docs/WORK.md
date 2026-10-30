@@ -11,6 +11,13 @@ Task: Password reset · branch: feature/reset · started: 2026-10-25
 - [x] Token table + migration — verified: `npm test` ✓
 - [ ] (in progress) Send reset e-mail
 - [ ] Reset form -->
+Task: replace ThreadX with FreeRTOS and USBX with TinyUSB, so the repo can go public without the Microsoft-licensed middleware · branch: feature/freertos-tinyusb (worktree `../015_freertos`) · started: 2026-10-30 · the agent writes the code · `.ioc` diff and TinyUSB 0.21.0 approved by the user 2026-10-30 · the board stays with the other session: no flashing, no COM ports here
+- [x] 1. TinyUSB 0.21.0 sources pinned in `tinyusb/` — verified: archive commit `dae3f9a` (`git get-tar-commit-id`) ✓, SHA-256 in `tinyusb/VERSIONS.md`
+- [x] 2. `.ioc`: FreeRTOS 10.3.1 (CMSIS V1, static only), regenerated; tasks in `app_freertos.c`; TinyUSB CDC in `App/`; ThreadX/USBX folders removed — verified: ELF has no `tx_`/`ux_` code, no `pvPortMalloc`, no `HAL_PCD_IRQHandler` ✓; USB descriptors read back from the ELF: VID 0x0483, PID 0x5710, bcdDevice 0x0200, class 02/02/00, 2 interfaces, EP 0x82/0x01/0x81 ✓
+- [x] 3. Debug + Release, host tests, regeneration — built ✓ (clean builds, 0 warnings; Debug flash 166.6/512 KB, RAM 34.3/128 KB; Release flash 95.8/512 KB, RAM 34.3/128 KB), verified: `ctest --preset HostTests` 157/157 ✓, CubeMX `project generate` on a copy changed no file and brought no ThreadX/USBX back ✓
+- [x] 4. `PROJECT.md`, licence notes; `.github/workflows` needed no change (no paths to the removed folders)
+- [ ] 5. (waiting for the user) HW test: flash, `test_cia402_v2.py`, `test_pdo.py`, `speed_step.py`, Scrutiny connection — built ✓, needs HW test
+
 Task: host unit tests in CI, missing tests, open-source blockers · branch: main (PROJECT.md decision 2026-10-27) · started: 2026-10-30 · the agent writes the code (user's choice for this session)
 - [x] 1. `AnglePLL::reset()` also sets `pll_speed_filtered` — verified: `motor_control_tests` 51/51 ✓ (scratchpad host build, MinGW), built ✓ (Debug, no new warnings; flash 177.4/512 KB, RAM 66.5/128 KB), needs HW test (normal sensorless start)
 - [x] 2. Host test preset `HostTests` for `tests/`; gtest download pinned with SHA-256 — verified: `ctest --preset HostTests` 51/51 ✓, built ✓ (Debug, no new warnings)
@@ -20,7 +27,7 @@ Task: host unit tests in CI, missing tests, open-source blockers · branch: main
 - [x] 6. CiA 402 logic moved to `motor_control/cia402`, `canopen_bridge.cpp` only copies OD ↔ `cmd` — verified: `ctest --preset HostTests` 157/157 ✓ (26 new CiA 402 tests), built ✓ (Debug flash 177.6/512 KB, RAM 66.5/128 KB; Release flash 103.4/512 KB, RAM 66.5/128 KB, no new warnings), needs HW test (`tools/hil/test_cia402_v2.py`, `tools/hil/test_pdo.py`)
 - [x] 7. Scrutiny CLI 0.16.0 in `release.yml`: publishes `_tagged.elf`, `.sfd`, and hex/bin made from the tagged ELF — verified: file parses (PyYAML) ✓; unverified (needs a `v*` tag on GitHub, PySide6 install on the runner not tried)
 - [x] 8a. `scrutiny-embedded/LICENSE` added (MIT text from the Scrutiny 0.16.0 installer)
-- [ ] 8b. ThreadX/USBX licence (see Open questions): waits for the user's RTOS decision
+- [ ] 8b. ThreadX/USBX licence: FreeRTOS + TinyUSB on `feature/freertos-tinyusb` (task above), clean history still open (see Open questions)
 
 ## Next
 <!-- Order set by the user 2026-10-30 -->
@@ -48,4 +55,5 @@ Later (user 2026-10-30): top-level README, commit e-mail in history, Docker imag
 
 ## Open questions
 <!-- question · impact · default used meanwhile -->
-- How to replace the ThreadX/USBX 6.2.0 copy (X-CUBE-AZRTOS-G4 2.0.0, Microsoft licence, no public source redistribution)? · blocks making the repo public; the 15 STM32 USBX controller files are not in the Eclipse repo; CubeMX regeneration would restore the old copy; old commits keep these files, so a public repo also needs a clean history · agent's recommendation 2026-10-30: FreeRTOS (MIT, in STM32CubeG4) + TinyUSB (MIT, `stm32_fsdev` on G4, FreeRTOS OSAL, no ThreadX OSAL), `motor_control/`, `isr.cpp` and `canopen/` unchanged; needs the user's decision and `.ioc` approval · meanwhile: repo stays private
+- How to clean the git history before going public? · old commits still hold the Microsoft-licensed `Middlewares/ST/threadx` and `usbx` files, so deleting them on a branch is not enough · needs the user's decision · meanwhile: repo stays private
+- Stale wording left on purpose (`canopen/` stays unchanged in this task): `canopen/VERSIONS.md` line 10 and a comment in `CO_app_STM32.c` line 191 still say ThreadX
