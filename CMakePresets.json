@@ -6,7 +6,7 @@
             "hidden": true,
             "generator": "Ninja",
             "binaryDir": "${sourceDir}/build/${presetName}",
-		    "toolchainFile": "${sourceDir}/cmake/gcc-arm-none-eabi.cmake",
+			    "toolchainFile": "${sourceDir}/cmake/gcc-arm-none-eabi.cmake",
             "cacheVariables": {
             }
         },
@@ -23,6 +23,17 @@
             "cacheVariables": {
                 "CMAKE_BUILD_TYPE": "Release"
             }
+        },
+        {
+            "name": "HostTests",
+            "generator": "Ninja",
+            "binaryDir": "${sourceDir}/build/${presetName}",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Debug",
+                "CMAKE_C_COMPILER": "gcc",
+                "CMAKE_CXX_COMPILER": "g++",
+                "HOST_TESTS": "ON"
+            }
         }
     ],
     "buildPresets": [
@@ -33,6 +44,19 @@
         {
             "name": "Release",
             "configurePreset": "Release"
+        },
+        {
+            "name": "HostTests",
+            "configurePreset": "HostTests"
+        }
+    ],
+    "testPresets": [
+        {
+            "name": "HostTests",
+            "configurePreset": "HostTests",
+            "output": {
+                "outputOnFailure": true
+            }
         }
     ]
 }

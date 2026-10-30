@@ -15,7 +15,7 @@ The toolchain, CMake and Ninja come from the STM32Cube bundles and are not on PA
 |---|---|
 | Build Debug | `cmake --build --preset Debug` (first time / after CMake changes: `cmake --preset Debug` before it) |
 | Build Release | `cmake --build --preset Release` (first time: `cmake --preset Release`) |
-| Host unit tests (motor_control) | none yet — no host build for `tests/` (see `docs/WORK.md` › Open questions); report as `not run (no host test build)` |
+| Host unit tests (motor_control) | `cmake --preset HostTests` (first time / after CMake changes; downloads GoogleTest), `cmake --build --preset HostTests`, `ctest --preset HostTests`. Needs `g++` on PATH (WinLibs on this PC) |
 | Memory usage | printed by the link step ("Memory region … %age Used"); or `arm-none-eabi-size build/Debug/015_BLDC_FOC_RTOS_MotorDrive.elf` |
 
 <!-- agent-lite:protocol v2 -->

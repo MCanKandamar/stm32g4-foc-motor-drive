@@ -30,6 +30,15 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS TRUE)
 project(${CMAKE_PROJECT_NAME})
 message("Build type: " ${CMAKE_BUILD_TYPE})
 
+# PC build of the unit tests (preset HostTests): only the hardware-free library and tests/
+option(HOST_TESTS "Build the motor_control unit tests for the PC" OFF)
+if(HOST_TESTS)
+    enable_testing()
+    add_subdirectory(motor_control)
+    add_subdirectory(tests)
+    return()
+endif()
+
 # Enable CMake support for ASM and C languages
 enable_language(C ASM)
 
