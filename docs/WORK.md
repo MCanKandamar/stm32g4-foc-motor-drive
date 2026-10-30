@@ -11,16 +11,16 @@ Task: Password reset · branch: feature/reset · started: 2026-10-25
 - [x] Token table + migration — verified: `npm test` ✓
 - [ ] (in progress) Send reset e-mail
 - [ ] Reset form -->
-_No active task._
+Task: Next fixes A + B (user 2026-10-30: "do 1 and 6") · branch: main · started: 2026-10-30
+- [x] A. Standstill speed (user 2026-10-27): with sensorless selected, 0x606C/0x2001 show the SMO/PLL estimate while stopped (e.g. −3808 rpm), so pv bit 12 is never set. Cause: in IDLE `angle_src` = FIXED, and the bridge uses SMO speed for every source except HALL. Fix: SMO speed only when `angle_src` = SMO, else Hall speed (0 after the Hall timeout). Also 0x6077 keeps the last iq when the motor is off (seen 2026-10-30: constant 43 / 21 / 54 ‰ in IDLE) because `foc.update()` does not run with `LoopMode::OFF` → report 0 then (`canopen_bridge.cpp`, `CanopenBridgeUpdate`) — built ✓ (Debug, no warnings; flash 177.4/512 KB, RAM 66.5/128 KB), needs HW test
+- [ ] (in progress) B. Hall speed-loop oscillation below ~1000 rpm (found 2026-10-30, Scrutiny datalog 250 Hz on a pv Hall 0 → 1000 rpm run): `speed_rpm_hall` and `speed_rpm_smo` both swing ±400 rpm at ~6 Hz, Hall ~30–40 ms behind SMO, `meas.idq_ref.iq_ref` −0.9…+1.2 A in antiphase; damps after the ramp, gone at 1500 rpm, none on sensorless at 1000. Likely cause: the 24-edge (1 mechanical turn) average in `HallSensor::onEdge` delays the feedback by T/2 (30 ms at 1000 rpm, 60 ms at 500). Options (need approval, PI/filter change): Hall PLL speed as feedback, shorter average, or lower speed-PI gains on Hall
 
 ## Next
-<!-- CANopen roadmap (fixed list, agreed with the user 2026-10-22) -->
-1. Fix (user 2026-10-27): wrong actual speed at standstill — with sensorless selected, 0x606C/0x2001 show the SMO/PLL estimate while stopped (e.g. −3808 rpm), so pv bit 12 is never set; report Hall speed (or 0) unless SMO is the active angle source (`canopen_bridge.cpp`, `CanopenBridgeUpdate`). Also 0x6077 keeps the last iq when the motor is off (seen 2026-10-30: constant 43 / 21 / 54 ‰ in IDLE)
+<!-- Order set by the user 2026-10-30 -->
+1. Host build for the `tests/` GoogleTest suite, then run it in CI (see Open questions)
 2. CANopen phase 7: robustness — heartbeat consumer / 0x6007, bus-off recovery, NMT return to operational after comm errors, error register 0x1001 (seen 2026-10-30: SLCAN channel closed → no ACK → EMCY 0x8120/0x8110 TX overflow → node goes pre-op and stays there; an NMT start while the error is still active is undone; under-voltage fault latched at power-up when the MCU starts before the 24 V supply, needs a 0x80 fault reset)
-3. Persistent calibration (user 2026-10-26, postponed after CiA 402 on 2026-10-27): Hall edge table in a reserved flash page, loaded at boot; needs approval for the linker-script region
-4. CANopen phase 8: EDS export and 0x1010 store parameters (uses the flash storage from item 3)
-5. Host build for the `tests/` GoogleTest suite, then run it in CI (see Open questions)
-6. Hall speed-loop oscillation below ~1000 rpm (found 2026-10-30, Scrutiny datalog 250 Hz on a pv Hall 0 → 1000 rpm run): `speed_rpm_hall` and `speed_rpm_smo` both swing ±400 rpm at ~6 Hz, Hall ~30–40 ms behind SMO, `meas.idq_ref.iq_ref` −0.9…+1.2 A in antiphase → a real oscillation of the speed loop, not a measurement error; damps after the ramp, gone at 1500 rpm, none on sensorless at 1000. Likely cause: the 24-edge (1 mechanical turn) average in `HallSensor::onEdge` delays the feedback by T/2 (30 ms at 1000 rpm, 60 ms at 500). Options (need approval, PI/filter change): Hall PLL speed as feedback, shorter average, or lower speed-PI gains on Hall
+3. CANopen phase 8: EDS export and 0x1010 store parameters (needs flash storage; it was planned to come from item 4, which now comes after it)
+4. Persistent calibration (user 2026-10-26, last by the user's order 2026-10-30): Hall edge table in a reserved flash page, loaded at boot; needs approval for the linker-script region
 Parked by the user: USB command refactor steps 4–6 (command queue, USB parser, telemetry); DC-bus sag and regen/over-voltage control.
 
 ## Done

@@ -381,8 +381,12 @@ void CanopenBridgeInit(void)
 void CanopenBridgeUpdate(void)
 {
     //  motor → OD
-    const float speed_rpm = (foc_cfg.angle_src == AngleSource::HALL) ? meas.speed_rpm_hall
-                                                                     : meas.speed_rpm_smo;
+    // The SMO speed is valid only while the SMO gives the angle; stopped or in start-up it can be
+    // far off (e.g. −3800 rpm at standstill). Hall speed goes to 0 after the Hall timeout.
+    const float speed_rpm = (foc_cfg.angle_src == AngleSource::SMO) ? meas.speed_rpm_smo
+                                                                    : meas.speed_rpm_hall;
+    // with PWM off the ISR skips foc.update(), so iq feedback would keep its last value
+    const float iq_a      = (foc_cfg.loop != LoopMode::OFF) ? status.idq_fdb.iq_fdb : 0.0f;
 
     OD_RAM.x2000_vdcMV       = static_cast<uint16_t>(lroundf(status.Vdc * 1000.0f));   // 24.1 V → 24100
     OD_RAM.x2001_speedRpm    = static_cast<int16_t>(lroundf(speed_rpm));
@@ -391,7 +395,7 @@ void CanopenBridgeUpdate(void)
 
     OD_RAM.x6061_modesOfOperationDisplay = OD_RAM.x6060_modesOfOperation;      // does not change in OE
     OD_RAM.x606C_velocityActualValue     = static_cast<int32_t>(lroundf(speed_rpm));
-    OD_RAM.x6077_torqueActualValue       = static_cast<int16_t>(lroundf(status.idq_fdb.iq_fdb * permille_per_amp()));
+    OD_RAM.x6077_torqueActualValue       = static_cast<int16_t>(lroundf(iq_a * permille_per_amp()));
 
     // targets (0x60FF / 0x2010 / 0x6071): OD → ramp → cmd
     profile_update(speed_rpm, motor_state_machine.getState());
