@@ -1,8 +1,8 @@
 # STM32G4 FOC Motor Drive
 
-Firmware for a three-phase BLDC/PMSM motor drive on a custom STM32G473 board. It runs field-oriented control (FOC) at 20 kHz on the ThreadX RTOS. The rotor angle comes from Hall sensors or from a sensorless sliding-mode observer (SMO), and the drive is commanded over CANopen with the CiA 402 drive profile.
+Firmware for a three-phase BLDC/PMSM motor drive on the custom STM32G473 [Motor-Control](https://github.com/Sinan-Akbayin/Motor-Control) board. It runs field-oriented control (FOC) at 20 kHz on FreeRTOS. The rotor angle comes from Hall sensors or from a sensorless sliding-mode observer (SMO), and the drive is commanded over CANopen with the CiA 402 drive profile.
 
-> **Hardware note:** the firmware targets one custom board, and the schematics are not in this repository. You can build it and run the unit tests with no hardware. To run it on another board, you must change the pin, ADC and PWM setup and the motor data. Read [Known limitations](#known-limitations) before you power a motor.
+> **Hardware note:** the firmware targets one custom board, and its KiCad design is in [Sinan-Akbayin/Motor-Control](https://github.com/Sinan-Akbayin/Motor-Control). You can build the firmware and run the unit tests with no hardware. To run it on another board, you must change the pin, ADC and PWM setup and the motor data. Read [Known limitations](#known-limitations) before you power a motor.
 
 ## Features
 
@@ -10,42 +10,53 @@ Firmware for a three-phase BLDC/PMSM motor drive on a custom STM32G473 board. It
 - **Two angle sources:** Hall sensors with a calibrated edge table and a PLL, or an SMO with a PLL and an open-loop start.
 - **CANopen node:** CiA 402 state machine, profile velocity and profile torque modes, PDOs, SYNC and EMCY, built on CANopenNode over FDCAN1.
 - **Protection:** gate-driver fault input, phase over-current, DC-bus over-voltage and under-voltage, and loss of sensorless lock.
-- **Live debugging:** [Scrutiny](https://github.com/scrutinydebugger/scrutiny-embedded) over USB CDC, for watching variables and datalogging from the 20 kHz loop.
+- **Live debugging:** [Scrutiny](https://github.com/scrutinydebugger/scrutiny-embedded) over USB CDC with TinyUSB, for watching variables and datalogging from the 20 kHz loop.
 - **Testing:** PC unit tests for the control library, CI on GitHub Actions, and Python hardware-in-the-loop (HIL) tests for the real board.
 
 ## Hardware
 
 | Item | Value |
 |---|---|
-| MCU | STM32G473VET6: Cortex-M4F, 170 MHz, 512 KB flash, 128 KB RAM |
+| MCU | STM32G473VET6: Cortex-M4F, 170 MHz, 512 KB flash, 128 KB RAM, 24 MHz crystal |
 | Gate driver | DRV8350S |
-| Current sensing | AD8418 amplifiers (gain 20) on 1.5 mΩ shunts, three phases |
-| Motor | 57BLF02: 24 V, 125 W, 3000 rpm, 4 pole pairs |
+| Power stage | 6 × BSC070N10NS5 N-channel MOSFETs in three half-bridges |
+| Current sensing | AD8418 amplifiers (gain 20) on 1.5 mΩ in-line shunts, three phases |
+| Voltage sensing | 39 kΩ / 2.2 kΩ dividers on the DC bus and all three phases |
+| Supply | LMR38020 buck from the DC bus to 5 V, then AMS1117 to 3.3 V |
+| CAN | FDCAN1, ISO1050 isolated transceiver, 500 kbit/s, node-ID 13 |
+| USB | Micro-B connector, CDC for Scrutiny |
+| Debug | 10-pin SWD header, ST-Link for flashing |
+| PCB | 4 copper layers, 100 × 100 mm |
 | PWM | TIM8, centre-aligned, 20 kHz |
-| CAN | FDCAN1, 500 kbit/s, node-ID 13 |
-| Debug | USB CDC for Scrutiny, ST-Link for flashing |
+| Motor | 57BLF02: 24 V, 125 W, 3000 rpm, 4 pole pairs |
 
-The pins and clocks are in [docs/PROJECT.md](docs/PROJECT.md#hardware--toolchain) and in the CubeMX project, [015_BLDC_FOC_RTOS_MotorDrive.ioc](015_BLDC_FOC_RTOS_MotorDrive.ioc).
+The schematic, connector list and full MCU pin table are in [Motor-Control](https://github.com/Sinan-Akbayin/Motor-Control). The firmware's own pin and clock setup is in [docs/PROJECT.md](docs/PROJECT.md#hardware--toolchain) and in the CubeMX project, [015_BLDC_FOC_RTOS_MotorDrive.ioc](015_BLDC_FOC_RTOS_MotorDrive.ioc).
+
+One pin assignment differs: this firmware reads the Hall sensors with TIM3 on PA6, PA7 and PB0. The Motor-Control schematic routes the Hall connector J2 to PD9, PD8 and PB11, and shows PA6, PA7 and PB0 on the J11 and J9 headers.
 
 ## Status
 
 | Area | State |
 |---|---|
-| Speed control with Hall and sensorless angle | Tested on the board |
-| Torque control with Hall angle | Tested on the board |
-| CiA 402 state machine, fault reporting, EMCY | Tested on the board |
-| PDOs and SYNC | Tested on the board |
-| Communication-loss reaction, bus-off recovery | Not done |
-| EDS export, `0x1010` store parameters | Not done |
-| Hall calibration stored in flash | Not done |
-| DC-bus sag and regenerative over-voltage control | Not done |
+| Speed control with Hall angle | Works on the board |
+| Speed control with sensorless angle | Works on the board |
+| Torque control with Hall angle | Partly: the motor turns at 100 ‰ but not at 50 ‰, cause not yet found |
+| CiA 402 state machine, fault reporting, EMCY | Works on the board |
+| PDOs and SYNC | Works on the board |
+| FreeRTOS and TinyUSB build | Builds and passes the unit tests, not yet tested on the board |
+| Communication-loss reaction, bus-off recovery | Not yet implemented |
+| EDS export, `0x1010` store parameters | Not yet implemented |
+| Hall calibration stored in flash | Not yet implemented |
+| DC-bus sag and regenerative over-voltage control | Not yet implemented |
 
-Bench results from 2026-10-30:
+The board results above come from the ThreadX firmware of 2026-10-30, the last build before the move to FreeRTOS.
+
+Bench results from the same firmware:
 
 | Test | Result |
 |---|---|
-| Hall speed step, 1000 → 1300 rpm | 22 ms rise, 23 % overshoot |
-| Sensorless speed step, 1000 → 1300 rpm | 20 ms rise, 17 % overshoot |
+| Hall speed step, 1000 → 1300 rpm | 22 ms rise, 22 % overshoot |
+| Sensorless speed step, 1000 → 1300 rpm | 22 ms rise, 18 % overshoot |
 | Hall speed ramp, 1000 → 1500 rpm | 31 rpm tracking error, 166 ms settling |
 
 ## Known limitations
@@ -54,8 +65,8 @@ This is a development project, not a safety-rated drive. Check these points befo
 
 - **No communication-loss reaction:** if the CAN master disappears, the motor keeps running. There is no heartbeat consumer, `0x6007` handling or RPDO timeout yet.
 - **No braking:** Quick Stop lets the motor coast.
-- **Basic DC-bus protection:** the Monitor thread checks the voltage every 10 ms and cuts the power above 30 V or below 12 V. Nothing limits regenerative energy, so a fast stop can raise the DC bus.
-- **No temperature protection:** the fault codes exist, but nothing sets them.
+- **Basic DC-bus protection:** the Monitor task checks the voltage every 10 ms and cuts the power above 30 V or below 12 V. Nothing limits regenerative energy, so a fast stop can raise the DC bus.
+- **No temperature protection:** the board has NTC inputs and the fault codes exist, but the firmware does not read the sensors.
 - **Gate driver on its defaults:** the firmware configures SPI2 but never writes the DRV8350S registers.
 - **Hall calibration is not saved:** a calibration run updates the table in RAM only. After a reset the drive goes back to the table built into [App/Src/app.cpp](App/Src/app.cpp).
 - **Sensorless limits:** it runs forward only, at 300 rpm or more. Below 200 rpm for 50 ms, the drive reports a fault and cuts the power.
@@ -87,11 +98,15 @@ The SMO also uses the voltage commanded by the current loop. The id reference is
 
 | Context | Rate | What it does |
 |---|---|---|
-| ADC3 interrupt, triggered by TIM8 | 20 kHz | Reads currents and voltages, runs the SMO and PLLs, runs FOC, updates the PWM duties |
+| ADC3 interrupt, triggered by TIM8 | 20 kHz | Reads currents and voltages, runs the SMO and PLLs, runs FOC, updates the PWM duty cycles |
 | Every 20th ADC3 interrupt | 1 kHz | Runs the speed PI |
-| Supervisor thread (priority 3) | 1 kHz | Motor state machine, start-up sequences, reference limits |
-| CANopen thread (priority 5) | 1 kHz | CANopenNode stack, CiA 402 state machine, speed and torque ramps |
-| Monitor thread (priority 8) | 100 Hz | DC-bus voltage check, status values, LED |
+| Supervisor task (priority 5) | 1 kHz | Motor state machine, start-up sequences, reference limits |
+| CANopen task (priority 4) | 1 kHz | CANopenNode stack, CiA 402 state machine, speed and torque ramps |
+| Monitor task (priority 3) | 100 Hz | DC-bus voltage check, status values, LED |
+| USB task (priority 2) | On USB events | TinyUSB device stack |
+| Scrutiny task (priority 1) | 1 kHz | Scrutiny protocol over USB CDC |
+
+In FreeRTOS a higher number means a higher priority, and all tasks use static memory. The ADC3 and gate-driver fault interrupts sit above the FreeRTOS interrupt mask, so critical sections never delay them.
 
 ### Motor states
 
@@ -125,10 +140,11 @@ canopen/              CANopenNode, its STM32 driver, and the object dictionary i
 tests/                GoogleTest unit tests for motor_control
 tools/hil/            Python HIL tests for the real board
 scrutiny-embedded/    Scrutiny target library
+tinyusb/              TinyUSB USB stack, only the files this firmware needs
 .github/workflows/    CI build and release
 docs/                 Project notes: architecture, decisions, work log
-Core/, Drivers/, Middlewares/, AZURE_RTOS/, USBX/
-                      STM32CubeMX output, ST drivers, ThreadX and USBX
+Core/, Drivers/, Middlewares/
+                      STM32CubeMX output, ST drivers, FreeRTOS
 ```
 
 `motor_control/` never touches hardware, so the same sources build for the target and for the PC. In generated files, edit only between the `USER CODE BEGIN` and `USER CODE END` markers, because CubeMX overwrites everything else.
@@ -142,7 +158,7 @@ cmake --preset Debug
 cmake --build --preset Debug
 ```
 
-Use the `Release` preset for an optimised build. The output is `build/<preset>/015_BLDC_FOC_RTOS_MotorDrive.elf`, and the link step prints the memory use. On 2026-10-30 the Release build used 103 of 512 KB flash and 66.5 of 128 KB RAM.
+Use the `Release` preset for an optimised build. The output is `build/<preset>/015_BLDC_FOC_RTOS_MotorDrive.elf`, and the link step prints the memory use. On 2026-10-30 the Release build used 96 of 512 KB flash and 34 of 128 KB RAM.
 
 If the Scrutiny CLI is installed, a post-build step also makes a `*_tagged.elf` file and a `.sfd` file. Flash the tagged ELF to use Scrutiny. Without the CLI, this step is skipped and the build still works.
 
@@ -214,7 +230,7 @@ The drive applies RPDOs on receipt and sends TPDOs every 100 ms. For synchronous
 
 ## Licence
 
-The project's own code is under the [MIT licence](LICENSE), © 2026 Can Kandamar. Third-party code keeps its own licence:
+The project's own code is under the [MIT licence](LICENSE), © 2026 Can Kandamar. Third-party code retains its original licence:
 
 | Component | Path | Licence |
 |---|---|---|
@@ -223,9 +239,11 @@ The project's own code is under the [MIT licence](LICENSE), © 2026 Can Kandamar
 | [Scrutiny embedded library](https://github.com/scrutinydebugger/scrutiny-embedded) | `scrutiny-embedded/` | MIT |
 | STM32G4 HAL | `Drivers/STM32G4xx_HAL_Driver/` | BSD-3-Clause, see its `LICENSE.txt` |
 | CMSIS | `Drivers/CMSIS/` | Apache-2.0, see its `LICENSE.txt` |
-| ThreadX and USBX 6.2.0 from ST | `Middlewares/ST/` | Microsoft Software License Terms, not MIT |
+| FreeRTOS 10.3.1 | `Middlewares/Third_Party/FreeRTOS/` | MIT |
+| [TinyUSB](https://github.com/hathach/tinyusb) 0.21.0 | `tinyusb/` | MIT |
 
 ## More documentation
 
 - [docs/PROJECT.md](docs/PROJECT.md): architecture, environment, hardware and design decisions
-- [canopen/VERSIONS.md](canopen/VERSIONS.md): versions of the CANopen sources
+- [canopen/VERSIONS.md](canopen/VERSIONS.md), [tinyusb/VERSIONS.md](tinyusb/VERSIONS.md): versions of the third-party sources
+- [Motor-Control](https://github.com/Sinan-Akbayin/Motor-Control): the board design
