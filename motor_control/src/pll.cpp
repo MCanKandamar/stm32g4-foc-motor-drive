@@ -51,6 +51,7 @@ namespace motor_control
     {
         pll_angle = theta;
         pll_speed = omega;
+        pll_speed_filtered = omega;
         pll_controller.setIntegral(omega);
     }
 }

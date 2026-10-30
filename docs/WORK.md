@@ -11,15 +11,24 @@ Task: Password reset · branch: feature/reset · started: 2026-10-25
 - [x] Token table + migration — verified: `npm test` ✓
 - [ ] (in progress) Send reset e-mail
 - [ ] Reset form -->
-_No active task._
+Task: host unit tests in CI, missing tests, open-source blockers · branch: main (PROJECT.md decision 2026-10-27) · started: 2026-10-30 · the agent writes the code (user's choice for this session)
+- [x] 1. `AnglePLL::reset()` also sets `pll_speed_filtered` — verified: `motor_control_tests` 51/51 ✓ (scratchpad host build, MinGW), built ✓ (Debug, no new warnings; flash 177.4/512 KB, RAM 66.5/128 KB), needs HW test (normal sensorless start)
+- [ ] (in progress) 2. Host test project and preset for `tests/`; pin the gtest download with a hash
+- [ ] 3. CI: test job in `build.yml`; `release.yml` runs the tests first
+- [ ] 4. Test names in English
+- [ ] 5. New tests: `state_machine`; `PidController` + `speed_control`; `startup` + `math_utils`; `hall_sensor`; `observer` + `AnglePLL::update_emf`. Baseline: 31 % of `motor_control/src` lines (107/344, gcov, MinGW)
+- [ ] 6. Move the CiA 402 logic from `canopen_bridge.cpp` to hardware-free code and test it
+- [ ] 7. Scrutiny CLI in `release.yml`: `_tagged.elf`, `.sfd`, hex/bin from the tagged ELF (PyPI 0.16.0 needs Python < 3.14)
+- [ ] 8. Licences before going public: ThreadX/USBX (see Open questions), `scrutiny-embedded` LICENSE file
 
 ## Next
 <!-- Order set by the user 2026-10-30 -->
-1. Host build for the `tests/` GoogleTest suite, then run it in CI (see Open questions)
+1. (active, see Now) Host build for the `tests/` GoogleTest suite, then run it in CI (see Open questions)
 2. CANopen phase 7: robustness — heartbeat consumer / 0x6007, bus-off recovery, NMT return to operational after comm errors, error register 0x1001 (seen 2026-10-30: SLCAN channel closed → no ACK → EMCY 0x8120/0x8110 TX overflow → node goes pre-op and stays there; an NMT start while the error is still active is undone; under-voltage fault latched at power-up when the MCU starts before the 24 V supply, needs a 0x80 fault reset)
 3. CANopen phase 8: EDS export and 0x1010 store parameters (needs flash storage; it was planned to come from item 4, which now comes after it)
 4. Persistent calibration (user 2026-10-26, last by the user's order 2026-10-30): Hall edge table in a reserved flash page, loaded at boot; needs approval for the linker-script region
 Parked by the user: USB command refactor steps 4–6 (command queue, USB parser, telemetry); DC-bus sag and regen/over-voltage control.
+Later (user 2026-10-30): top-level README, commit e-mail in history, Docker image for CI (look at it after Now step 7).
 
 ## Done
 <!-- Newest first, one line each, with evidence label and commit if any. -->
@@ -39,3 +48,4 @@ Parked by the user: USB command refactor steps 4–6 (command queue, USB parser,
 ## Open questions
 <!-- question · impact · default used meanwhile -->
 - How should the `tests/` GoogleTest suite be built on the PC (host CMake project or preset)? · motor_control changes cannot be unit-tested by agents · meanwhile: report `not run (no host test build)`
+- How to replace the ThreadX/USBX 6.2.0 copy (X-CUBE-AZRTOS-G4 2.0.0, Microsoft licence, no public source redistribution)? · blocks making the repo public; the 15 STM32 USBX controller files are not in the Eclipse repo; CubeMX regeneration would restore the old copy · meanwhile: repo stays private
