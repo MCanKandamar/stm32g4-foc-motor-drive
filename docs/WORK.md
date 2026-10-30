@@ -48,4 +48,4 @@ Later (user 2026-10-30): top-level README, commit e-mail in history, Docker imag
 
 ## Open questions
 <!-- question · impact · default used meanwhile -->
-- How to replace the ThreadX/USBX 6.2.0 copy (X-CUBE-AZRTOS-G4 2.0.0, Microsoft licence, no public source redistribution)? · blocks making the repo public; the 15 STM32 USBX controller files are not in the Eclipse repo; CubeMX regeneration would restore the old copy · meanwhile: repo stays private
+- How to replace the ThreadX/USBX 6.2.0 copy (X-CUBE-AZRTOS-G4 2.0.0, Microsoft licence, no public source redistribution)? · blocks making the repo public; the 15 STM32 USBX controller files are not in the Eclipse repo; CubeMX regeneration would restore the old copy; old commits keep these files, so a public repo also needs a clean history · agent's recommendation 2026-10-30: FreeRTOS (MIT, in STM32CubeG4) + TinyUSB (MIT, `stm32_fsdev` on G4, FreeRTOS OSAL, no ThreadX OSAL), `motor_control/`, `isr.cpp` and `canopen/` unchanged; needs the user's decision and `.ioc` approval · meanwhile: repo stays private
