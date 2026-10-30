@@ -27,7 +27,7 @@ Firmware for a three-phase BLDC/PMSM motor drive on a custom STM32G473 board. It
 | CAN | FDCAN1, 500 kbit/s, node-ID 13 |
 | Debug | USB CDC for Scrutiny, ST-Link for flashing |
 
-The pins and clocks are in [docs/PROJECT.md](docs/PROJECT.md#hardware--toolchain) and in the CubeMX project, [015_BLDC_FOC_RTOS_MotorDrive.ioc](015_BLDC_FOC_RTOS_MotorDrive.ioc).
+The pins and clocks are in [docs/PROJECT.md](docs/PROJECT.md#hardware--toolchain) and in the CubeMX project, [stm32g4-foc-motor-drive.ioc](stm32g4-foc-motor-drive.ioc).
 
 ## Status
 
@@ -156,7 +156,7 @@ cmake --preset Debug
 cmake --build --preset Debug
 ```
 
-Use the `Release` preset for an optimised build. The output is `build/<preset>/015_BLDC_FOC_RTOS_MotorDrive.elf`, and the link step prints the memory use. On 2026-10-30 the Release build in CI used 106,000 bytes of flash (20 %) and 68,080 bytes of RAM (52 %).
+Use the `Release` preset for an optimised build. The output is `build/<preset>/stm32g4-foc-motor-drive.elf`, and the link step prints the memory use. On 2026-10-30 the Release build in CI used 106,000 bytes of flash (20 %) and 68,080 bytes of RAM (52 %).
 
 If the Scrutiny CLI is installed, a post-build step also makes a `*_tagged.elf` file and a `.sfd` file. Flash the tagged ELF to use Scrutiny. Without the CLI, this step is skipped and the build still works.
 
