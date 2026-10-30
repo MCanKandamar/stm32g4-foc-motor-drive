@@ -38,6 +38,7 @@ The toolchain, CMake and Ninja come from the STM32Cube bundles and are not on PA
 - For firmware, add memory use: `built ✓ (flash 41.2/64 KB, RAM 9.8/20 KB)`.
 - `needs HW test` — only real hardware can prove it. Write `built ✓, needs HW test`, and never assume it works on the board.
 - `HW verified (<who>, <date>)` — only if the user reported the result on hardware, or you ran an on-target test the user approved and saw its output.
+- `failed: <command> ✗` — it ran and failed; quote the relevant output.
 - `unverified (<reason>)` — not checked.
 - Hardware testing is done by the user, usually with Scrutiny. After `built ✓, needs HW test`, tell the user in a few lines what to test and how (which Scrutiny variables or signals to watch, what result to expect). Mark `HW verified` only after the user reports the result.
 

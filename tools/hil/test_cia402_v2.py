@@ -220,7 +220,7 @@ def wait_bootup(timeout=60.0):
 
 
 def t1():
-    print("\n>>> T1: 60 s içinde kartı resetle (reset tuşu)", flush=True)
+    print("\n>>> T1: reset the board within 60 s (reset button)", flush=True)
     t_from = time.perf_counter() - 0.5
     _drain()
     tb = wait_bootup(60.0)
@@ -252,7 +252,7 @@ def t9(nmt_reset=False):
         print("\n>>> T9: NMT Reset Node (0x000: 81 0D)", flush=True)
         bus.send(can.Message(arbitration_id=0x000, data=[0x81, 0x0D], is_extended_id=False))
     else:
-        print("\n>>> T9: 60 s içinde kartı TEKRAR resetle (boot-up'ta hemen 0x06 gönderilecek)", flush=True)
+        print("\n>>> T9: reset the board AGAIN within 60 s (0x06 is sent right after boot-up)", flush=True)
     tb = wait_bootup(60.0)
     if tb is None:
         record('T9', 'boot-up seen, then 06 ignored in INIT', 'no boot-up in 60 s', False, t_from)

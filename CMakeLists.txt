@@ -120,5 +120,5 @@ if(SCRUTINY_CMD)
         METADATA_PROJECT_NAME   "BLDC FOC"
         INSTALL_SFD)
 else()
-    message(WARNING "scrutiny bulunamadı: .sfd ve tagged ELF üretilmeyecek")
+    message(WARNING "scrutiny not found: no .sfd and no tagged ELF will be made")
 endif()
