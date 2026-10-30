@@ -14,6 +14,10 @@ import threading
 import time
 from pathlib import Path
 
+import sys
+
+sys.path.insert(0, 'C:/Program Files (x86)/Scrutiny Debugger/scrutinydebugger-nocli-0.16.0-py3-none-any.whl')
+
 import can
 
 PORT = 'COM15'
