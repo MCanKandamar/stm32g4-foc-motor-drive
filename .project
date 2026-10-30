@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <projectDescription>
-	<name>015_BLDC_FOC_RTOS_MotorDrive</name>
+	<name>stm32g4-foc-motor-drive</name>
 	<comment></comment>
 	<projects>
 	</projects>

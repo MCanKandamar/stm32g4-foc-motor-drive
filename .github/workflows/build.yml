@@ -31,15 +31,15 @@ jobs:
         run: cmake --build --preset ${{ matrix.preset }}
 
       - name: Memory usage
-        run: arm-none-eabi-size build/${{ matrix.preset }}/015_BLDC_FOC_RTOS_MotorDrive.elf
+        run: arm-none-eabi-size build/${{ matrix.preset }}/stm32g4-foc-motor-drive.elf
 
       - name: Upload firmware
         uses: actions/upload-artifact@v4
         with:
           name: firmware-${{ matrix.preset }}
           path: |
-            build/${{ matrix.preset }}/015_BLDC_FOC_RTOS_MotorDrive.elf
-            build/${{ matrix.preset }}/015_BLDC_FOC_RTOS_MotorDrive.map
+            build/${{ matrix.preset }}/stm32g4-foc-motor-drive.elf
+            build/${{ matrix.preset }}/stm32g4-foc-motor-drive.map
           retention-days: 14
 
   host-tests:
