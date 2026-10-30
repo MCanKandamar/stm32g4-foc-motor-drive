@@ -17,9 +17,10 @@ Task: host unit tests in CI, missing tests, open-source blockers · branch: main
 - [x] 3. CI: `host-tests` job in `build.yml`; `release.yml` needs it — verified: both files parse (PyYAML) ✓; unverified (not pushed, nothing has run on Linux yet)
 - [x] 4. Test names in English — verified: `ctest --preset HostTests` 51/51 ✓ (names only, 51 lines changed)
 - [x] 5. New tests: `state_machine`, `PidController`, `speed_control`, `startup`, `math_utils`, `hall_sensor`, `observer` + `AnglePLL::update_emf` — verified: `ctest --preset HostTests` 131/131 ✓; `motor_control/src` line coverage 31 % → 341/345 (gcov, MinGW); 5 deliberate code breaks in a scratch copy were all caught
-- [ ] (in progress) 6. Move the CiA 402 logic from `canopen_bridge.cpp` to hardware-free code and test it
-- [ ] 7. Scrutiny CLI in `release.yml`: `_tagged.elf`, `.sfd`, hex/bin from the tagged ELF (PyPI 0.16.0 needs Python < 3.14)
-- [ ] 8. Licences before going public: ThreadX/USBX (see Open questions), `scrutiny-embedded` LICENSE file
+- [x] 6. CiA 402 logic moved to `motor_control/cia402`, `canopen_bridge.cpp` only copies OD ↔ `cmd` — verified: `ctest --preset HostTests` 157/157 ✓ (26 new CiA 402 tests), built ✓ (Debug flash 177.6/512 KB, RAM 66.5/128 KB; Release flash 103.4/512 KB, RAM 66.5/128 KB, no new warnings), needs HW test (`tools/hil/test_cia402_v2.py`, `tools/hil/test_pdo.py`)
+- [x] 7. Scrutiny CLI 0.16.0 in `release.yml`: publishes `_tagged.elf`, `.sfd`, and hex/bin made from the tagged ELF — verified: file parses (PyYAML) ✓; unverified (needs a `v*` tag on GitHub, PySide6 install on the runner not tried)
+- [x] 8a. `scrutiny-embedded/LICENSE` added (MIT text from the Scrutiny 0.16.0 installer)
+- [ ] 8b. ThreadX/USBX licence (see Open questions): waits for the user's RTOS decision
 
 ## Next
 <!-- Order set by the user 2026-10-30 -->
