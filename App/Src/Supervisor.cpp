@@ -1,7 +1,8 @@
 #include "Supervisor.h"
 #include "StartupSeq.hpp"
 #include "app.hpp"
-#include "tx_api.h"
+#include "FreeRTOS.h"
+#include "task.h"
 #include <cstdint>
 
 using namespace motor_control;
@@ -98,7 +99,7 @@ static void init_peripherals()
     HAL_ADC_Start_DMA(&hadc5, (uint32_t*)adc_dma.adc_vdc_vrefint_raw, 2);
     __HAL_DMA_DISABLE_IT(&hdma_adc5, DMA_IT_TC | DMA_IT_HT);
 
-    tx_thread_sleep(2);
+    vTaskDelay(pdMS_TO_TICKS(2));
 
     adc_cal.adc_ref_voltage = __HAL_ADC_CALC_VREFANALOG_VOLTAGE(adc_dma.adc_vdc_vrefint_raw[1], ADC_RESOLUTION_12B) / 1000.0f;
     adc_cal.volt_per_lsb    = adc_cal.adc_ref_voltage / ((1U << ADC_BIT) - 1U);
