@@ -59,7 +59,7 @@ constexpr Iabc_t kZeroCurrent{0.0f, 0.0f, 0.0f};
 
 }  // namespace
 
-TEST(CurrentControl, SifirHatadaSifirGerilim)
+TEST(CurrentControl, ZeroErrorGivesZeroVoltage)
 {
     current_control cc(p_only(1.0f), p_only(1.0f));
     const duties_t d = cc.update({0.0f, 0.0f}, kZeroCurrent, make_sin_cos(0.3f), 24.0f);
@@ -68,7 +68,7 @@ TEST(CurrentControl, SifirHatadaSifirGerilim)
     EXPECT_NEAR(d.duty_c, 0.5f, kTol);
 }
 
-TEST(CurrentControl, QHatasiHerAcidaQEksenineGerilimUygular)
+TEST(CurrentControl, QErrorDrivesQAxisAtAnyAngle)
 {
     // iq_ref = 2 A, measured current 0, Kp = 1  ->  Vq = 2 V, Vd = 0, for any rotor angle
     for (int deg = 0; deg < 360; deg += 10) {
@@ -80,7 +80,7 @@ TEST(CurrentControl, QHatasiHerAcidaQEksenineGerilimUygular)
     }
 }
 
-TEST(CurrentControl, AkimReferansaEsitseGerilimSifir)
+TEST(CurrentControl, ZeroVoltageWhenCurrentEqualsReference)
 {
     // Measured current is exactly iq_ref = 2 A (90° ahead of the rotor)  ->  no error  ->  no voltage
     for (int deg = 0; deg < 360; deg += 30) {
@@ -94,7 +94,7 @@ TEST(CurrentControl, AkimReferansaEsitseGerilimSifir)
     }
 }
 
-TEST(CurrentControl, GerilimVektoruVbusBolKok3SiniriniAsmaz)
+TEST(CurrentControl, VoltageVectorStaysBelowVbusOverSqrt3)
 {
     // Very large references: both PIs want to saturate. The vector length must equal Vbus/√3 at every angle.
     const float vdc = 24.0f;
@@ -107,7 +107,7 @@ TEST(CurrentControl, GerilimVektoruVbusBolKok3SiniriniAsmaz)
     }
 }
 
-TEST(CurrentControl, DEkseniOnceliklidir)
+TEST(CurrentControl, DAxisHasPriority)
 {
     // Both id_ref and iq_ref are very large: the d axis takes all of V_max, nothing is left for q
     const float vdc = 24.0f;
@@ -119,7 +119,7 @@ TEST(CurrentControl, DEkseniOnceliklidir)
     EXPECT_NEAR(v.Vq, 0.0f, 1e-2f);
 }
 
-TEST(CurrentControl, QEksenineKalanPayVerilir)
+TEST(CurrentControl, QAxisGetsRemainingVoltage)
 {
     // Vd = 8 V (Kp = 1, id error 8). V_max = 13.856  ->  Vq at most √(13.856² − 8²) = 11.31 V
     const float vdc = 24.0f;
@@ -131,7 +131,7 @@ TEST(CurrentControl, QEksenineKalanPayVerilir)
     EXPECT_NEAR(v.Vq, std::sqrt(v_max * v_max - 64.0f), 1e-2f);
 }
 
-TEST(CurrentControl, VbusDusunceLimitDeDuser)
+TEST(CurrentControl, LimitDropsWithVbus)
 {
     current_control cc(p_only(1.0f), p_only(1.0f));
     const SinCos_t sc = make_sin_cos(deg_to_rad(20));
@@ -142,7 +142,7 @@ TEST(CurrentControl, VbusDusunceLimitDeDuser)
     }
 }
 
-TEST(CurrentControl, VbusSifirkenCokmez)
+TEST(CurrentControl, ZeroVbusDoesNotCrash)
 {
     current_control cc(p_only(1.0f), p_only(1.0f));
     const duties_t d = cc.update({1.0f, 1.0f}, kZeroCurrent, make_sin_cos(0.0f), 0.0f);
@@ -151,7 +151,7 @@ TEST(CurrentControl, VbusSifirkenCokmez)
     EXPECT_FALSE(std::isnan(d.duty_c));
 }
 
-TEST(CurrentControl, ResetSonrasiYeniKurulmusGibiDavranir)
+TEST(CurrentControl, BehavesLikeNewAfterReset)
 {
     const PiConfig_ cfg{.Kp = 0.5f, .Ki = 200.0f, .step_time = 50e-6f, .out_max = 100.0f, .out_min = -100.0f};
     const SinCos_t sc = make_sin_cos(deg_to_rad(60));

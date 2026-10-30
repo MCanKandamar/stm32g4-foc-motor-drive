@@ -52,21 +52,21 @@ float run_max_error_deg(AnglePLL& pll, float theta0, float omega, int steps)
 
 }  // namespace
 
-TEST(AnglePLL, ResetVerilenAciylaBaslar)
+TEST(AnglePLL, ResetStartsAtGivenAngle)
 {
     AnglePLL pll(pll_config());
     pll.reset(1.0f, 0.0f);
     EXPECT_FLOAT_EQ(pll.get_angle(), 1.0f);
 }
 
-TEST(AnglePLL, ResetSonrasiHizVerilenDegerdir)
+TEST(AnglePLL, ResetSetsGivenSpeed)
 {
     AnglePLL pll(pll_config());
     pll.reset(0.0f, 1000.0f);
     EXPECT_FLOAT_EQ(pll.get_speed(), 1000.0f);
 }
 
-TEST(AnglePLL, SabitHizdaKilitlenir)
+TEST(AnglePLL, LocksAtConstantSpeed)
 {
     // Start from rest, rotor turns at 1000 rad/s. After 0.2 s the angle and speed must have settled.
     AnglePLL pll(pll_config());
@@ -78,7 +78,7 @@ TEST(AnglePLL, SabitHizdaKilitlenir)
     EXPECT_NEAR(pll.get_speed(), 1000.0f, 10.0f);
 }
 
-TEST(AnglePLL, TersYondeDeKilitlenir)
+TEST(AnglePLL, LocksInReverse)
 {
     AnglePLL pll(pll_config());
     pll.reset(0.0f, 0.0f);
@@ -89,7 +89,7 @@ TEST(AnglePLL, TersYondeDeKilitlenir)
     EXPECT_NEAR(pll.get_speed(), -1000.0f, 10.0f);
 }
 
-TEST(AnglePLL, IkiPiGecisindeAciZiplamaz)
+TEST(AnglePLL, NoAngleJumpAtTwoPiWrap)
 {
     // Turn a few times while locked: the angle is always in 0..2π and moves only ω·Ts per step.
     AnglePLL pll(pll_config());
@@ -105,7 +105,7 @@ TEST(AnglePLL, IkiPiGecisindeAciZiplamaz)
     }
 }
 
-TEST(AnglePLL, DogruResetGecisSureciYaratmaz)
+TEST(AnglePLL, CorrectResetHasNoTransient)
 {
     // Start while the motor already turns at 1000 rad/s: if the speed is given, the error stays small from the start.
     AnglePLL pll(pll_config());
@@ -113,7 +113,7 @@ TEST(AnglePLL, DogruResetGecisSureciYaratmaz)
     EXPECT_LT(run_max_error_deg(pll, 2.0f, 1000.0f, 400), 1.0f);   // first 20 ms
 }
 
-TEST(AnglePLL, HizsizResetBuyukGecisSureciYaratir)
+TEST(AnglePLL, ResetWithoutSpeedHasLargeTransient)
 {
     // Same case with speed 0: the angle error goes above 90° until the PLL catches up (this is why we pass ω).
     AnglePLL pll(pll_config());

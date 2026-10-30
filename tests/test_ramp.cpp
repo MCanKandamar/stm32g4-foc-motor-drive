@@ -25,7 +25,7 @@ float run(Ramp& r, float target, float up, float down, int n)
 
 }  // namespace
 
-TEST(Ramp, HizlanmaRateUpIle)
+TEST(Ramp, AcceleratesWithRateUp)
 {
     Ramp r;
 
@@ -33,7 +33,7 @@ TEST(Ramp, HizlanmaRateUpIle)
     EXPECT_NEAR(run(r, 3000.0f, 1000.0f, 500.0f, 100), 100.0f, kTol);
 }
 
-TEST(Ramp, HedefteTamDurur)
+TEST(Ramp, StopsExactlyAtTarget)
 {
     Ramp r;
 
@@ -42,7 +42,7 @@ TEST(Ramp, HedefteTamDurur)
     EXPECT_EQ(r.get_output(), 300.0f);
 }
 
-TEST(Ramp, YavaslamaRateDownIle)
+TEST(Ramp, DeceleratesWithRateDown)
 {
     Ramp r;
     r.reset(1000.0f);
@@ -51,7 +51,7 @@ TEST(Ramp, YavaslamaRateDownIle)
     EXPECT_NEAR(run(r, 0.0f, 2000.0f, 500.0f, 100), 950.0f, kTol);
 }
 
-TEST(Ramp, SifirdanGecis)
+TEST(Ramp, CrossesZero)
 {
     Ramp r;
     r.reset(100.0f);
@@ -63,7 +63,7 @@ TEST(Ramp, SifirdanGecis)
     EXPECT_EQ(run(r, -100.0f, 2000.0f, 1000.0f, 30), -100.0f);
 }
 
-TEST(Ramp, NegatifYondeHizlanma)
+TEST(Ramp, AcceleratesInNegativeDirection)
 {
     Ramp r;
 
@@ -71,7 +71,7 @@ TEST(Ramp, NegatifYondeHizlanma)
     EXPECT_NEAR(run(r, -3000.0f, 1000.0f, 100.0f, 100), -100.0f, kTol);
 }
 
-TEST(Ramp, ResetCikisiAyarlar)
+TEST(Ramp, ResetSetsOutput)
 {
     Ramp r;
     run(r, 500.0f, 1000.0f, 1000.0f, 100);

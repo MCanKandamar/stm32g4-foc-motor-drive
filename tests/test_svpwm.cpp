@@ -45,7 +45,7 @@ V_AlphaBeta_t applied_vector(const duties_t& d)
 
 // ---------------------------------------------------------------- Known examples
 
-TEST(Svpwm, AlphaEksenindeOnVolt)
+TEST(Svpwm, TenVoltsOnAlphaAxis)
 {
     const duties_t d = svpwm(inverseClarke({10.0f, 0.0f}), kVbus);
     EXPECT_NEAR(d.duty_a, 0.8125f, kTol);
@@ -53,7 +53,7 @@ TEST(Svpwm, AlphaEksenindeOnVolt)
     EXPECT_NEAR(d.duty_c, 0.1875f, kTol);
 }
 
-TEST(Svpwm, DogrusalBolgeSinirindaBirFaz100BirFaz0)
+TEST(Svpwm, AtLinearLimitOnePhaseIs100AndOneIs0)
 {
     // |V| = Vbus/sqrt(3), angle 30°  ->  Vα = 12, Vβ = 6.928
     const duties_t d = svpwm_from_vector(kVbus / std::numbers::sqrt3_v<float>, deg_to_rad(30));
@@ -62,7 +62,7 @@ TEST(Svpwm, DogrusalBolgeSinirindaBirFaz100BirFaz0)
     EXPECT_NEAR(d.duty_c, 0.0f, kTol);
 }
 
-TEST(Svpwm, SifirGerilimdeTumFazlarYuzde50)
+TEST(Svpwm, ZeroVoltageGivesAllPhases50Percent)
 {
     const duties_t d = svpwm(inverseClarke({0.0f, 0.0f}), kVbus);
     EXPECT_NEAR(d.duty_a, 0.5f, kTol);
@@ -70,7 +70,7 @@ TEST(Svpwm, SifirGerilimdeTumFazlarYuzde50)
     EXPECT_NEAR(d.duty_c, 0.5f, kTol);
 }
 
-TEST(Svpwm, VbusSifirVeyaNegatifseTumDutylerSifir)
+TEST(Svpwm, ZeroOrNegativeVbusGivesZeroDuties)
 {
     for (const float vbus : {0.0f, -5.0f}) {
         const duties_t d = svpwm(inverseClarke({10.0f, 3.0f}), vbus);
@@ -82,7 +82,7 @@ TEST(Svpwm, VbusSifirVeyaNegatifseTumDutylerSifir)
 
 // ---------------------------------------------------------------- Full turn
 
-TEST(Svpwm, HerAcidaKomutEdilenVektorAynenUygulanir)
+TEST(Svpwm, CommandedVectorAppliedAtAnyAngle)
 {
     // In the linear range the vector on the motor must match the commanded size and angle exactly
     for (int deg = 0; deg < 360; deg += 5) {
@@ -93,7 +93,7 @@ TEST(Svpwm, HerAcidaKomutEdilenVektorAynenUygulanir)
     }
 }
 
-TEST(Svpwm, DutylerOrtalanmistir)
+TEST(Svpwm, DutiesAreCentered)
 {
     // Property of the min-max method: the largest and smallest duty are symmetric around 0.5
     for (int deg = 0; deg < 360; deg += 5) {
@@ -104,7 +104,7 @@ TEST(Svpwm, DutylerOrtalanmistir)
     }
 }
 
-TEST(Svpwm, DogrusalBolgeSinirindaDutylerTasmaz)
+TEST(Svpwm, DutiesStayInRangeAtLinearLimit)
 {
     const float v_limit = kVbus / std::numbers::sqrt3_v<float>;
     for (int deg = 0; deg < 360; deg += 1) {
@@ -116,7 +116,7 @@ TEST(Svpwm, DogrusalBolgeSinirindaDutylerTasmaz)
     }
 }
 
-TEST(Svpwm, AsiriModulasyondaDutyler0ile1ArasindaKalir)
+TEST(Svpwm, OvermodulationKeepsDutiesBetween0And1)
 {
     // |V| far above the limit: the clamp must keep the duties in [0, 1]
     for (int deg = 0; deg < 360; deg += 5) {

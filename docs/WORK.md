@@ -15,8 +15,8 @@ Task: host unit tests in CI, missing tests, open-source blockers · branch: main
 - [x] 1. `AnglePLL::reset()` also sets `pll_speed_filtered` — verified: `motor_control_tests` 51/51 ✓ (scratchpad host build, MinGW), built ✓ (Debug, no new warnings; flash 177.4/512 KB, RAM 66.5/128 KB), needs HW test (normal sensorless start)
 - [x] 2. Host test preset `HostTests` for `tests/`; gtest download pinned with SHA-256 — verified: `ctest --preset HostTests` 51/51 ✓, built ✓ (Debug, no new warnings)
 - [x] 3. CI: `host-tests` job in `build.yml`; `release.yml` needs it — verified: both files parse (PyYAML) ✓; unverified (not pushed, nothing has run on Linux yet)
-- [ ] (in progress) 4. Test names in English
-- [ ] 5. New tests: `state_machine`; `PidController` + `speed_control`; `startup` + `math_utils`; `hall_sensor`; `observer` + `AnglePLL::update_emf`. Baseline: 31 % of `motor_control/src` lines (107/344, gcov, MinGW)
+- [x] 4. Test names in English — verified: `ctest --preset HostTests` 51/51 ✓ (names only, 51 lines changed)
+- [ ] (in progress) 5. New tests: `state_machine`; `PidController` + `speed_control`; `startup` + `math_utils`; `hall_sensor`; `observer` + `AnglePLL::update_emf`. Baseline: 31 % of `motor_control/src` lines (107/344, gcov, MinGW)
 - [ ] 6. Move the CiA 402 logic from `canopen_bridge.cpp` to hardware-free code and test it
 - [ ] 7. Scrutiny CLI in `release.yml`: `_tagged.elf`, `.sfd`, hex/bin from the tagged ELF (PyPI 0.16.0 needs Python < 3.14)
 - [ ] 8. Licences before going public: ThreadX/USBX (see Open questions), `scrutiny-embedded` LICENSE file

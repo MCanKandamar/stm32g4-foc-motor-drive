@@ -20,7 +20,7 @@ PiConfig_ make_config(float kp, float ki)
 
 }  // namespace
 
-TEST(PiController, SadecePTerimi)
+TEST(PiController, ProportionalTermOnly)
 {
     PiController pi(make_config(2.0f, 0.0f));
 
@@ -29,7 +29,7 @@ TEST(PiController, SadecePTerimi)
     EXPECT_NEAR(pi.getIntegral(), 0.0f, kTol);
 }
 
-TEST(PiController, IntegralZamanlaBirikir)
+TEST(PiController, IntegralAccumulatesOverTime)
 {
     PiController pi(make_config(0.0f, 100.0f));
 
@@ -42,7 +42,7 @@ TEST(PiController, IntegralZamanlaBirikir)
     EXPECT_NEAR(output, 1.0f, kTol);
 }
 
-TEST(PiController, CikisLimitleriAsilmaz)
+TEST(PiController, OutputStaysWithinLimits)
 {
     PiController pi(make_config(5.0f, 1000.0f));
 
@@ -59,7 +59,7 @@ TEST(PiController, CikisLimitleriAsilmaz)
     EXPECT_FLOAT_EQ(pi.update(-100.0f, 0.0f), -10.0f);
 }
 
-TEST(PiController, PTerimiDoyurunca_IntegralBirikmez)
+TEST(PiController, NoIntegralWindupWhenPTermSaturates)
 {
     // The P term alone saturates the output (1 * 100 > 10).
     // With conditional integration the integral must stay at 0 (no windup).
@@ -76,7 +76,7 @@ TEST(PiController, PTerimiDoyurunca_IntegralBirikmez)
     EXPECT_NEAR(pi.update(0.0f, 1.0f), -1.1f, kTol);
 }
 
-TEST(PiController, GurultuOrnegiIntegraliBozmaz)
+TEST(PiController, NoisySampleKeepsIntegral)
 {
     // Scenario: the integral sits at ~8 under a steady load. One noisy sample
     // makes the P term large for a moment and saturates the output.
@@ -96,7 +96,7 @@ TEST(PiController, GurultuOrnegiIntegraliBozmaz)
     EXPECT_NEAR(pi.update(0.0f, 0.0f), integral_before, kTol);
 }
 
-TEST(PiController, AltLimitteDeAntiWindupCalisir)
+TEST(PiController, AntiWindupWorksAtLowerLimit)
 {
     PiController pi(make_config(1.0f, 100.0f));
 
@@ -108,7 +108,7 @@ TEST(PiController, AltLimitteDeAntiWindupCalisir)
     EXPECT_NEAR(pi.update(0.0f, -1.0f), 1.1f, kTol);
 }
 
-TEST(PiController, ResetIntegraliSifirlar)
+TEST(PiController, ResetClearsIntegral)
 {
     PiController pi(make_config(0.0f, 100.0f));
 
@@ -122,7 +122,7 @@ TEST(PiController, ResetIntegraliSifirlar)
     EXPECT_FLOAT_EQ(pi.update(0.0f, 0.0f), 0.0f);
 }
 
-TEST(PiController, SetLimitsYeniLimitleriUygular)
+TEST(PiController, SetLimitsAppliesNewLimits)
 {
     PiController pi(make_config(5.0f, 0.0f));
     pi.setLimits(-3.0f, 3.0f);
@@ -131,7 +131,7 @@ TEST(PiController, SetLimitsYeniLimitleriUygular)
     EXPECT_FLOAT_EQ(pi.update(-100.0f, 0.0f), -3.0f);
 }
 
-TEST(PiController, LimitDaralincaIntegralDeDaralir)
+TEST(PiController, IntegralShrinksWithNarrowerLimits)
 {
     // Scenario: integral at 8 V, limits ±10 V. Vbus drops and the limit goes down to ±5 V
     // (current_control calls setLimits every cycle).
@@ -155,14 +155,14 @@ TEST(PiController, LimitDaralincaIntegralDeDaralir)
 // Death test: when built with invalid settings, the assert in the constructor must stop the program.
 // (assert works only in Debug builds; in Release these tests are skipped.)
 #ifndef NDEBUG
-TEST(PiControllerDeathTest, AdimSuresiSifirsaDurur)
+TEST(PiControllerDeathTest, ZeroStepTimeAborts)
 {
     PiConfig_ config = make_config(1.0f, 1.0f);
     config.step_time = 0.0f;
     EXPECT_DEATH(PiController{config}, "");
 }
 
-TEST(PiControllerDeathTest, LimitlerTersseDurur)
+TEST(PiControllerDeathTest, ReversedLimitsAbort)
 {
     PiConfig_ config = make_config(1.0f, 1.0f);
     config.out_max = -10.0f;

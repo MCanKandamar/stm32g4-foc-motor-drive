@@ -38,21 +38,21 @@ Iabc_t balanced_current(float amplitude, float theta)
 
 // ---------------------------------------------------------------- Clarke
 
-TEST(Clarke, FazATepedeykenVektorAlphaEksenindedir)
+TEST(Clarke, PhaseAPeakIsOnAlphaAxis)
 {
     const I_AlphaBeta_t ab = clarke({1.0f, -0.5f, -0.5f});
     EXPECT_NEAR(ab.ialpha, 1.0f, kTol);
     EXPECT_NEAR(ab.ibeta, 0.0f, kTol);
 }
 
-TEST(Clarke, DoksanDerecedeVektorBetaEksenindedir)
+TEST(Clarke, NinetyDegreesIsOnBetaAxis)
 {
     const I_AlphaBeta_t ab = clarke(balanced_current(1.0f, kPi / 2.0f));
     EXPECT_NEAR(ab.ialpha, 0.0f, kTol);
     EXPECT_NEAR(ab.ibeta, 1.0f, kTol);
 }
 
-TEST(Clarke, GenligiKorur)
+TEST(Clarke, KeepsAmplitude)
 {
     for (int deg = 0; deg < 360; deg += 15) {
         const I_AlphaBeta_t ab = clarke(balanced_current(2.5f, deg_to_rad(deg)));
@@ -62,7 +62,7 @@ TEST(Clarke, GenligiKorur)
 
 // ---------------------------------------------------------------- Inverse Clarke
 
-TEST(InverseClarke, AlphaEksenindekiVektor)
+TEST(InverseClarke, VectorOnAlphaAxis)
 {
     const Vabc_t v = inverseClarke({10.0f, 0.0f});
     EXPECT_NEAR(v.Va, 10.0f, kTol);
@@ -70,7 +70,7 @@ TEST(InverseClarke, AlphaEksenindekiVektor)
     EXPECT_NEAR(v.Vc, -5.0f, kTol);
 }
 
-TEST(InverseClarke, FazlarinToplamiSifirdir)
+TEST(InverseClarke, PhasesSumToZero)
 {
     for (int deg = 0; deg < 360; deg += 15) {
         const float theta = deg_to_rad(deg);
@@ -79,7 +79,7 @@ TEST(InverseClarke, FazlarinToplamiSifirdir)
     }
 }
 
-TEST(InverseClarke, ClarkeIleGeriDonulur)
+TEST(InverseClarke, RoundTripWithClarke)
 {
     for (int deg = 0; deg < 360; deg += 15) {
         const Iabc_t i = balanced_current(3.0f, deg_to_rad(deg));
@@ -93,7 +93,7 @@ TEST(InverseClarke, ClarkeIleGeriDonulur)
 
 // ---------------------------------------------------------------- Park
 
-TEST(Park, RotorAcisiylaDonenAkimDEksenindeDcOlur)
+TEST(Park, CurrentRotatingWithRotorIsDcOnDAxis)
 {
     // The basic idea of FOC: a balanced 3-phase current, passed through Park with the rotor angle,
     // turns into constant (DC) d and q values.
@@ -105,7 +105,7 @@ TEST(Park, RotorAcisiylaDonenAkimDEksenindeDcOlur)
     }
 }
 
-TEST(Park, DoksanDereceIleridekiAkimQEksenindedir)
+TEST(Park, CurrentNinetyDegreesAheadIsOnQAxis)
 {
     // Current 90° ahead of the rotor -> all of it on the q axis (torque current)
     for (int deg = 0; deg < 360; deg += 15) {
@@ -118,14 +118,14 @@ TEST(Park, DoksanDereceIleridekiAkimQEksenindedir)
 
 // ---------------------------------------------------------------- Inverse Park
 
-TEST(InversePark, SifirAcidaDEkseniAlphaEksenidir)
+TEST(InversePark, AtZeroAngleDAxisIsAlphaAxis)
 {
     const V_AlphaBeta_t ab = inversePark({4.0f, 1.5f}, make_sin_cos(0.0f));
     EXPECT_NEAR(ab.Valpha, 4.0f, kTol);
     EXPECT_NEAR(ab.Vbeta, 1.5f, kTol);
 }
 
-TEST(InversePark, ParkIleGeriDonulur)
+TEST(InversePark, RoundTripWithPark)
 {
     const Vdq_t input{1.2f, -0.7f};
     for (int deg = 0; deg < 360; deg += 15) {
