@@ -17,10 +17,12 @@ namespace
         .out_min       = -5.0f,
     });
 
+    // Kp [A/rpm], Ki [A/(rpm·s)]. Tuned on the board 2026-10-30 (tools/hil/speed_step.py):
+    // crossover ~8 Hz, limited by the 30 Hz speed PLLs; 1000 → 1300 rpm step rises in ~20 ms.
     motor_control::PidConfig_ speed_pi_cfg(
     {
-        .Kp            = 0.001f,
-        .Ki            = 0.001f,
+        .Kp            = 0.0025f,
+        .Ki            = 0.02f,
         .Kd            = 0.0f,
         .step_time     = 0.001f,
         .out_max       = 9.0f,
