@@ -32,7 +32,7 @@ Firmware for a three-phase BLDC/PMSM motor drive on the custom STM32G473 [Motor-
 | PWM | TIM8, centre-aligned, 20 kHz |
 | Motor | 57BLF02: 24 V, 125 W, 3000 rpm, 4 pole pairs |
 
-The schematic, connector list and full MCU pin table are in [Motor-Control](https://github.com/Sinan-Akbayin/Motor-Control). The firmware's own pin and clock setup is in [docs/PROJECT.md](docs/PROJECT.md#hardware--toolchain) and in the CubeMX project, [015_BLDC_FOC_RTOS_MotorDrive.ioc](015_BLDC_FOC_RTOS_MotorDrive.ioc).
+The schematic, connector list and full MCU pin table are in [Motor-Control](https://github.com/Sinan-Akbayin/Motor-Control). The firmware's own pin and clock setup is in [docs/PROJECT.md](docs/PROJECT.md#hardware--toolchain) and in the CubeMX project, [stm32g4-foc-motor-drive.ioc](stm32g4-foc-motor-drive.ioc).
 
 One pin assignment differs from the Motor-Control schematic: this firmware reads the Hall sensors with TIM3 on PA6, PA7 and PB0. The Motor-Control schematic routes the Hall connector J2 to PD9, PD8 and PB11, and shows PA6, PA7 and PB0 on the J11 and J9 headers.
 
@@ -165,7 +165,7 @@ cmake --preset Debug
 cmake --build --preset Debug
 ```
 
-Use the `Release` preset for an optimised build. The output is `build/<preset>/015_BLDC_FOC_RTOS_MotorDrive.elf`, and the link step prints the memory use. On 2026-10-30 the Release build used 96 of 512 KB flash and 34 of 128 KB RAM.
+Use the `Release` preset for an optimised build. The output is `build/<preset>/stm32g4-foc-motor-drive.elf`, and the link step prints the memory use. On 2026-10-30 the Release build used 96 of 512 KB flash and 34 of 128 KB RAM.
 
 If the Scrutiny CLI is installed, a post-build step also makes a `*_tagged.elf` file and a `.sfd` file. Flash the tagged ELF to use Scrutiny. Without the CLI, this step is skipped and the build still works.
 

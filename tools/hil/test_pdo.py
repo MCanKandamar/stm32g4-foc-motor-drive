@@ -3,7 +3,7 @@
 Usage (python-can, SLCAN adapter on PORT):
     python tools/hil/test_pdo.py --tests D
     python tools/hil/test_pdo.py --tests A,B,C --motor-ok
-    python tools/hil/test_pdo.py --tests C --tq 100 --tq-time 1.5 --motor-ok
+    python tools/hil/test_pdo.py --tests C --tq 80 --tq-time 0.45 --motor-ok
 
 D: SYNC mode (motor off)   A: pv sensorless target change via RPDO1
 B: pv Hall via RPDO1       C: tq via RPDO2 (an unloaded motor speeds up fast)
@@ -25,6 +25,7 @@ SDO_TX, SDO_RX, EMCY, HB = 0x60D, 0x58D, 0x08D, 0x70D
 RPDO1, RPDO2, TPDO1, TPDO2, SYNC = 0x20D, 0x30D, 0x18D, 0x28D, 0x080
 SPEED_ABORT_RPM = 2500
 ST_IDLE, ST_CL, ST_FAULT = 1, 4, 5
+TQ_SETTLED_S = 0.1           # C: 0x0637 is reached by ~97 ms, 0x6077 is read by SDO from here on
 
 bus = None
 rxq = queue.Queue()
@@ -332,7 +333,7 @@ def test_pv(name, sensor, v1, v2):
 
 # --- C: profile torque over RPDO2 ----------------------------------------------
 
-def test_c(permille=50, duration=2.0):
+def test_c(permille=80, duration=0.45):
     t_from = now()
     to_switch_on_disabled()
     sdo_write(0x6060, 0, 4, 1)
@@ -345,11 +346,14 @@ def test_c(permille=50, duration=2.0):
     try:
         wait_sw(0x0027, mask=0x006F)
         sws = []
+        tq_sdo = []
         while now() - t_on < duration:
             guard(t_from, True)
             sw = sdo_read(0x6041)
             if not sws or sws[-1][1] != sw:
                 sws.append((round((now() - t_on) * 1000.0), sw))
+            if now() - t_on >= TQ_SETTLED_S:
+                tq_sdo.append(sdo_read(0x6077, signed=True))
             time.sleep(0.01)
     finally:
         rpdo2(0x06, 0)
@@ -360,12 +364,13 @@ def test_c(permille=50, duration=2.0):
     tq = [q for _, _, q, _ in f2]
     modes = sorted({m for _, _, _, m in f2})
     sp = [rpm for _, _, rpm in f1]
-    mean_tq = sum(tq) / len(tq) if tq else None
-    record('C1', f'RPDO2 06/07/0F + {permille} permille: sw 0x0637, mode display 4, torque actual ~{permille}, motor turns',
-           f"sw changes (ms, sw) {[(t, hex(s)) for t, s in sws]}, mode {modes}, torque actual {tq} "
-           f"(mean {mean_tq and round(mean_tq, 1)}), TPDO1 speed {sp}",
+    mean_tq = sum(tq_sdo) / len(tq_sdo) if tq_sdo else None
+    record('C1', f'RPDO2 06/07/0F + {permille} permille: sw 0x0637, mode display 4, SDO 0x6077 mean ~{permille}, '
+                 'TPDO2 torque > 0, motor turns',
+           f"sw changes (ms, sw) {[(t, hex(s)) for t, s in sws]}, mode {modes}, SDO 0x6077 {tq_sdo} "
+           f"(mean {mean_tq and round(mean_tq, 1)}), TPDO2 torque {tq}, TPDO1 speed {sp}",
            any(s == 0x0637 for _, s in sws) and modes == [4] and mean_tq is not None
-           and abs(mean_tq - permille) <= 15 and sp and max(abs(v) for v in sp) > 50)
+           and abs(mean_tq - permille) <= 15 and any(q > 0 for q in tq) and sp and max(abs(v) for v in sp) > 50)
     t_stop = wait_state(ST_IDLE, 10.0, t_from)
     print(f"   C: stopped, IDLE after {t_stop:.1f} s, rotor still after {coast(True):.1f} s", flush=True)
 
@@ -377,8 +382,10 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument('--tests', default='D,A,B,C')
     ap.add_argument('--log', default=str(Path(__file__).parent / 'logs'))
-    ap.add_argument('--tq', type=int, default=50, help='C: target torque [permille]')
-    ap.add_argument('--tq-time', type=float, default=2.0, help='C: run time [s]')
+    # Break-away depends on where the rotor rests: 60 moved it from two places, one place needed 80
+    # (70 did not). At 80 the unloaded motor gains ~6300 rpm/s, so 0.45 s stays below SPEED_ABORT_RPM.
+    ap.add_argument('--tq', type=int, default=80, help='C: target torque [permille]')
+    ap.add_argument('--tq-time', type=float, default=0.45, help='C: run time [s]')
     ap.add_argument('--motor-ok', action='store_true', help='allow A/B/C (motor rotates)')
     args = ap.parse_args()
     tests = [t.strip().upper() for t in args.tests.split(',')]

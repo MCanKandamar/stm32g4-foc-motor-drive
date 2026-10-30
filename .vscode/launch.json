@@ -15,8 +15,8 @@
             "imagesAndSymbols": [
                 {
                     // copy with the Scrutiny firmware ID inside (made by scrutiny_postbuild after the build)
-                    //"imageFileName": "${workspaceFolder}/build/Debug/015_BLDC_FOC_RTOS_MotorDrive_tagged.elf"
-                    "imageFileName": "${workspaceFolder}/build/Release/015_bldc_foc_rtos_motordrive_tagged.elf"
+                    //"imageFileName": "${workspaceFolder}/build/Debug/stm32g4-foc-motor-drive_tagged.elf"
+                    "imageFileName": "${workspaceFolder}/build/Release/stm32g4-foc-motor-drive_tagged.elf"
                 }
             ],
             "liveWatch": {

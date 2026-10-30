@@ -2,20 +2,22 @@
 
 Usage (venv with python-can and scrutinydebugger 0.16):
     python tools/hil/test_cia402_v2.py --tests T1,T9,T2,T3,T7,T8
+    python tools/hil/test_cia402_v2.py --tests T1,T9,T2,T3,T7,T8 --nmt-reset
     python tools/hil/test_cia402_v2.py --tests T5,T6 --motor-ok
 
 T4 runs inside T3 (it needs the 0x07 of T3). T5/T6 rotate the motor and only run
 with --motor-ok. On every exit the script writes 0x6040 = 0 and 0x2011 = 2.
+--nmt-reset replaces the reset button in T1/T9: a software reset, not a power cycle.
 """
 import argparse
 import json
 import queue
+import sys
 import threading
 import time
 from pathlib import Path
 
-import sys
-
+# The server is 0.16; a global scrutinydebugger package may be older and fail the handshake.
 sys.path.insert(0, 'C:/Program Files (x86)/Scrutiny Debugger/scrutinydebugger-nocli-0.16.0-py3-none-any.whl')
 
 import can
@@ -25,6 +27,9 @@ SDO_TX, SDO_RX, EMCY, HB = 0x60D, 0x58D, 0x08D, 0x70D
 SPEED_REF_RPM = 300          # rule: <= 300 rpm
 RUN_TIME_S = 8.0             # rule: <= 8 s per test
 SPEED_ABORT_RPM = 600        # safety: unexpected speed -> stop at once
+SW_PROFILE_BITS = 0x1400     # 0x6041 bit 10 target reached, bit 12 speed = 0: they follow the speed, not the state
+T5_SETTLED_S = 6.5           # first sample after the ramp: CLOSED_LOOP at ~5.9 s, then 500 -> 300 rpm at 1000 rpm/s
+SCRUTINY_SETTLE_S = 2.0      # after the connect: time to read the CAN frames that piled up during it (~1.4 s seen)
 
 bus = None
 rxq = queue.Queue()          # (t, id, bytes) from the RX thread
@@ -101,10 +106,10 @@ def cw(value):                                    # write controlword, return st
     return t0
 
 
-def wait_sw(expected, t0, timeout=0.2):           # poll 0x6041 every 2 ms
+def wait_sw(expected, t0, timeout=0.2, mask=0xFFFF):   # poll 0x6041 every 2 ms
     while time.perf_counter() - t0 < timeout:
         st, sw = sdo_read(0x6041)
-        if sw == expected:
+        if (sw & mask) == expected:
             return (time.perf_counter() - t0) * 1000.0
         time.sleep(0.002)
     return None
@@ -191,6 +196,20 @@ class Scr:
 
 
 scr = None
+
+
+def connect_scrutiny():
+    global scr
+    try:
+        scr = Scr()
+        scr.connect()
+        time.sleep(SCRUTINY_SETTLE_S)             # the first SDO of a test must not wait behind old frames
+        _drain()
+    except Exception as e:
+        print(f"Scrutiny not available: {e}")
+        scr = None
+
+
 results = []          # dict(test, expected, measured, verdict)
 raw = {}              # test -> list of frame strings
 
@@ -223,10 +242,16 @@ def wait_bootup(timeout=60.0):
     return None
 
 
-def t1():
-    print("\n>>> T1: reset the board within 60 s (reset button)", flush=True)
+def t1(nmt_reset=False):
     t_from = time.perf_counter() - 0.5
-    _drain()
+    if nmt_reset:                                 # NMT Reset Node -> HAL_NVIC_SystemReset()
+        time.sleep(1.0)                           # frames queued while the channel was closed arrive first
+        _drain()
+        print("\n>>> T1: NMT Reset Node (0x000: 81 0D), a software reset, not a power cycle", flush=True)
+        bus.send(can.Message(arbitration_id=0x000, data=[0x81, 0x0D], is_extended_id=False))
+    else:
+        print("\n>>> T1: reset the board within 60 s (reset button)", flush=True)
+        _drain()
     tb = wait_bootup(60.0)
     if tb is None:
         record('T1', 'boot-up 0x70D 00 seen', 'no boot-up in 60 s', False, t_from)
@@ -246,7 +271,8 @@ def t1():
     meas = f"0x0250 after {t_ok:.1f} ms" if t_ok else "0x0250 not reached in 1 s"
     meas += f" (first reads {sws}); 0x2002={ms}; 0x603F={ec}"
     ok = t_ok is not None and t_ok <= 50.0 and ms == 1 and ec == 0
-    record('T1', '0x6041=0x0250 <=50 ms after boot-up, 0x2002=1, 0x603F=0', meas, ok, t_from)
+    how = 'NMT software reset, not a power cycle' if nmt_reset else 'reset button'
+    record('T1', f'{how}: 0x6041=0x0250 <=50 ms after boot-up, 0x2002=1, 0x603F=0', meas, ok, t_from)
 
 
 def t9(nmt_reset=False):
@@ -275,7 +301,8 @@ def t9(nmt_reset=False):
     meas = (f"06 sent {(t_cw - tb) * 1000:.1f} ms after boot-up; first read {first[0]} ms: sw={first[1]:#06x} 0x2002={first[2]}; "
             f"INIT ended ~{t_init_end} ms; 0x0231 seen: {saw_0231} (at {t231} ms, during INIT: {saw_0231_in_init}); "
             f"last sw={seq[-1][1]:#06x}")
-    record('T9', 'sw stays 0x0250 (never 0x0231) after 06 sent during INIT', meas, not saw_0231, t_from)
+    record('T9', 'no 0x0231 while 0x2002=0 (INIT); 06 is level-held, so it applies after INIT', meas,
+           not saw_0231_in_init, t_from)
     raw['T9 sequence (ms_after_bootup, 0x6041, 0x2002)'] = [f"{t} {s:#06x} {m}" for t, s, m in seq]
 
 
@@ -292,9 +319,9 @@ def t2():
     return hb
 
 
-def step(value, expected, timeout=0.2):
+def step(value, expected, timeout=0.2, mask=0xFFFF):
     t0 = cw(value)
-    return wait_sw(expected, t0, timeout)
+    return wait_sw(expected, t0, timeout, mask)
 
 
 def t3_t4(hb):
@@ -420,17 +447,19 @@ def t5():
     sdo_write(0x2010, 0, SPEED_REF_RPM, 4)
     cw(0x00)
     wait_sw(0x0250, time.perf_counter(), 0.3)
-    lat = {'06': step(0x06, 0x0231), '07': step(0x07, 0x0233), '0F': step(0x0F, 0x0237)}
+    lat = {'06': step(0x06, 0x0231), '07': step(0x07, 0x0233),
+           '0F': step(0x0F, 0x0237, mask=0xFFFF & ~SW_PROFILE_BITS)}
     samples = run_and_sample('T5', RUN_TIME_S)
     lat['07 stop'] = step(0x07, 0x0233)
     seq = states_in_order(samples)
-    last2 = [sp for t, sp, _ in samples if t >= RUN_TIME_S - 2.0 - 0.01]
+    settled = [sp for t, sp, _ in samples if t >= T5_SETTLED_S - 0.01]
     order_ok = [s for s in seq if s in (2, 3, 4)] == [2, 3, 4]
-    speed_ok = bool(last2) and all(isinstance(s, int) and 250 <= s <= 350 for s in last2)
+    speed_ok = bool(settled) and all(isinstance(s, int) and 250 <= s <= 350 for s in settled)
     lat_ok = all(v is not None and v < 10.0 for v in lat.values())
     meas = (', '.join(f"{k}: {'timeout' if v is None else f'{v:.1f} ms'}" for k, v in lat.items())
-            + f"; states {seq}; last 2 s speed {last2}")
-    record('T5', '06/07/0F < 10 ms; 0x2002 2->3->4; last 2 s 250..350 rpm', meas, lat_ok and order_ok and speed_ok, t_from)
+            + f"; states {seq}; speed from {T5_SETTLED_S} s {settled}")
+    record('T5', f'06/07/0F < 10 ms (0F: bits 10, 12 ignored); 0x2002 2->3->4; from {T5_SETTLED_S} s (ramp done) 250..350 rpm',
+           meas, lat_ok and order_ok and speed_ok, t_from)
     raw['T5 samples (t_s, rpm, state)'] = [str(s) for s in samples]
     return [v for v in lat.values() if v is not None]
 
@@ -454,12 +483,13 @@ def t6():
 # --- main -------------------------------------------------------------------
 
 def main():
-    global bus, scr
+    global bus
     ap = argparse.ArgumentParser()
     ap.add_argument('--tests', default='T1,T9,T2,T3,T7,T8')
     ap.add_argument('--motor-ok', action='store_true', help='allow T5/T6 (motor rotates)')
     ap.add_argument('--no-scrutiny', action='store_true')
-    ap.add_argument('--nmt-reset', action='store_true', help='T9: reset the board with NMT Reset Node')
+    ap.add_argument('--nmt-reset', action='store_true',
+                    help='T1, T9: reset the board with NMT Reset Node (software reset, not a power cycle)')
     args = ap.parse_args()
     tests = [t.strip().upper() for t in args.tests.split(',')]
 
@@ -469,17 +499,13 @@ def main():
     latencies = []
     hb = None
     try:
-        if not args.no_scrutiny and any(t in tests for t in ('T3', 'T7', 'T8')):
-            try:
-                scr = Scr()
-                scr.connect()
-            except Exception as e:
-                print(f"Scrutiny not available: {e}")
-                scr = None
         for t in tests:
             try:
+                # a board reset (T1, T9) ends the Scrutiny watches, so connect after them
+                if t in ('T3', 'T7', 'T8') and scr is None and not args.no_scrutiny:
+                    connect_scrutiny()
                 if t == 'T1':
-                    t1()
+                    t1(args.nmt_reset)
                 elif t == 'T9':
                     t9(args.nmt_reset)
                 elif t == 'T2':
