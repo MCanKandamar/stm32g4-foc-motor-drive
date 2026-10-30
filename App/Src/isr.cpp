@@ -22,6 +22,7 @@ extern "C" void HAL_ADCEx_InjectedConvCpltCallback(ADC_HandleTypeDef *hadc)
         meas.z_alphabeta        = smo.update(meas.i_alphabeta, meas.v_alphabeta);
         meas.theta_e_rad_smo    = pll_smo.update_emf(meas.z_alphabeta);
         meas.speed_rpm_hall     = hall.getMechanicalSpeedRpm();
+        meas.speed_rpm_hall_pll = pll.get_speed() / 4.0f * RAD_TO_RPM;
         meas.speed_rpm_smo      = pll_smo.get_speed() / 4.0f * RAD_TO_RPM;
 
         if (foc_cfg.loop == LoopMode::OFF)      // the Supervisor turned PWM off
@@ -45,7 +46,8 @@ extern "C" void HAL_ADCEx_InjectedConvCpltCallback(ADC_HandleTypeDef *hadc)
                 break;
             case AngleSource::HALL:
                 meas.SinCos  = cordicSinCos(meas.theta_e_rad_pll);
-                speed_fb_rpm = meas.speed_rpm_hall;
+                // not speed_rpm_hall: its 1-turn average lags T/2 (30 ms at 1000 rpm) and makes the speed loop oscillate
+                speed_fb_rpm = meas.speed_rpm_hall_pll;
                 break;
             case AngleSource::SMO:
                 meas.SinCos  = cordicSinCos(wrap_2pi(meas.theta_e_rad_smo + foc_cfg.angle_offset));

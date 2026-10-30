@@ -75,6 +75,7 @@ struct Measurements
     volatile float           theta_ol;
 
     volatile float           speed_rpm_hall;
+    volatile float           speed_rpm_hall_pll;    // speed of the Hall angle PLL: Hall speed-loop feedback
     volatile float           speed_rpm_smo;
     motor_control::Iabc_t    Iabc;
     motor_control::Vabc_t    Vabc;
