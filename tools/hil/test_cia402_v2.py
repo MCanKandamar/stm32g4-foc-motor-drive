@@ -12,9 +12,13 @@ with --motor-ok. On every exit the script writes 0x6040 = 0 and 0x2011 = 2.
 import argparse
 import json
 import queue
+import sys
 import threading
 import time
 from pathlib import Path
+
+# The server is 0.16; a global scrutinydebugger package may be older and fail the handshake.
+sys.path.insert(0, 'C:/Program Files (x86)/Scrutiny Debugger/scrutinydebugger-nocli-0.16.0-py3-none-any.whl')
 
 import can
 
