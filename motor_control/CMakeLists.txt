@@ -1,11 +1,11 @@
-# Donanımdan bağımsız FOC kütüphanesi.
-# Hem PC'de hem STM32'de aynı kaynaklarla derlenir.
+# Hardware-independent FOC library.
+# Builds from the same sources on the PC and on the STM32.
 #
-#   Başlık dosyaları: inc/*.hpp   →  kullanırken: #include "pi_controller.hpp"
-#   Kaynak dosyalar : src/*.cpp
+#   Header files: inc/*.hpp   →  to use: #include "pi_controller.hpp"
+#   Source files: src/*.cpp
 #
-# src/ içindeki tüm .cpp dosyaları otomatik bulunur; yeni dosya eklediğinde
-# bu dosyaya dokunman gerekmez.
+# All .cpp files in src/ are found automatically; when you add a new file
+# you do not need to change this file.
 file(GLOB MOTOR_CONTROL_SOURCES CONFIGURE_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp)
 
 if(MOTOR_CONTROL_SOURCES)
@@ -13,11 +13,11 @@ if(MOTOR_CONTROL_SOURCES)
     target_include_directories(motor_control PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/inc)
     target_compile_options(motor_control PRIVATE
         -Wall -Wextra -Wpedantic
-        -Wdouble-promotion   # float'ın gizlice double'a dönüşmesini yakala (Cortex-M FPU'su sadece float)
-        -Wfloat-conversion   # double -> float gizli dönüşümleri yakala
+        -Wdouble-promotion   # catch hidden float to double promotion (the Cortex-M FPU is float only)
+        -Wfloat-conversion   # catch hidden double -> float conversions
     )
 else()
-    # Henüz .cpp yok: sadece başlık dosyalarını paylaşan bir kütüphane.
+    # No .cpp yet: a library that only shares header files.
     add_library(motor_control INTERFACE)
     target_include_directories(motor_control INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/inc)
 endif()

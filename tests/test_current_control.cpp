@@ -1,7 +1,7 @@
-// current_control testleri: clarke → park → PI → inversePark → inverseClarke → svpwm zinciri,
-// gerilim vektörü limiti (Vbus/√3), d ekseni önceliği ve reset.
+// current_control tests: the clarke → park → PI → inversePark → inverseClarke → svpwm chain,
+// voltage vector limit (Vbus/√3), d-axis priority and reset.
 //
-// Testler duty'lerden motora gerçekte uygulanan Vd/Vq'yu geri hesaplayarak kontrol eder.
+// The tests work back from the duties to the Vd/Vq the motor really gets, and check those.
 
 #include "current_control.hpp"
 
@@ -27,13 +27,13 @@ SinCos_t make_sin_cos(float theta)
     return {std::sin(theta), std::cos(theta)};
 }
 
-// Sadece P: Ki = 0 iken çıkış = Kp * hata, testleri hesaplamak kolay
+// P only: with Ki = 0, output = Kp * error, so the tests are easy to calculate
 PiConfig_ p_only(float kp)
 {
     return {.Kp = kp, .Ki = 0.0f, .step_time = 50e-6f, .out_max = 100.0f, .out_min = -100.0f};
 }
 
-// Tepe değeri 'amplitude', elektriksel açısı 'theta' olan dengeli 3 faz akım
+// Balanced 3-phase current with peak 'amplitude' and electrical angle 'theta'
 Iabc_t balanced_current(float amplitude, float theta)
 {
     return {
@@ -43,7 +43,7 @@ Iabc_t balanced_current(float amplitude, float theta)
     };
 }
 
-// Duty'lerden motora uygulanan gerilimi rotor eksenlerinde (dq) geri hesaplar
+// Works back from the duties to the voltage on the motor, in rotor axes (dq)
 Vdq_t applied_vdq(const duties_t& d, float vdc, const SinCos_t& sc)
 {
     const float va = d.duty_a * vdc;
@@ -70,7 +70,7 @@ TEST(CurrentControl, SifirHatadaSifirGerilim)
 
 TEST(CurrentControl, QHatasiHerAcidaQEksenineGerilimUygular)
 {
-    // iq_ref = 2 A, ölçülen akım 0, Kp = 1  ->  Vq = 2 V, Vd = 0, rotor açısı ne olursa olsun
+    // iq_ref = 2 A, measured current 0, Kp = 1  ->  Vq = 2 V, Vd = 0, for any rotor angle
     for (int deg = 0; deg < 360; deg += 10) {
         current_control cc(p_only(1.0f), p_only(1.0f));
         const SinCos_t sc = make_sin_cos(deg_to_rad(deg));
@@ -82,7 +82,7 @@ TEST(CurrentControl, QHatasiHerAcidaQEksenineGerilimUygular)
 
 TEST(CurrentControl, AkimReferansaEsitseGerilimSifir)
 {
-    // Ölçülen akım tam olarak iq_ref = 2 A (rotordan 90° ileride)  ->  hata yok  ->  gerilim yok
+    // Measured current is exactly iq_ref = 2 A (90° ahead of the rotor)  ->  no error  ->  no voltage
     for (int deg = 0; deg < 360; deg += 30) {
         const float theta = deg_to_rad(deg);
         current_control cc(p_only(1.0f), p_only(1.0f));
@@ -96,7 +96,7 @@ TEST(CurrentControl, AkimReferansaEsitseGerilimSifir)
 
 TEST(CurrentControl, GerilimVektoruVbusBolKok3SiniriniAsmaz)
 {
-    // Çok büyük referanslar: iki PI de doymak istiyor. Vektörün boyu her açıda Vbus/√3'e eşit olmalı.
+    // Very large references: both PIs want to saturate. The vector length must equal Vbus/√3 at every angle.
     const float vdc = 24.0f;
     const float v_max = vdc / std::numbers::sqrt3_v<float>;
     for (int deg = 0; deg < 360; deg += 5) {
@@ -109,7 +109,7 @@ TEST(CurrentControl, GerilimVektoruVbusBolKok3SiniriniAsmaz)
 
 TEST(CurrentControl, DEkseniOnceliklidir)
 {
-    // id_ref de iq_ref de çok büyük: d ekseni V_max'ın tamamını alır, q'ya pay kalmaz
+    // Both id_ref and iq_ref are very large: the d axis takes all of V_max, nothing is left for q
     const float vdc = 24.0f;
     const float v_max = vdc / std::numbers::sqrt3_v<float>;
     current_control cc(p_only(1.0f), p_only(1.0f));
@@ -121,7 +121,7 @@ TEST(CurrentControl, DEkseniOnceliklidir)
 
 TEST(CurrentControl, QEksenineKalanPayVerilir)
 {
-    // Vd = 8 V (Kp = 1, id hatası 8). V_max = 13.856  ->  Vq en fazla √(13.856² − 8²) = 11.31 V
+    // Vd = 8 V (Kp = 1, id error 8). V_max = 13.856  ->  Vq at most √(13.856² − 8²) = 11.31 V
     const float vdc = 24.0f;
     const float v_max = vdc / std::numbers::sqrt3_v<float>;
     current_control cc(p_only(1.0f), p_only(1.0f));
@@ -158,7 +158,7 @@ TEST(CurrentControl, ResetSonrasiYeniKurulmusGibiDavranir)
 
     current_control used(cfg, cfg);
     for (int i = 0; i < 500; ++i) {
-        used.update({1.0f, 3.0f}, kZeroCurrent, sc, 24.0f);  // integraller birikir
+        used.update({1.0f, 3.0f}, kZeroCurrent, sc, 24.0f);  // integrals build up
     }
     used.reset();
 

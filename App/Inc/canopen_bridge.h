@@ -6,8 +6,8 @@
 extern "C" {
 #endif
 
-void CanopenBridgeInit(void);       // canopen_app_init'ten sonra bir kez: OD yazma kontrolleri
-void CanopenBridgeUpdate(void);     // CANopen thread'inden her 1 ms: OD <-> motor verisi
+void CanopenBridgeInit(void);       // once after canopen_app_init: OD write checks
+void CanopenBridgeUpdate(void);     // every 1 ms from the CANopen thread: OD <-> motor data
 
 #ifdef __cplusplus
 }

@@ -1,14 +1,14 @@
-# Build çıktıları
+# Build outputs
 build/
 mx.scratch
 __pycache__/
 
-# Firmware dışı içerik (dökümanlar, kılavuzlar)
+# Non-firmware content (documents, guides)
 doc/
 .claude/
 
-# Kişisel Scrutiny dashboard düzeni
+# Personal Scrutiny dashboard layout
 cfg.scdb
 
-# Donanım testi (HIL) çıktıları
+# Hardware test (HIL) outputs
 tools/hil/logs/

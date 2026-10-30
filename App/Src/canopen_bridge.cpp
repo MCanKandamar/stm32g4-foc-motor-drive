@@ -12,10 +12,10 @@ extern CO_t* CO;                    // CO_app_STM32.c
 
 using namespace motor_control;
 
-/* Fault → CiA 402 hata kodu (0x603F) ve EMCY -------------------------------*/
+/* Fault → CiA 402 error code (0x603F) and EMCY -----------------------------*/
 
-// EMCY'de hangi hatanın aktif olduğunu tutan bit: üretici "kritik" aralığı (0x40..),
-// error register 0x1001'de bit 7 (manufacturer) ve bit 0 (generic) yanar.
+// EMCY bit that marks which fault is active: manufacturer "critical" range (0x40..);
+// it sets bit 7 (manufacturer) and bit 0 (generic) in error register 0x1001.
 static constexpr uint8_t EM_FAULT_BIT_BASE = 0x40U;
 
 // CiA 301 / CiA 402 emergency error code
@@ -32,12 +32,12 @@ static uint16_t cia402_error_code(FaultCode f)
         case FaultCode::MOTOR_OVER_TEMP:     return 0x4310U;    // excess temperature drive (motor)
         case FaultCode::DRIVER_OVER_TEMP:    return 0x4210U;    // excess temperature device
         case FaultCode::SENSOR_ERROR:        return 0x7300U;    // sensor
-        case FaultCode::SENSORLESS_LOST:     return 0xFF01U;    // device specific: SMO kilidi kayıp
+        case FaultCode::SENSORLESS_LOST:     return 0xFF01U;    // device specific: SMO lock lost
     }
     return 0xFF00U;
 }
 
-// fault değişince: eski hatayı EMCY "error reset" ile kapat, yenisini EMCY ile bildir
+// on a fault change: clear the old fault with EMCY "error reset", report the new one with EMCY
 static void fault_update()
 {
     static FaultCode last_fault = FaultCode::NONE;
@@ -58,60 +58,60 @@ static void fault_update()
     last_fault             = f;
 }
 
-/* CiA 402 durum makinesi ---------------------------------------------------*/
+/* CiA 402 state machine ----------------------------------------------------*/
 
-// "Fault Reaction Active" yok: bizde anlık (güç hemen kesilir).
+// No "Fault Reaction Active": here it is instant (power is cut at once).
 enum class Cia402State : uint8_t
 {
-    NOT_READY_TO_SWITCH_ON, // MotorState::INIT: cihaz hazırlanıyor, controlword dinlenmez
+    NOT_READY_TO_SWITCH_ON, // MotorState::INIT: device is starting, controlword is ignored
     SWITCH_ON_DISABLED,
     READY_TO_SWITCH_ON,
-    SWITCHED_ON,            // IDLE + akım ofseti ölçülmüş, güç katı kapalı
-    OPERATION_ENABLED,      // motor çalışıyor (ALIGN … CLOSED_LOOP)
+    SWITCHED_ON,            // IDLE + current offset measured, power stage off
+    OPERATION_ENABLED,      // motor is running (ALIGN … CLOSED_LOOP)
     QUICK_STOP_ACTIVE,
     FAULT
 };
 
-// Controlword'den çözülen komut. Bit 7 (fault reset) ayrıca kenarla bakılır.
+// Command decoded from the controlword. Bit 7 (fault reset) is checked separately, on its edge.
 enum class Cia402Cmd : uint8_t
 {
     NONE,
     SHUTDOWN,               // 0x06
-    SWITCH_ON,              // 0x07 (Operation Enabled'da: disable operation)
+    SWITCH_ON,              // 0x07 (in Operation Enabled: disable operation)
     ENABLE_OPERATION,       // 0x0F
     DISABLE_VOLTAGE,        // 0x00
     QUICK_STOP              // 0x02
 };
 
 static Cia402State cia_state = Cia402State::NOT_READY_TO_SWITCH_ON;
-static bool        run_seen  = false;     // OE'de motorun IDLE'dan çıktığı görüldü
+static bool        run_seen  = false;     // in OE, the motor was seen leaving IDLE
 static bool        last_fault_reset_bit = false;
 
 
-/* Modes of operation (0x6060): profile velocity ve profile torque ----------*/
+/* Modes of operation (0x6060): profile velocity and profile torque ---------*/
 
 static constexpr int8_t  MODE_PV          = 3;        // profile velocity → LoopMode::SPEED
-static constexpr int8_t  MODE_TQ          = 4;        // profile torque   → LoopMode::CURRENT, her zaman Hall
-static constexpr uint8_t SENSOR_MODE_HALL = 1U;       // 0x2012: 0 = sensörsüz, 1 = Hall (sadece pv)
+static constexpr int8_t  MODE_TQ          = 4;        // profile torque   → LoopMode::CURRENT, always Hall
+static constexpr uint8_t SENSOR_MODE_HALL = 1U;       // 0x2012: 0 = sensorless, 1 = Hall (pv only)
 
-static constexpr float   BRIDGE_DT        = 0.001f;   // CanopenBridgeUpdate periyodu [s]
-static constexpr float   VEL_WINDOW_RPM   = 30.0f;    // pv bit 10: |gerçek − hedef| bunun altında
-static constexpr float   VEL_ZERO_RPM     = 10.0f;    // pv bit 12: hız sıfır sayılır
+static constexpr float   BRIDGE_DT        = 0.001f;   // CanopenBridgeUpdate period [s]
+static constexpr float   VEL_WINDOW_RPM   = 30.0f;    // pv bit 10: |actual − target| below this
+static constexpr float   VEL_ZERO_RPM     = 10.0f;    // pv bit 12: speed counts as zero
 
 static Ramp  vel_ramp;                  // [rpm]
 static Ramp  trq_ramp;                  // [‰ of 0x6076]
-static float vel_target = 0.0f;         // sınırlanmış 0x60FF [rpm]
-static float trq_target = 0.0f;         // sınırlanmış 0x6071 [‰]
+static float vel_target = 0.0f;         // limited 0x60FF [rpm]
+static float trq_target = 0.0f;         // limited 0x6071 [‰]
 
-// ‰ (0x6076'ya göre) ↔ iq [A]: T = iq · kt. 1000 ‰ = 400 mNm = 6.06 A
+// ‰ (of 0x6076) ↔ iq [A]: T = iq · kt. 1000 ‰ = 400 mNm = 6.06 A
 static float permille_per_amp()
 {
     const float rated_nm = static_cast<float>(OD_RAM.x6076_motorRatedTorque) / 1000.0f;
     return BLF02.torque_constant / rated_nm * 1000.0f;
 }
 
-// 0x6060 ve 0x2012 yazma kontrolü (SDO ve RPDO). Mod START'ta sabitlenir;
-// Operation Enabled'da farklı değer yazmak SDO abort 0x08000022 verir.
+// Write check for 0x6060 and 0x2012 (SDO and RPDO). The mode is fixed at START;
+// writing a different value in Operation Enabled gives SDO abort 0x08000022.
 static ODR_t write_mode_guard(OD_stream_t* stream, const void* buf, OD_size_t count, OD_size_t* countWritten)
 {
     if (count != 1U)
@@ -140,13 +140,13 @@ static ODR_t write_mode_guard(OD_stream_t* stream, const void* buf, OD_size_t co
     return OD_writeOriginal(stream, buf, count, countWritten);
 }
 
-static OD_extension_t mode_guard_ext;          // CanopenBridgeInit doldurur
+static OD_extension_t mode_guard_ext;          // filled by CanopenBridgeInit
 
-// Hedef → rampa → cmd. Sadece Operation Enabled'da; dışında rampalar ve ref'ler 0.
+// Target → ramp → cmd. Only in Operation Enabled; otherwise ramps and refs are 0.
 static void profile_update(float speed_rpm, MotorState ms)
 {
-    // 0x2010: rampasız hız ref'i. Yazılınca rampa o değere atlar, 0x60FF de aynı değeri alır
-    // (rampa geri çekmesin). 0x2010 ve 0x60FF'ten son yazılan geçerli.
+    // 0x2010: speed ref without a ramp. When written, the ramp jumps to it and 0x60FF gets the same value
+    // (so the ramp does not pull it back). The last write of 0x2010 or 0x60FF wins.
     static int32_t last_speed_ref = 0;
 
     if (OD_RAM.x2010_speedRefRpm != last_speed_ref)
@@ -171,7 +171,7 @@ static void profile_update(float speed_rpm, MotorState ms)
     if (OD_RAM.x6060_modesOfOperation == MODE_TQ)
     {
         if (ms != MotorState::CLOSED_LOOP)
-            trq_ramp.reset();                   // kalkış bitene kadar 0'da bekle
+            trq_ramp.reset();                   // stay at 0 until start-up is done
         else
         {
             const float slope = std::max(static_cast<float>(OD_RAM.x6087_torqueSlope), 1.0f);
@@ -182,7 +182,7 @@ static void profile_update(float speed_rpm, MotorState ms)
     else
     {
         if (ms != MotorState::CLOSED_LOOP)
-            vel_ramp.reset(speed_rpm);          // sensörsüz kalkışta (ALIGN, OL) rampa gerçek hızdan başlasın
+            vel_ramp.reset(speed_rpm);          // in a sensorless start-up (ALIGN, OL) start the ramp from the actual speed
         else
         {
             const float acc = std::max(static_cast<float>(OD_RAM.x6083_profileAcceleration), 1.0f);
@@ -193,7 +193,7 @@ static void profile_update(float speed_rpm, MotorState ms)
     }
 }
 
-// Statusword'ün moda bağlı bitleri (sadece Operation Enabled'da)
+// Mode-specific statusword bits (only in Operation Enabled)
 static uint16_t profile_status_bits()
 {
     uint16_t sw = 0U;
@@ -215,7 +215,7 @@ static uint16_t profile_status_bits()
     return sw;
 }
 
-// CiA 402 komut tablosu: bit 7 3 2 1 0, x = bakılmaz
+// CiA 402 command table: bits 7 3 2 1 0, x = don't care
 static Cia402Cmd decode_controlword(uint16_t cw)
 {
     if ((cw & 0x0082U) == 0x0000U) return Cia402Cmd::DISABLE_VOLTAGE;     // 0xxx xx0x
@@ -226,7 +226,7 @@ static Cia402Cmd decode_controlword(uint16_t cw)
     return Cia402Cmd::NONE;
 }
 
-// Modu START'tan önce cmd'ye yaz; Supervisor START'ta sabitler.
+// Write the mode to cmd before START; the Supervisor fixes it at START.
 static void enter_operation_enabled()
 {
     cia_state = Cia402State::OPERATION_ENABLED;
@@ -236,7 +236,7 @@ static void enter_operation_enabled()
     {
         cmd.iq_ref = 0.0f;
         cmd.loop   = LoopMode::CURRENT;
-        cmd.sensor = SensorMode::HALL;          // tork kontrolü sensörsüz olmaz
+        cmd.sensor = SensorMode::HALL;          // torque control does not work sensorless
     }
     else
     {
@@ -248,8 +248,8 @@ static void enter_operation_enabled()
     cmd.start = true;
 }
 
-// Operation Enabled'dan çıkış: motoru durdur, yeni duruma geç.
-// Start henüz işlenmediyse iptal et; Supervisor stop'tan sonra start'a bakar.
+// Leave Operation Enabled: stop the motor, go to the new state.
+// Cancel start if it is not handled yet; the Supervisor checks start after stop.
 static void leave_operation_enabled(Cia402State next)
 {
     cia_state = next;
@@ -261,7 +261,7 @@ static void cia402_update()
 {
     const MotorState ms = motor_state_machine.getState();
 
-    // 1) MotorState her zaman haklı
+    // 1) MotorState always wins
     if (ms == MotorState::FAULT)
     {
         cia_state = Cia402State::FAULT;
@@ -272,18 +272,18 @@ static void cia402_update()
     }
     else if (cia_state == Cia402State::FAULT || cia_state == Cia402State::NOT_READY_TO_SWITCH_ON)
     {
-        cia_state = Cia402State::SWITCH_ON_DISABLED;    // fault reset ya da INIT tamamlandı
+        cia_state = Cia402State::SWITCH_ON_DISABLED;    // fault reset or INIT done
     }
     else if (cia_state == Cia402State::OPERATION_ENABLED)
     {
         if (ms != MotorState::IDLE)
             run_seen = true;
-        else if (run_seen)                              // beklenmeyen duruş: kendiliğinden kalkmasın
+        else if (run_seen)                              // unexpected stop: do not restart by itself
             cia_state = Cia402State::SWITCH_ON_DISABLED;
     }
     else if (cia_state == Cia402State::QUICK_STOP_ACTIVE && ms == MotorState::IDLE)
     {
-        cia_state = Cia402State::SWITCH_ON_DISABLED;    // motor durdu
+        cia_state = Cia402State::SWITCH_ON_DISABLED;    // motor stopped
     }
 
     // 2) Controlword
@@ -293,11 +293,11 @@ static void cia402_update()
     const bool      fault_reset_edge = fr_bit && !last_fault_reset_bit;
     last_fault_reset_bit = fr_bit;
 
-    // 3) Geçişler
+    // 3) Transitions
     switch (cia_state)
     {
         case Cia402State::NOT_READY_TO_SWITCH_ON:
-            break;                          // INIT bitene kadar komut yok
+            break;                          // no commands until INIT is done
 
         case Cia402State::SWITCH_ON_DISABLED:
             if (c == Cia402Cmd::SHUTDOWN)
@@ -307,7 +307,7 @@ static void cia402_update()
         case Cia402State::READY_TO_SWITCH_ON:
             if (c == Cia402Cmd::SWITCH_ON || c == Cia402Cmd::ENABLE_OPERATION)
             {
-                cia_state      = Cia402State::SWITCHED_ON;    // 0x0F: bir sonraki turda OE
+                cia_state      = Cia402State::SWITCHED_ON;    // 0x0F: OE on the next cycle
                 cmd.offset_cal = true;
             }
             else if (c == Cia402Cmd::DISABLE_VOLTAGE || c == Cia402Cmd::QUICK_STOP)
@@ -331,7 +331,7 @@ static void cia402_update()
             else if (c == Cia402Cmd::DISABLE_VOLTAGE)
                 leave_operation_enabled(Cia402State::SWITCH_ON_DISABLED);
             else if (c == Cia402Cmd::QUICK_STOP)
-                leave_operation_enabled(Cia402State::QUICK_STOP_ACTIVE);   // serbest duruş, frenleme yok
+                leave_operation_enabled(Cia402State::QUICK_STOP_ACTIVE);   // coast to stop, no braking
             break;
 
         case Cia402State::QUICK_STOP_ACTIVE:
@@ -341,7 +341,7 @@ static void cia402_update()
 
         case Cia402State::FAULT:
             if (fault_reset_edge)
-                cmd.reset_fault = true;     // FAULT'tan çıkınca 1. adım SOD'a alır
+                cmd.reset_fault = true;     // when FAULT clears, step 1 moves to SOD
             break;
     }
 
@@ -350,7 +350,7 @@ static void cia402_update()
     switch (cia_state)
     {
         case Cia402State::NOT_READY_TO_SWITCH_ON:
-            OD_RAM.x6041_statusword = 0x0000U;      // standart: hazır değil, ek bit yok
+            OD_RAM.x6041_statusword = 0x0000U;      // standard: not ready, no extra bits
             return;
         case Cia402State::SWITCH_ON_DISABLED: sw = 0x0040U; break;
         case Cia402State::READY_TO_SWITCH_ON: sw = 0x0021U; break;
@@ -361,7 +361,7 @@ static void cia402_update()
     }
     if (status.Vdc > VDC_MIN && status.Vdc < VDC_MAX)
         sw |= 0x0010U;                      // bit 4: voltage enabled
-    sw |= 0x0200U;                          // bit 9: remote, controlword dinleniyor
+    sw |= 0x0200U;                          // bit 9: remote, controlword is used
     if (cia_state == Cia402State::OPERATION_ENABLED)
         sw |= profile_status_bits();        // bit 10, 12
 
@@ -389,14 +389,14 @@ void CanopenBridgeUpdate(void)
     OD_RAM.x2002_motorState  = static_cast<uint8_t>(motor_state_machine.getState());
     OD_RAM.x2003_faultCode   = static_cast<uint8_t>(fault);
 
-    OD_RAM.x6061_modesOfOperationDisplay = OD_RAM.x6060_modesOfOperation;      // OE'de değişmez
+    OD_RAM.x6061_modesOfOperationDisplay = OD_RAM.x6060_modesOfOperation;      // does not change in OE
     OD_RAM.x606C_velocityActualValue     = static_cast<int32_t>(lroundf(speed_rpm));
     OD_RAM.x6077_torqueActualValue       = static_cast<int16_t>(lroundf(status.idq_fdb.iq_fdb * permille_per_amp()));
 
-    // hedefler (0x60FF / 0x2010 / 0x6071): OD → rampa → cmd
+    // targets (0x60FF / 0x2010 / 0x6071): OD → ramp → cmd
     profile_update(speed_rpm, motor_state_machine.getState());
 
-    // command: OD → cmd. Start ve fault reset sadece CiA 402 controlword'den.
+    // command: OD → cmd. Start and fault reset come only from the CiA 402 controlword.
     switch (OD_RAM.x2011_command)
     {
         case 2: cmd.stop        = true; break;

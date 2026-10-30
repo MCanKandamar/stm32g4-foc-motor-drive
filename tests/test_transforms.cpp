@@ -1,4 +1,4 @@
-// Clarke, ters Clarke, Park ve ters Park testleri.
+// Clarke, inverse Clarke, Park and inverse Park tests.
 
 #include "transforms.hpp"
 
@@ -24,7 +24,7 @@ SinCos_t make_sin_cos(float theta)
     return {std::sin(theta), std::cos(theta)};
 }
 
-// Tepe değeri 'amplitude', elektriksel açısı 'theta' olan dengeli 3 faz akım
+// Balanced 3-phase current with peak 'amplitude' and electrical angle 'theta'
 Iabc_t balanced_current(float amplitude, float theta)
 {
     return {
@@ -60,7 +60,7 @@ TEST(Clarke, GenligiKorur)
     }
 }
 
-// ---------------------------------------------------------------- Ters Clarke
+// ---------------------------------------------------------------- Inverse Clarke
 
 TEST(InverseClarke, AlphaEksenindekiVektor)
 {
@@ -84,7 +84,7 @@ TEST(InverseClarke, ClarkeIleGeriDonulur)
     for (int deg = 0; deg < 360; deg += 15) {
         const Iabc_t i = balanced_current(3.0f, deg_to_rad(deg));
         const I_AlphaBeta_t ab = clarke(i);
-        const Vabc_t back = inverseClarke({ab.ialpha, ab.ibeta});  // akım tipinden gerilim tipine elle kopya
+        const Vabc_t back = inverseClarke({ab.ialpha, ab.ibeta});  // copy by hand from the current type to the voltage type
         EXPECT_NEAR(back.Va, i.ia, kTol) << "aci = " << deg;
         EXPECT_NEAR(back.Vb, i.ib, kTol) << "aci = " << deg;
         EXPECT_NEAR(back.Vc, i.ic, kTol) << "aci = " << deg;
@@ -95,8 +95,8 @@ TEST(InverseClarke, ClarkeIleGeriDonulur)
 
 TEST(Park, RotorAcisiylaDonenAkimDEksenindeDcOlur)
 {
-    // FOC'un temel fikri: dengeli 3 faz akımı rotor açısıyla Park'tan geçirince
-    // d ve q sabit (DC) değerlere dönüşür.
+    // The basic idea of FOC: a balanced 3-phase current, passed through Park with the rotor angle,
+    // turns into constant (DC) d and q values.
     for (int deg = 0; deg < 360; deg += 15) {
         const float theta = deg_to_rad(deg);
         const Idq_fdb_t dq = park(clarke(balanced_current(3.0f, theta)), make_sin_cos(theta));
@@ -107,7 +107,7 @@ TEST(Park, RotorAcisiylaDonenAkimDEksenindeDcOlur)
 
 TEST(Park, DoksanDereceIleridekiAkimQEksenindedir)
 {
-    // Akım rotordan 90° ileride -> tamamı q ekseninde (tork üreten akım)
+    // Current 90° ahead of the rotor -> all of it on the q axis (torque current)
     for (int deg = 0; deg < 360; deg += 15) {
         const float theta = deg_to_rad(deg);
         const Idq_fdb_t dq = park(clarke(balanced_current(2.0f, theta + kPi / 2.0f)), make_sin_cos(theta));
@@ -116,7 +116,7 @@ TEST(Park, DoksanDereceIleridekiAkimQEksenindedir)
     }
 }
 
-// ---------------------------------------------------------------- Ters Park
+// ---------------------------------------------------------------- Inverse Park
 
 TEST(InversePark, SifirAcidaDEkseniAlphaEksenidir)
 {
@@ -131,7 +131,7 @@ TEST(InversePark, ParkIleGeriDonulur)
     for (int deg = 0; deg < 360; deg += 15) {
         const SinCos_t sc = make_sin_cos(deg_to_rad(deg));
         const V_AlphaBeta_t ab = inversePark(input, sc);
-        const Idq_fdb_t back = park({ab.Valpha, ab.Vbeta}, sc);  // gerilim tipinden akım tipine elle kopya
+        const Idq_fdb_t back = park({ab.Valpha, ab.Vbeta}, sc);  // copy by hand from the voltage type to the current type
         EXPECT_NEAR(back.id_fdb, input.Vd, kTol) << "aci = " << deg;
         EXPECT_NEAR(back.iq_fdb, input.Vq, kTol) << "aci = " << deg;
     }

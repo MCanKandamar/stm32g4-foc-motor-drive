@@ -24,7 +24,7 @@ void CanopenInit(void)
 void CanopenRun(void)
 {
     canopen_app_process();      // NMT, Heartbeat, SDO, EMCY
-    CanopenBridgeUpdate();      // OD <-> motor verisi
+    CanopenBridgeUpdate();      // OD <-> motor data
     canopen_app_interrupt();    // SYNC, RPDO, TPDO
 
     // handles standard LED indicators

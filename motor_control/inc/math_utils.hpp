@@ -11,7 +11,7 @@ namespace motor_control
     constexpr float RAD_TO_RPM  = 60.0f / TWO_PI;
     constexpr float RAD_TO_DEG  = 180.0f / PI;
 
-    // [0, 2π) aralığına sar (girdi en fazla bir tur dışarıda)
+    // wrap to [0, 2π) (input at most one turn outside)
     inline float wrap_2pi(float x)
     {
         if      (x >= TWO_PI) x -= TWO_PI;
@@ -19,7 +19,7 @@ namespace motor_control
         return x;
     }
 
-    // [-π, π) aralığına sar (girdi en fazla bir tur dışarıda)
+    // wrap to [-π, π) (input at most one turn outside)
     inline float wrap_pi(float x)
     {
         if      (x >=  PI) x -= TWO_PI;

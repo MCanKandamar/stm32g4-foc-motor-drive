@@ -13,7 +13,7 @@ extern "C" void HAL_ADCEx_InjectedConvCpltCallback(ADC_HandleTypeDef *hadc)
 
     if (hadc->Instance == ADC3)
     {   
-        offsetCalSample();                      // ofset ölçümü sürüyorsa örneği topla
+        offsetCalSample();                      // add the sample if an offset measurement is running
         meas.Iabc               = get_abc_currents();
         meas.Vabc               = get_abc_voltages();
         meas.theta_e_rad_hall   = get_motor_angle_hal();
@@ -24,7 +24,7 @@ extern "C" void HAL_ADCEx_InjectedConvCpltCallback(ADC_HandleTypeDef *hadc)
         meas.speed_rpm_hall     = hall.getMechanicalSpeedRpm();
         meas.speed_rpm_smo      = pll_smo.get_speed() / 4.0f * RAD_TO_RPM;
 
-        if (foc_cfg.loop == LoopMode::OFF)      // PWM'i Supervisor kapattı
+        if (foc_cfg.loop == LoopMode::OFF)      // the Supervisor turned PWM off
         {
             ScrutinyFocTick();
             return;

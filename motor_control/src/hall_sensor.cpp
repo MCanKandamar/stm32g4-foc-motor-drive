@@ -14,7 +14,7 @@ namespace motor_control
         width_ = calcWidths(cfg.edge_angle_rad);
     }
 
-    // s numaralı dilim edge[s] ile edge[s+1] arasında
+    // sector s is between edge[s] and edge[s+1]
     std::array<float, 6> HallSensor::calcWidths(const std::array<float, 6>& edges)
     {
         std::array<float, 6> w;
@@ -33,9 +33,9 @@ namespace motor_control
 
         last_sector_ = sector;
         width_cur_   = width_[sector];
-        theta_edge_  = config_.edge_angle_rad[sector] + width_cur_ / 2.0f;    // sektör ortası
+        theta_edge_  = config_.edge_angle_rad[sector] + width_cur_ / 2.0f;    // middle of the sector
         theta_       = theta_edge_;
-        k_           = 0.0f;                      // kenar gelene kadar açı sabit
+        k_           = 0.0f;                      // angle stays fixed until an edge comes
         omega_e_     = 0.0f;
         dir_         = 0;
         stopped_     = true;
@@ -59,14 +59,14 @@ namespace motor_control
             if (delta == 1)
             {
                 onEdge(sector, +1, period_cnt);
-                cal_edge_ = sector;                         // ileri: s'ye girilen kenar = edge[s]
+                cal_edge_ = sector;                         // forward: edge into s = edge[s]
             }
             else if (delta == 5)
             {
                 onEdge(sector, -1, period_cnt);
-                cal_edge_ = (sector + 1) % 6;               // geri: s'ye girilen kenar = edge[s+1]
+                cal_edge_ = (sector + 1) % 6;               // backward: edge into s = edge[s+1]
             }
-            else if (cal_active_) cal_errors_++;            // sektör atlandı (gürültü)
+            else if (cal_active_) cal_errors_++;            // sector skipped (noise)
         }
 
         if (cnt > timeout_cnt_)  onTimeout();
@@ -99,7 +99,7 @@ namespace motor_control
         buf_idx_ = (buf_idx_ + 1) % AVG_EDGES;
         if (buf_n_ < AVG_EDGES) buf_n_++;
 
-        const float angle = buf_n_ * PI_DIV_3;   // buffer'daki toplam açı
+        const float angle = buf_n_ * PI_DIV_3;   // total angle in the buffer
 
         omega_e_ = dir * angle * config_.f_cnt_hz / period_sum_;
         k_ = omega_e_ / config_.f_cnt_hz;
@@ -141,7 +141,7 @@ namespace motor_control
         cal_active_ = true;
     }
 
-    // update()'ten sonra çağrılır. Bu adımda kenar geldiyse referans açıyı o kenara ekler.
+    // Called after update(). If an edge came in this step, adds the reference angle to that edge.
     void HallSensor::recordCalibration(float theta_ref)
     {
         if (!cal_active_ || cal_edge_ < 0) return;
@@ -159,13 +159,13 @@ namespace motor_control
         std::array<float, 6> edges;
         for (int i = 0; i < 6; ++i)
         {
-            if (cal_count_[i] == 0) return false;            // bu kenar hiç görülmedi
+            if (cal_count_[i] == 0) return false;            // this edge was never seen
 
-            edges[i] = atan2f(cal_sum_sin_[i], cal_sum_cos_[i]);   // vektör ortalaması: 350° ile 10° → 0°
+            edges[i] = atan2f(cal_sum_sin_[i], cal_sum_cos_[i]);   // vector mean: 350° and 10° → 0°
             if (edges[i] < 0.0f) edges[i] += TWO_PI;
         }
 
-        // Kenarlar sırayla artmalı; ters sırada (faz/Hall sırası ters) dilimler ~300° çıkar
+        // Edges must increase in order; in reverse order (phase/Hall order swapped) the sectors come out ~300°
         const std::array<float, 6> widths = calcWidths(edges);
         for (float w : widths)
             if (w > PI) return false;

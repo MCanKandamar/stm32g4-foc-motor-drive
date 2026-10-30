@@ -11,7 +11,7 @@ namespace motor_control
             motor_state = MotorState::FAULT;
         }
 
-        // INIT yarıda kalmasın: STOP orada geçersiz
+        // Do not cut INIT short: STOP is ignored there
         if (event == MotorEvent::STOP && motor_state != MotorState::FAULT
                                       && motor_state != MotorState::INIT)
         {
@@ -58,7 +58,7 @@ namespace motor_control
                 break;
 
             case motor_control::MotorState::FAULT:
-                if (event == MotorEvent::RESET_FAULT)       // init bitmediyse baştan
+                if (event == MotorEvent::RESET_FAULT)       // start over if init has not finished
                     motor_state = init_done ? MotorState::IDLE : MotorState::INIT;
                 break;
         }

@@ -1,6 +1,6 @@
-// Ramp testleri.
-// Kontrol edilenler: hızlanma/yavaşlama eğimi, hedefte tam durma, sıfırdan geçişte
-// önce rate_down sonra rate_up, negatif yön ve reset.
+// Ramp tests.
+// Checked: acceleration/deceleration slope, exact stop at the target, at a zero crossing
+// first rate_down then rate_up, negative direction and reset.
 
 #include "ramp.hpp"
 
@@ -13,7 +13,7 @@ namespace {
 constexpr float kTol = 1e-3f;
 constexpr float kDt  = 1e-3f;      // 1 ms
 
-// n adım çalıştır, son çıkışı döndür
+// run n steps, return the last output
 float run(Ramp& r, float target, float up, float down, int n)
 {
     float out = r.get_output();
@@ -37,7 +37,7 @@ TEST(Ramp, HedefteTamDurur)
 {
     Ramp r;
 
-    // 1000 rpm/s ile 300 rpm'e 300 ms'de varılır; fazladan adımlar hedefi aşmaz
+    // at 1000 rpm/s, 300 rpm is reached in 300 ms; extra steps do not go past the target
     run(r, 300.0f, 1000.0f, 1000.0f, 400);
     EXPECT_EQ(r.get_output(), 300.0f);
 }
@@ -47,7 +47,7 @@ TEST(Ramp, YavaslamaRateDownIle)
     Ramp r;
     r.reset(1000.0f);
 
-    // |çıkış| küçülüyor: 500 rpm/s, 100 ms -> 50 rpm düşer
+    // |output| shrinks: 500 rpm/s, 100 ms -> drops 50 rpm
     EXPECT_NEAR(run(r, 0.0f, 2000.0f, 500.0f, 100), 950.0f, kTol);
 }
 
@@ -56,8 +56,8 @@ TEST(Ramp, SifirdanGecis)
     Ramp r;
     r.reset(100.0f);
 
-    // +100 -> -100: önce 100 rpm 1000 rpm/s ile 100 ms'de 0'a,
-    // sonra 2000 rpm/s ile 50 ms'de -100'e
+    // +100 -> -100: first from 100 rpm to 0 at 1000 rpm/s in 100 ms,
+    // then to -100 at 2000 rpm/s in 50 ms
     EXPECT_NEAR(run(r, -100.0f, 2000.0f, 1000.0f, 100), 0.0f, kTol);
     EXPECT_NEAR(run(r, -100.0f, 2000.0f, 1000.0f, 25), -50.0f, kTol);
     EXPECT_EQ(run(r, -100.0f, 2000.0f, 1000.0f, 30), -100.0f);
@@ -67,7 +67,7 @@ TEST(Ramp, NegatifYondeHizlanma)
 {
     Ramp r;
 
-    // 0'dan negatife: |çıkış| büyüyor -> rate_up
+    // from 0 to negative: |output| grows -> rate_up
     EXPECT_NEAR(run(r, -3000.0f, 1000.0f, 100.0f, 100), -100.0f, kTol);
 }
 

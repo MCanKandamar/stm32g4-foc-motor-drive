@@ -1,4 +1,4 @@
-// SVPWM testleri. Girdiler, gerçek kullanımdaki gibi inverseClarke'tan geçirilerek verilir.
+// SVPWM tests. Inputs go through inverseClarke first, as in real use.
 
 #include "svpwm.hpp"
 #include "transforms.hpp"
@@ -22,14 +22,14 @@ float deg_to_rad(int deg)
     return static_cast<float>(deg) * kPi / 180.0f;
 }
 
-// Genliği 'magnitude', açısı 'theta' olan gerilim vektörünü duty'lere çevirir
+// Turns a voltage vector with size 'magnitude' and angle 'theta' into duties
 duties_t svpwm_from_vector(float magnitude, float theta)
 {
     return svpwm(inverseClarke({magnitude * std::cos(theta), magnitude * std::sin(theta)}), kVbus);
 }
 
-// Duty'lerden motora gerçekte uygulanan αβ vektörünü geri hesaplar.
-// (Ortak mod gerilimi motoru etkilemediği için düşer.)
+// Works back from the duties to the αβ vector the motor really gets.
+// (The common-mode voltage drops out because it does not affect the motor.)
 V_AlphaBeta_t applied_vector(const duties_t& d)
 {
     const float va = d.duty_a * kVbus;
@@ -43,7 +43,7 @@ V_AlphaBeta_t applied_vector(const duties_t& d)
 
 }  // namespace
 
-// ---------------------------------------------------------------- Bilinen örnekler
+// ---------------------------------------------------------------- Known examples
 
 TEST(Svpwm, AlphaEksenindeOnVolt)
 {
@@ -55,7 +55,7 @@ TEST(Svpwm, AlphaEksenindeOnVolt)
 
 TEST(Svpwm, DogrusalBolgeSinirindaBirFaz100BirFaz0)
 {
-    // |V| = Vbus/sqrt(3), açı 30°  ->  Vα = 12, Vβ = 6.928
+    // |V| = Vbus/sqrt(3), angle 30°  ->  Vα = 12, Vβ = 6.928
     const duties_t d = svpwm_from_vector(kVbus / std::numbers::sqrt3_v<float>, deg_to_rad(30));
     EXPECT_NEAR(d.duty_a, 1.0f, kTol);
     EXPECT_NEAR(d.duty_b, 0.5f, kTol);
@@ -80,11 +80,11 @@ TEST(Svpwm, VbusSifirVeyaNegatifseTumDutylerSifir)
     }
 }
 
-// ---------------------------------------------------------------- Tam tur
+// ---------------------------------------------------------------- Full turn
 
 TEST(Svpwm, HerAcidaKomutEdilenVektorAynenUygulanir)
 {
-    // Doğrusal bölgede motora giden vektör, komutun genlik ve açısıyla birebir aynı olmalı
+    // In the linear range the vector on the motor must match the commanded size and angle exactly
     for (int deg = 0; deg < 360; deg += 5) {
         const float theta = deg_to_rad(deg);
         const V_AlphaBeta_t v = applied_vector(svpwm_from_vector(10.0f, theta));
@@ -95,7 +95,7 @@ TEST(Svpwm, HerAcidaKomutEdilenVektorAynenUygulanir)
 
 TEST(Svpwm, DutylerOrtalanmistir)
 {
-    // Min-max yönteminin özelliği: en büyük ve en küçük duty 0.5 etrafında simetriktir
+    // Property of the min-max method: the largest and smallest duty are symmetric around 0.5
     for (int deg = 0; deg < 360; deg += 5) {
         const duties_t d = svpwm_from_vector(10.0f, deg_to_rad(deg));
         const float d_max = std::max({d.duty_a, d.duty_b, d.duty_c});
@@ -118,7 +118,7 @@ TEST(Svpwm, DogrusalBolgeSinirindaDutylerTasmaz)
 
 TEST(Svpwm, AsiriModulasyondaDutyler0ile1ArasindaKalir)
 {
-    // |V| sınırın çok üstünde: duty'ler clamp ile [0, 1] içinde tutulmalı
+    // |V| far above the limit: the clamp must keep the duties in [0, 1]
     for (int deg = 0; deg < 360; deg += 5) {
         const duties_t d = svpwm_from_vector(30.0f, deg_to_rad(deg));
         for (const float duty : {d.duty_a, d.duty_b, d.duty_c}) {

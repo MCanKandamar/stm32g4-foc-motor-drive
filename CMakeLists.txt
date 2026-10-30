@@ -49,7 +49,7 @@ add_subdirectory(motor_control)
 # CANopen stack (CANopenNode + STM32 FDCAN driver + Object Dictionary)
 add_subdirectory(canopen)
 
-# Scrutiny debugger: scrutiny_build_config.hpp bu değerlerle .in şablonundan üretilir
+# Scrutiny debugger: scrutiny_build_config.hpp is made from the .in template with these values
 set(SCRUTINY_ENABLE_DATALOGGING           ON)
 set(SCRUTINY_SUPPORT_64BITS               ON)
 set(SCRUTINY_SUPPORT_PROTECTED_REGIONS    ON)
@@ -61,10 +61,10 @@ set(SCRUTINY_PROTOCOL_VERSION_MINOR       0)
 set(SCRUTINY_DATALOGGING_MAX_SIGNAL       16)
 set(SCRUTINY_DATALOGGING_ENCODING         SCRUTINY_DATALOGGING_ENCODING_RAW)
 set(SCRUTINY_DATALOGGING_BUFFER_32BITS    OFF)
-set(INSTALL_FOLDER                        scrutiny)   # scrutiny'nin install() kuralları boş hedef kabul etmiyor
+set(INSTALL_FOLDER                        scrutiny)   # scrutiny's install() rules do not accept an empty target
 add_subdirectory(scrutiny-embedded)
-# Scrutiny C++11 için yazılmış; C++20'de enum'lar arası '|' deprecated uyarısı verir (-Werror ile hata olur).
-# PUBLIC: scrutiny başlıklarını include eden App kodu için de geçerli.
+# Scrutiny is written for C++11; in C++20, '|' between enums gives a deprecated warning (an error with -Werror).
+# PUBLIC: also applies to App code that includes the scrutiny headers.
 target_compile_options(scrutiny-embedded PUBLIC $<$<COMPILE_LANGUAGE:CXX>:-Wno-deprecated-enum-enum-conversion>)
 
 # Link directories setup
@@ -106,9 +106,9 @@ target_link_libraries(${CMAKE_PROJECT_NAME}
     canopen
 )
 
-# Scrutiny post-build: .sfd (değişken haritası) + firmware ID'si gömülmüş <proje>_tagged.elf
-# Karta tagged ELF yüklenmeli. scrutiny CLI kurulu değilse bu adım atlanır, build yine çalışır.
-# HINTS PATH'ten önce aranır: installer sürümü (GUI ile aynı sürüm) pip'teki eski sürüme tercih edilir
+# Scrutiny post-build: .sfd (variable map) + <project>_tagged.elf with the firmware ID inside
+# Flash the tagged ELF to the board. If the scrutiny CLI is not installed, this step is skipped and the build still works.
+# HINTS is searched before PATH: the installer version (same as the GUI) wins over the older pip version
 find_program(SCRUTINY_CMD scrutiny HINTS "C:/Program Files (x86)/Scrutiny Debugger")
 if(SCRUTINY_CMD)
     include(scrutiny-embedded/cmake/scrutiny.cmake)
@@ -116,7 +116,7 @@ if(SCRUTINY_CMD)
     scrutiny_postbuild(${CMAKE_PROJECT_NAME}
         SCRUTINY_CMD            ${SCRUTINY_CMD}
         CPPFILT                 ${TOOLCHAIN_DIR}/arm-none-eabi-c++filt${CMAKE_HOST_EXECUTABLE_SUFFIX}
-        TAGGED_EXECUTABLE_NAME  ${CMAKE_PROJECT_NAME}_tagged.elf   # uzantıyı target'tan alamıyor, elle veriliyor
+        TAGGED_EXECUTABLE_NAME  ${CMAKE_PROJECT_NAME}_tagged.elf   # cannot get the extension from the target, so it is given by hand
         METADATA_PROJECT_NAME   "BLDC FOC"
         INSTALL_SFD)
 else()

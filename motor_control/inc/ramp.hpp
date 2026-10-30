@@ -2,9 +2,9 @@
 
 namespace motor_control
 {
-    // Hedefe sabit eğimle yaklaşan referans (CiA 402 profile velocity / torque rampası).
-    // rate_up: |çıkış| büyürken, rate_down: |çıkış| küçülürken [birim/s], ikisi de > 0.
-    // Sıfırı geçerken önce rate_down ile 0'a iner, sonra rate_up ile devam eder.
+    // Reference that moves to the target at a fixed slope (CiA 402 profile velocity / torque ramp).
+    // rate_up: while |output| grows, rate_down: while |output| shrinks [unit/s], both > 0.
+    // When crossing zero, it first goes to 0 with rate_down, then goes on with rate_up.
     class Ramp
     {
         public:

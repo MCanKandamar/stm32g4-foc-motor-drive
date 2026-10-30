@@ -3,27 +3,27 @@
 
 namespace motor_control
 {
-    // ISR açıyı nereden alır
+    // Where the ISR gets the angle
     enum class AngleSource : uint8_t
     {
-        FIXED,          // sabit açı (hizalama)
-        OPEN_LOOP,      // açı rampası
+        FIXED,          // fixed angle (alignment)
+        OPEN_LOOP,      // angle ramp
         HALL,           // Hall + PLL
         SMO             // SMO + PLL
     };
 
-    // ISR hangi döngüyü kapatır
+    // Which loop the ISR closes
     enum class LoopMode : uint8_t
     {
-        OFF,            // FOC çalışmaz
-        CURRENT,        // idq_ref doğrudan
-        SPEED           // idq_ref hız PI'dan
+        OFF,            // FOC does not run
+        CURRENT,        // idq_ref given directly
+        SPEED           // idq_ref from the speed PI
     };
 
-    // Kullanıcının seçtiği açı kaynağı (START'ta sabitlenir)
+    // Angle source chosen by the user (fixed at START)
     enum class SensorMode : uint8_t
     {
-        HALL,           // ADC → CL, açı Hall
-        SENSORLESS      // ADC → ALIGN → OL → CL, açı SMO
+        HALL,           // ADC → CL, angle from Hall
+        SENSORLESS      // ADC → ALIGN → OL → CL, angle from SMO
     };
 }

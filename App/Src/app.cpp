@@ -85,7 +85,7 @@ Commands     cmd;
 
 /* Functions -------------------------------------------------------*/
 
-// angle_src ve loop'un tek yazma noktası. ISR iki yazma arasına girip yarım ayar görmesin.
+// The only place that writes angle_src and loop, so the ISR cannot run between the two writes and see half a setting.
 void set_foc_mode(motor_control::AngleSource angle_src, motor_control::LoopMode loop)
 {
     HAL_NVIC_DisableIRQ(ADC3_IRQn);
@@ -169,7 +169,7 @@ motor_control::Idq_ref_t get_idq_ref(float omega_ref_rpm, float omega_fdbck_rpm)
         div = 0;
         speed_ctrl.update(omega_ref_rpm, omega_fdbck_rpm);
     }
-    return speed_ctrl.get_output();     // ara örneklerde son çıktı (geçişte reset(iq_init) değeri)
+    return speed_ctrl.get_output();     // last output between updates (the reset(iq_init) value after a switch)
 }
 
 void update_duties(motor_control::duties_t duties)

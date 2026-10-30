@@ -29,25 +29,25 @@ constexpr float     VDC_MIN         = 12.0f;
 constexpr float     I_ALIGN         = 1.0f;
 constexpr uint32_t  ALIGN_MS        = 1000;
 
-constexpr float     TS              = 1.0f / 20'000.0f;           // ISR periyodu [s]
-constexpr float     OMEGA_CAL       = motor_control::TWO_PI;     // Hall kalibrasyonu: 1 Hz elektriksel [rad/s]
-constexpr int       CAL_TURNS       = 4;                         // her yönde 4 elektriksel tur = 1 mekanik tur
+constexpr float     TS              = 1.0f / 20'000.0f;           // ISR period [s]
+constexpr float     OMEGA_CAL       = motor_control::TWO_PI;     // Hall calibration: 1 Hz electrical [rad/s]
+constexpr int       CAL_TURNS       = 4;                         // 4 electrical turns each way = 1 mechanical turn
 
-constexpr float     SUPERVISOR_DT   = 0.001f;                    // Supervisor periyodu [s]
+constexpr float     SUPERVISOR_DT   = 0.001f;                    // Supervisor period [s]
 constexpr float     I_OL            = 2.0f;                      // open-loop iq [A]
-constexpr float     OMEGA_OL        = 500.0f * motor_control::TWO_PI / 60.0f * 4.0f;  // 500 rpm mekanik ≈ 209 rad/s elektriksel
-constexpr float     OL_RAMP         = OMEGA_OL / 1.0f;           // 1 s'de hedef hıza [rad/s²]
-constexpr uint32_t  OL_HOLD_MS      = 2000;                      // hedef hızda bekleme (SMO'yu izlemek için)
-constexpr float     IQ_DOWN_STEP    = 0.002f;                    // OL'de iq azaltma adımı [A/ms]: 2 A 1 s'de
-constexpr float     IQ_OL_MIN       = 0.1f;                      // iq azaltmanın alt sınırı [A]
-constexpr float     DELTA_SWITCH    = 0.3f;                      // |θ_ol − θ_smo| bunun altına inince CL'e geç [rad] ≈ 17°
-constexpr float     OFFSET_STEP     = 0.005f;                    // OL→SMO açı ofseti erime adımı [rad/ms]: 1 rad 200 ms'de
+constexpr float     OMEGA_OL        = 500.0f * motor_control::TWO_PI / 60.0f * 4.0f;  // 500 rpm mechanical ≈ 209 rad/s electrical
+constexpr float     OL_RAMP         = OMEGA_OL / 1.0f;           // reach the target speed in 1 s [rad/s²]
+constexpr uint32_t  OL_HOLD_MS      = 2000;                      // wait at the target speed (to watch the SMO)
+constexpr float     IQ_DOWN_STEP    = 0.002f;                    // iq decrease step in OL [A/ms]: 2 A in 1 s
+constexpr float     IQ_OL_MIN       = 0.1f;                      // lowest iq when decreasing [A]
+constexpr float     DELTA_SWITCH    = 0.3f;                      // switch to CL when |θ_ol − θ_smo| is below this [rad] ≈ 17°
+constexpr float     OFFSET_STEP     = 0.005f;                    // OL→SMO angle offset fade step [rad/ms]: 1 rad in 200 ms
 
-constexpr float     IQ_REF_MAX      = 5.0f;                      // CURRENT modunda iq sınırı [A]
+constexpr float     IQ_REF_MAX      = 5.0f;                      // iq limit in CURRENT mode [A]
 
-constexpr float     SL_MIN_RPM      = 300.0f;                    // sensörsüz modda en düşük hız ref'i [rpm]
-constexpr float     SL_LOST_RPM     = 200.0f;                    // SMO hızı bunun altında → kilit kayıp sayılır [rpm]
-constexpr uint32_t  SL_LOST_MS      = 50;                        // bu kadar süre altında kalırsa hata [ms]
+constexpr float     SL_MIN_RPM      = 300.0f;                    // lowest speed reference in sensorless mode [rpm]
+constexpr float     SL_LOST_RPM     = 200.0f;                    // SMO speed below this → lock is lost [rpm]
+constexpr uint32_t  SL_LOST_MS      = 50;                        // fault if it stays below for this long [ms]
 
 constexpr float SPEED_REF_MAX_RPM = 3560.0f;   // 57BLF02 nominal rated: = 3000 rpm
                                                //                tested: = 3560 rpm
@@ -63,9 +63,9 @@ extern "C" CORDIC_HandleTypeDef hcordic;
 extern "C" DMA_HandleTypeDef    hdma_adc4;
 extern "C" DMA_HandleTypeDef    hdma_adc5;
 
-/* Paylaşılan veri: her grubun tek bir yazarı var ---------------------------*/
+/* Shared data: each group has one writer -----------------------------------*/
 
-// Yazar: ADC3 ISR (20 kHz). Thread'ler sadece okur.
+// Writer: ADC3 ISR (20 kHz). Threads only read.
 struct Measurements
 {
     float                    Vabc_phase_divider_voltage[3];
@@ -87,20 +87,20 @@ struct Measurements
     uint8_t                  hall_state = 0;
 };
 
-// Yazar: Supervisor. ISR okur. angle_src/loop sadece set_foc_mode() ile değişir.
+// Writer: Supervisor. ISR reads. angle_src/loop change only through set_foc_mode().
 struct FocConfig
 {
     motor_control::AngleSource  angle_src       = motor_control::AngleSource::FIXED;
     motor_control::LoopMode     loop            = motor_control::LoopMode::OFF;
-    volatile bool               record_hall_cal = false;   // OPEN_LOOP açısını Hall kalibrasyonuna kaydet
+    volatile bool               record_hall_cal = false;   // record the OPEN_LOOP angle for Hall calibration
     motor_control::Idq_ref_t    idq_ref         = {};
-    motor_control::SinCos_t     fixed_sincos    = {};      // FIXED açı
+    motor_control::SinCos_t     fixed_sincos    = {};      // FIXED angle
     volatile float              speed_ref_rpm   = 0.0f;
-    volatile float              ol_speed        = 0.0f;    // open-loop açı hızı [rad/s]
-    volatile float              angle_offset    = 0.0f;    // SMO açısına eklenir [rad], OL→SMO geçişinde 0'a erir
+    volatile float              ol_speed        = 0.0f;    // open-loop angle speed [rad/s]
+    volatile float              angle_offset    = 0.0f;    // added to the SMO angle [rad], fades to 0 after the OL→SMO switch
 };
 
-// Yazar: Monitor. ISR ve diğer thread'ler okur.
+// Writer: Monitor. ISR and other threads read.
 struct Status
 {
     volatile float              theta_deg;
@@ -115,25 +115,25 @@ struct Commands
     volatile bool  start         = false;
     volatile bool  stop          = false;
     volatile bool  reset_fault   = false;
-    volatile bool  calibrate     = false;   // Hall kalibrasyonu (sadece IDLE'da)
-    volatile bool  offset_cal    = false;   // akım ofsetini tazele (sadece IDLE'da, CiA 402 Switch On)
-    volatile motor_control::SensorMode sensor = motor_control::SensorMode::SENSORLESS;  // START'ta sabitlenir
-    volatile motor_control::LoopMode   loop   = motor_control::LoopMode::SPEED;         // START'ta sabitlenir
-    volatile float speed_ref_rpm = 0.0f;    // SPEED modunda
-    volatile float iq_ref        = 0.0f;    // CURRENT modunda [A]
+    volatile bool  calibrate     = false;   // Hall calibration (only in IDLE)
+    volatile bool  offset_cal    = false;   // refresh the current offset (only in IDLE, CiA 402 Switch On)
+    volatile motor_control::SensorMode sensor = motor_control::SensorMode::SENSORLESS;  // fixed at START
+    volatile motor_control::LoopMode   loop   = motor_control::LoopMode::SPEED;         // fixed at START
+    volatile float speed_ref_rpm = 0.0f;    // in SPEED mode
+    volatile float iq_ref        = 0.0f;    // in CURRENT mode [A]
 };
 
-// Yazar: Supervisor (init ve offsetCalPoll). ISR okur.
+// Writer: Supervisor (init and offsetCalPoll). ISR reads.
 struct AdcCalib
 {
     float    adc_ref_voltage         = 3.3f;
     float    volt_per_lsb            = adc_ref_voltage / ((1U << ADC_BIT) - 1U);
     float    amp_per_lsb             = volt_per_lsb / SHUNT_RES_OHM / SHUNT_AMP_GAIN;
     uint16_t amplifier_offset_raw[3] = {2048, 2048, 2048};
-    bool     offset_valid            = false;   // en az bir ofset ölçümü bitti (INIT bunu bekler)
+    bool     offset_valid            = false;   // at least one offset measurement is done (INIT waits for it)
 };
 
-// Yazar: DMA (ADC4, ADC5).
+// Writer: DMA (ADC4, ADC5).
 struct AdcDma
 {
     uint16_t adc_vdc_vrefint_raw[2];
@@ -147,7 +147,7 @@ extern AdcCalib     adc_cal;
 extern AdcDma       adc_dma;
 extern Commands     cmd;
 
-// Hata mandalı: birden çok yazarı var (ISR'lar, Monitor, Supervisor), bilerek grupların dışında.
+// Fault latch: it has many writers (ISRs, Monitor, Supervisor), so it is kept outside the groups on purpose.
 extern volatile motor_control::FaultCode  fault;
 
 extern motor_control::HallSensor          hall;

@@ -1,10 +1,10 @@
 #pragma once
 #include "state_machine.hpp"
 
-// Motor durumlarının işi. Supervisor çağırır:
-// enter = duruma girişte bir kez, run = durumda kaldıkça her 1 ms.
+// Work done in each motor state. Called by the Supervisor:
+// enter = once on entering the state, run = every 1 ms while in the state.
 
-motor_control::MotorEvent prepare_start();     // START anında: modu sabitle, START_HALL / START_SENSORLESS döndür
+motor_control::MotorEvent prepare_start();     // at START: fix the mode, return START_HALL / START_SENSORLESS
 
 void enter_align();
 void run_align();

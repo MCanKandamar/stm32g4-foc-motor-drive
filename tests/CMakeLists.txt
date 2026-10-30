@@ -1,6 +1,6 @@
-# PC'de çalışan GoogleTest testleri: tests/*.cpp
-# Test dosyası yoksa hiçbir şey yapılmaz. İlk test dosyası eklenince
-# GoogleTest GitHub'dan build/ klasörüne indirilir.
+# GoogleTest tests that run on the PC: tests/*.cpp
+# With no test file, nothing happens. When the first test file is added,
+# GoogleTest is downloaded from GitHub into the build/ folder.
 file(GLOB TEST_SOURCES CONFIGURE_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/*.cpp)
 
 if(TEST_SOURCES)
@@ -19,11 +19,11 @@ if(TEST_SOURCES)
     target_compile_options(motor_control_tests PRIVATE -Wall -Wextra)
 
     if(MINGW)
-        # MinGW çalışma zamanı DLL'lerini exe'ye göm; testler PATH'ten bağımsız çalışsın.
+        # Link the MinGW runtime into the exe, so the tests run without depending on PATH.
         target_link_options(motor_control_tests PRIVATE -static)
     endif()
 
-    # Testleri CTest'e ve VS Code'un Testing paneline tanıt.
+    # Register the tests with CTest and the VS Code Testing panel.
     include(GoogleTest)
     gtest_discover_tests(motor_control_tests)
 endif()

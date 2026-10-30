@@ -1,7 +1,7 @@
-// AnglePLL testleri: sabit hızda kilitlenme, 2π geçişi, ters yön ve reset(θ, ω) ile
-// geçiş süreci olmadan başlama.
+// AnglePLL tests: lock at constant speed, 2π wrap, reverse direction, and a start with reset(θ, ω)
+// without a settling transient.
 //
-// Ölçüm açısı her adımda gerçek rotor açısıdır (gürültüsüz); PLL'in açısı onunla karşılaştırılır.
+// The measured angle is the real rotor angle at each step (no noise); the PLL angle is compared with it.
 
 #include "pll.hpp"
 
@@ -17,7 +17,7 @@ namespace {
 constexpr float kPi = std::numbers::pi_v<float>;
 constexpr float kTwoPi = 2.0f * kPi;
 constexpr float kTs = 50e-6f;                 // 20 kHz ISR
-constexpr float kWn = kTwoPi * 30.0f;         // bant genişliği 30 Hz
+constexpr float kWn = kTwoPi * 30.0f;         // bandwidth 30 Hz
 constexpr float kZeta = 0.8f;
 
 PiConfig_ pll_config()
@@ -31,14 +31,14 @@ float wrap_0_2pi(float a)
     return (a < 0.0f) ? a + kTwoPi : a;
 }
 
-// İki açı arasındaki en kısa fark, derece cinsinden (−180..+180)
+// Shortest difference between two angles, in degrees (−180..+180)
 float diff_deg(float a, float b)
 {
     float d = std::fmod(a - b + 3.0f * kPi, kTwoPi) - kPi;
     return d * 180.0f / kPi;
 }
 
-// Rotor 'omega' ile dönüyor; PLL'i 'steps' adım besler, en büyük açı hatasını döndürür
+// Rotor turns at 'omega'; feeds the PLL for 'steps' steps, returns the largest angle error
 float run_max_error_deg(AnglePLL& pll, float theta0, float omega, int steps)
 {
     float worst = 0.0f;
@@ -68,7 +68,7 @@ TEST(AnglePLL, ResetSonrasiHizVerilenDegerdir)
 
 TEST(AnglePLL, SabitHizdaKilitlenir)
 {
-    // Durgun başlat, rotor 1000 rad/s dönüyor. 0.2 s sonra açı ve hız oturmuş olmalı.
+    // Start from rest, rotor turns at 1000 rad/s. After 0.2 s the angle and speed must have settled.
     AnglePLL pll(pll_config());
     pll.reset(0.0f, 0.0f);
     run_max_error_deg(pll, 0.0f, 1000.0f, 4000);
@@ -91,12 +91,12 @@ TEST(AnglePLL, TersYondeDeKilitlenir)
 
 TEST(AnglePLL, IkiPiGecisindeAciZiplamaz)
 {
-    // Kilitliyken birkaç tur dön: açı her zaman 0..2π içinde ve her adımda sadece ω·Ts kadar ilerler.
+    // Turn a few times while locked: the angle is always in 0..2π and moves only ω·Ts per step.
     AnglePLL pll(pll_config());
     pll.reset(0.0f, 1000.0f);
 
     float prev = pll.get_angle();
-    for (int k = 1; k <= 2000; ++k) {                       // ~16 elektriksel tur
+    for (int k = 1; k <= 2000; ++k) {                       // ~16 electrical turns
         const float angle = pll.update(wrap_0_2pi(1000.0f * kTs * static_cast<float>(k)));
         ASSERT_GE(angle, 0.0f) << "adim " << k;
         ASSERT_LT(angle, kTwoPi) << "adim " << k;
@@ -107,15 +107,15 @@ TEST(AnglePLL, IkiPiGecisindeAciZiplamaz)
 
 TEST(AnglePLL, DogruResetGecisSureciYaratmaz)
 {
-    // Motor zaten 1000 rad/s dönerken başlatma: hız verilirse hata ilk andan itibaren küçük kalır.
+    // Start while the motor already turns at 1000 rad/s: if the speed is given, the error stays small from the start.
     AnglePLL pll(pll_config());
     pll.reset(2.0f, 1000.0f);
-    EXPECT_LT(run_max_error_deg(pll, 2.0f, 1000.0f, 400), 1.0f);   // ilk 20 ms
+    EXPECT_LT(run_max_error_deg(pll, 2.0f, 1000.0f, 400), 1.0f);   // first 20 ms
 }
 
 TEST(AnglePLL, HizsizResetBuyukGecisSureciYaratir)
 {
-    // Aynı durumda hız 0 verilirse PLL yetişene kadar açı hatası 90°'yi geçer (neden ω'yı verdiğimizin kanıtı).
+    // Same case with speed 0: the angle error goes above 90° until the PLL catches up (this is why we pass ω).
     AnglePLL pll(pll_config());
     pll.reset(2.0f, 0.0f);
     EXPECT_GT(run_max_error_deg(pll, 2.0f, 1000.0f, 400), 90.0f);

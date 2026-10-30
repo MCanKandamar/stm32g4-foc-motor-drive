@@ -6,8 +6,8 @@
 extern "C" {
 #endif
 
-void CanopenInit(void);     // CANopen thread'inin başında bir kez
-void CanopenRun(void);      // CANopen thread'inden her 1 ms
+void CanopenInit(void);     // once, at the start of the CANopen thread
+void CanopenRun(void);      // every 1 ms from the CANopen thread
 
 #ifdef __cplusplus
 }

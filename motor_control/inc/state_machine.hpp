@@ -5,13 +5,13 @@ namespace motor_control
 {
     enum class MotorState : uint8_t
     {
-        INIT,               // açılış: cihaz hazırlığı ve akım ofseti, bitince IDLE
+        INIT,               // power-up: device setup and current offset, then IDLE
         IDLE,
         ALIGN,
         OPEN_LOOP,
         CLOSED_LOOP,
         FAULT,
-        CALIBRATING         // Hall kenar açılarını ölç, bitince IDLE
+        CALIBRATING         // measure the Hall edge angles, then IDLE
     };
 
     enum class MotorEvent : uint8_t
@@ -39,7 +39,7 @@ namespace motor_control
         MOTOR_OVER_TEMP,
         DRIVER_OVER_TEMP,
         SENSOR_ERROR,
-        SENSORLESS_LOST     // SMO hızı SL_LOST_RPM altında: açı tahmini güvenilmez
+        SENSORLESS_LOST     // SMO speed below SL_LOST_RPM: angle estimate is not reliable
     };
 
     class StateMachine
@@ -52,7 +52,7 @@ namespace motor_control
 
         private:
             volatile MotorState motor_state = MotorState::INIT;
-            bool                init_done   = false;    // INIT bir kez bitti; fault reset'ten sonra IDLE'a dönülür
+            bool                init_done   = false;    // INIT finished once; a fault reset goes back to IDLE
 
     };
 }

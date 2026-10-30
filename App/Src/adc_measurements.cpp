@@ -2,11 +2,11 @@
 #include "types.hpp"
 #include "filters.hpp"
 
-/* Akım ofseti: güç katı kapalıyken ADC3 enjekte örneklerinin ortalaması ------*/
+/* Current offset: mean of ADC3 injected samples with the power stage off -----*/
 
 constexpr uint16_t OFFSET_SAMPLES = 128;        // 128 / 20 kHz = 6.4 ms
 
-// Yazar: başlatma → Supervisor (busy = false iken), örnekler → ADC3 ISR (busy = true iken)
+// Writers: start → Supervisor (while busy = false), samples → ADC3 ISR (while busy = true)
 struct OffsetAcc
 {
     volatile uint32_t sum[3];
@@ -15,16 +15,16 @@ struct OffsetAcc
 };
 static OffsetAcc offset_acc;
 
-// Sadece güç katı kapalıyken çağrılır
+// Call only with the power stage off
 void offsetCalStart()
 {
     if (offset_acc.busy)
-        return;                                 // ölçüm zaten sürüyor
+        return;                                 // measurement already running
 
     for (int i = 0; i < 3; i++)
         offset_acc.sum[i] = 0;
     offset_acc.n    = 0;
-    offset_acc.busy = true;                     // en son: ISR ancak bundan sonra toplar
+    offset_acc.busy = true;                     // last: the ISR adds samples only after this
 }
 
 bool offsetCalBusy()
@@ -32,13 +32,13 @@ bool offsetCalBusy()
     return offset_acc.busy;
 }
 
-// ADC3 ISR, her enjekte dizisinde
+// ADC3 ISR, on every injected sequence
 void offsetCalSample()
 {
     if (!offset_acc.busy)
         return;
 
-    // volatile üzerinde ++ / += C++20'de kullanımdan kalktı: açık oku-yaz
+    // ++ / += on volatile is deprecated in C++20: read and write explicitly
     offset_acc.sum[0] = offset_acc.sum[0] + HAL_ADCEx_InjectedGetValue(&hadc3, ADC_INJECTED_RANK_1);
     offset_acc.sum[1] = offset_acc.sum[1] + HAL_ADCEx_InjectedGetValue(&hadc3, ADC_INJECTED_RANK_2);
     offset_acc.sum[2] = offset_acc.sum[2] + HAL_ADCEx_InjectedGetValue(&hadc3, ADC_INJECTED_RANK_3);
@@ -49,7 +49,7 @@ void offsetCalSample()
         offset_acc.busy = false;
 }
 
-// Supervisor, her 1 ms: ölçüm yeni bittiyse ofseti yaz
+// Supervisor, every 1 ms: write the offset when a measurement has just finished
 void offsetCalPoll()
 {
     static bool was_busy = false;

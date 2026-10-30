@@ -14,7 +14,7 @@
             "runEntry": "main",
             "imagesAndSymbols": [
                 {
-                    // Scrutiny firmware ID'si gömülü kopya (build sonrası scrutiny_postbuild üretir)
+                    // copy with the Scrutiny firmware ID inside (made by scrutiny_postbuild after the build)
                     //"imageFileName": "${workspaceFolder}/build/Debug/015_BLDC_FOC_RTOS_MotorDrive_tagged.elf"
                     "imageFileName": "${workspaceFolder}/build/Release/015_bldc_foc_rtos_motordrive_tagged.elf"
                 }

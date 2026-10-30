@@ -55,6 +55,7 @@ The toolchain, CMake and Ninja come from the STM32Cube bundles and are not on PA
 
 ## Conventions
 - Follow the style of the surrounding code (naming, file layout, comments); do not introduce a new style.
+- Comments in English only: short, simple words anyone can follow. Comment only where the code does not explain itself (the reason, units, limits).
 - Single precision only in firmware: no `double`, float literals with `f` (`1.0f`); the Cortex-M4 FPU is single precision.
 - C++: no exceptions, no RTTI; report errors with return values or fault codes.
 - Architecture rules (hardware-free `motor_control/`, short ISRs, no dynamic memory, no edits to third-party code): `docs/PROJECT.md` › Architecture.

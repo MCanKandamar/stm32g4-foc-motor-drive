@@ -17,7 +17,7 @@ static void enter_off();
 
 void SupervisorInit(void)
 {
-    // Açılış: INIT'e elle gir. currState de INIT (0) olduğundan SupervisorRun bunu yeni durum saymaz.
+    // Power-up: enter INIT by hand. currState is also INIT (0), so SupervisorRun does not see it as a new state.
     enter_init();
     currState = MotorState::INIT;
 }
@@ -32,7 +32,7 @@ void SupervisorRun(void)
 
     const MotorState s = motor_state_machine.getState();
 
-    // 1) Yeni duruma girildiyse: enter bir kez
+    // 1) On a new state: run enter once
     if (s != currState)
     {
         currState = s;
@@ -49,7 +49,7 @@ void SupervisorRun(void)
         }
     }
 
-    // 2) Her 1 ms: run
+    // 2) Every 1 ms: run
     switch (s)
     {
         case MotorState::INIT:           run_init();        break;
@@ -57,16 +57,16 @@ void SupervisorRun(void)
         case MotorState::OPEN_LOOP:      run_open_loop();   break;
         case MotorState::CLOSED_LOOP:    run_closed_loop(); break;
         case MotorState::CALIBRATING:    run_calibrating(); break;
-        default:                                            break;  // IDLE, FAULT: bekle
+        default:                                            break;  // IDLE, FAULT: wait
     }
 }
 
 
-/* INIT: açılışta cihaz hazırlığı, sonra akım ofseti ------------------------*/
+/* INIT: device setup at power-up, then current offset ----------------------*/
 
 static void enter_init()
 {
-    static bool hw_ready = false;       // peripheral'lar sadece bir kez (fault reset'te INIT'e dönülebilir)
+    static bool hw_ready = false;       // peripherals only once (a fault reset can go back to INIT)
 
     if (!hw_ready)
     {
@@ -75,7 +75,7 @@ static void enter_init()
     }
 
     adc_cal.offset_valid = false;
-    offsetCalStart();                   // güç katı kapalı, ~6.4 ms
+    offsetCalStart();                   // power stage off, ~6.4 ms
 }
 
 static void run_init()
@@ -120,7 +120,7 @@ static void init_peripherals()
     meas.hall_state = readHallPins();
     hall.init(meas.hall_state);
 
-    // FOC ISR: TIM8 tetikli enjekte dönüşümler. IDLE'da LoopMode::OFF ile çalışır, ofseti de ölçer.
+    // FOC ISR: injected conversions triggered by TIM8. Runs with LoopMode::OFF in IDLE and also measures the offset.
     HAL_ADCEx_InjectedStart_IT(&hadc3);
     __HAL_ADC_DISABLE_IT(&hadc3, ADC_IT_JEOC);
     __HAL_ADC_ENABLE_IT(&hadc3, ADC_IT_JEOS);
@@ -137,7 +137,7 @@ static void enter_off()
 }
 
 
-/* Komutlar -----------------------------------------------------------------*/
+/* Commands -----------------------------------------------------------------*/
 
 static void handle_commands()
 {
@@ -155,10 +155,10 @@ static void handle_commands()
     {
         cmd.offset_cal = false;
         if (motor_state_machine.getState() == MotorState::IDLE)
-            offsetCalStart();                   // güç katı kapalı, akım sıfır
+            offsetCalStart();                   // power stage off, current is zero
     }
 
-    // Ofset tazelenirken start / calibrate bekler: bayrak silinmez, ölçüm bitince işlenir
+    // While the offset refreshes, start / calibrate wait: the flag stays and is handled when it is done
     if (offsetCalBusy())
         return;
 
