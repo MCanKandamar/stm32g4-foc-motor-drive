@@ -44,7 +44,7 @@ One pin assignment differs from the Motor-Control schematic: this firmware reads
 | Torque control with Hall angle | Tested on the board |
 | CiA 402 state machine, fault reporting, EMCY | Tested on the board |
 | PDOs and SYNC | Tested on the board |
-| Speed-step test on FreeRTOS | Not done |
+| Speed-step test on FreeRTOS | Accepted without recorded numbers |
 | Communication-loss reaction | Not done |
 | Bus-off recovery | The CAN driver restarts FDCAN, not tested on the board |
 | Final EDS file, `0x1010` store parameters | Not done |
@@ -53,7 +53,7 @@ One pin assignment differs from the Motor-Control schematic: this firmware reads
 
 The latest board results are under [HIL tests](#hil-tests).
 
-The speed-loop results below come from the ThreadX firmware of 2026-10-30 and have not been repeated on FreeRTOS. `motor_control/` and [App/Src/isr.cpp](App/Src/isr.cpp) are the same in both versions.
+The speed-loop results below come from the ThreadX firmware of 2026-10-30, not from FreeRTOS. `motor_control/` and [App/Src/isr.cpp](App/Src/isr.cpp) are the same in both versions.
 
 | Test | Result |
 |---|---|
