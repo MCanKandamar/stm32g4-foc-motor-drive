@@ -2,7 +2,7 @@
 <!-- agent-lite v5. Lasting knowledge: read only the section a task needs. -->
 
 ## Overview
-Motor-drive firmware for a custom STM32G473 board driving a BLDC/PMSM motor through a DRV8350S gate driver. Field-oriented control with the rotor angle from Hall sensors or from a sensorless sliding-mode back-EMF observer; FreeRTOS; CANopen node (CANopenNode on FDCAN1) with CiA 402 drive profile (state machine, profile velocity and profile torque modes; PDO mapping and robustness still to do); Scrutiny embedded debugger for live variables and datalogging.
+Motor-drive firmware for a custom STM32G473 board driving a BLDC/PMSM motor through a DRV8350S gate driver. Field-oriented control with the rotor angle from Hall sensors or from a sensorless sliding-mode back-EMF observer; FreeRTOS; CANopen node (CANopenNode on FDCAN1) with CiA 402 drive profile (state machine, profile velocity and profile torque modes, PDO mapping, reaction to communication loss); Scrutiny embedded debugger for live variables and datalogging.
 
 ## Architecture
 Three layers (see `doc/motor_control/README.md`, local only):
