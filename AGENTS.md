@@ -1,7 +1,7 @@
 # AGENTS.md
 
 ## Project
-Firmware for a BLDC/PMSM motor drive on a custom STM32G473 board: field-oriented control with Hall-sensor or sensorless (sliding-mode observer) rotor angle, FreeRTOS, CANopen (CiA 402 in progress). Single developer (the user), active development.
+Firmware for a BLDC/PMSM motor drive on a custom STM32G473 board: field-oriented control with Hall-sensor or sensorless (sliding-mode observer) rotor angle, FreeRTOS, CANopen with the CiA 402 drive profile. Single developer (the user), active development.
 
 Profiles: code, embedded, learning
 
@@ -61,6 +61,7 @@ Everything is read/write except the paths below.
 Read-only:
 - `Drivers/` — ST HAL and CMSIS, copied by CubeMX
 - `Middlewares/` — FreeRTOS, copied by CubeMX
+- `tinyusb/src/` — upstream code, pinned commit in `tinyusb/VERSIONS.md`
 - `canopen/CANopenNode/` — upstream code, pinned commit in `canopen/VERSIONS.md`
 - `scrutiny-embedded/` — third-party library
 - `cmake/stm32cubemx/`, `startup_stm32g473xx.s` — CubeMX output with no USER CODE blocks
