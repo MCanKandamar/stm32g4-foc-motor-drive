@@ -15,7 +15,7 @@
         <ProfileTechnology>CANopen</ProfileTechnology>
       </ISO15745Reference>
     </ProfileHeader>
-    <ProfileBody xmlns:q1="http://www.canopen.org/xml/1.1" xsi:type="q1:ProfileBody_Device_CANopen" formatName="CANopen" formatVersion="1.0" fileName="bldc_drive.xdd" fileCreator="" fileCreationDate="2020-11-23" fileCreationTime="14:00:00.0000000+03:00" fileModifiedBy="" fileModificationDate="2026-11-02" fileModificationTime="09:35:26.3244512+03:00" fileVersion="1" supportedLanguages="en" xmlns="">
+    <ProfileBody xmlns:q1="http://www.canopen.org/xml/1.1" xsi:type="q1:ProfileBody_Device_CANopen" formatName="CANopen" formatVersion="1.0" fileName="bldc_drive.xdd" fileCreator="" fileCreationDate="2020-11-23" fileCreationTime="14:00:00.0000000+03:00" fileModifiedBy="" fileModificationDate="2026-11-02" fileModificationTime="16:57:12.4222393+03:00" fileVersion="1" supportedLanguages="en" xmlns="">
       <q1:DeviceIdentity>
         <q1:vendorName>M. Can Kandamar</q1:vendorName>
         <q1:vendorID>0</q1:vendorID>
@@ -60,26 +60,6 @@
             <q1:subrange lowerLimit="0" upperLimit="8" />
             <UDINT />
           </q1:array>
-          <q1:array name="Verify configuration" uniqueID="UID_ARR_1020">
-            <q1:subrange lowerLimit="0" upperLimit="2" />
-            <UDINT />
-          </q1:array>
-          <q1:array name="OS prompt" uniqueID="UID_ARR_1026">
-            <q1:subrange lowerLimit="0" upperLimit="3" />
-            <USINT />
-          </q1:array>
-          <q1:array name="Module list" uniqueID="UID_ARR_1027">
-            <q1:subrange lowerLimit="0" upperLimit="1" />
-            <UINT />
-          </q1:array>
-          <q1:array name="Emergency consumer object" uniqueID="UID_ARR_1028">
-            <q1:subrange lowerLimit="0" upperLimit="8" />
-            <UDINT />
-          </q1:array>
-          <q1:array name="Error behavior object" uniqueID="UID_ARR_1029">
-            <q1:subrange lowerLimit="0" upperLimit="2" />
-            <USINT />
-          </q1:array>
           <q1:struct name="Identity" uniqueID="UID_REC_1018">
             <q1:varDeclaration name="Highest sub-index supported" uniqueID="UID_RECSUB_101800">
               <USINT />
@@ -97,34 +77,6 @@
               <UDINT />
             </q1:varDeclaration>
           </q1:struct>
-          <q1:struct name="OS command" uniqueID="UID_REC_1023">
-            <q1:varDeclaration name="Highest sub-index supported" uniqueID="UID_RECSUB_102300">
-              <USINT />
-            </q1:varDeclaration>
-            <q1:varDeclaration name="Command" uniqueID="UID_RECSUB_102301">
-              <BITSTRING />
-            </q1:varDeclaration>
-            <q1:varDeclaration name="Status" uniqueID="UID_RECSUB_102302">
-              <USINT />
-            </q1:varDeclaration>
-            <q1:varDeclaration name="Reply" uniqueID="UID_RECSUB_102303">
-              <BITSTRING />
-            </q1:varDeclaration>
-          </q1:struct>
-          <q1:struct name="OS debugger interface" uniqueID="UID_REC_1025">
-            <q1:varDeclaration name="Highest sub-index supported" uniqueID="UID_RECSUB_102500">
-              <USINT />
-            </q1:varDeclaration>
-            <q1:varDeclaration name="Command" uniqueID="UID_RECSUB_102501">
-              <BITSTRING />
-            </q1:varDeclaration>
-            <q1:varDeclaration name="Status" uniqueID="UID_RECSUB_102502">
-              <USINT />
-            </q1:varDeclaration>
-            <q1:varDeclaration name="Reply" uniqueID="UID_RECSUB_102503">
-              <BITSTRING />
-            </q1:varDeclaration>
-          </q1:struct>
           <q1:struct name="SDO server parameter" uniqueID="UID_REC_1200">
             <q1:varDeclaration name="Highest sub-index supported" uniqueID="UID_RECSUB_120000">
               <USINT />
@@ -134,20 +86,6 @@
             </q1:varDeclaration>
             <q1:varDeclaration name="COB-ID server to client (tx)" uniqueID="UID_RECSUB_120002">
               <UDINT />
-            </q1:varDeclaration>
-          </q1:struct>
-          <q1:struct name="SDO server parameter" uniqueID="UID_REC_1201">
-            <q1:varDeclaration name="Highest sub-index supported" uniqueID="UID_RECSUB_120100">
-              <USINT />
-            </q1:varDeclaration>
-            <q1:varDeclaration name="COB-ID client to server (rx)" uniqueID="UID_RECSUB_120101">
-              <UDINT />
-            </q1:varDeclaration>
-            <q1:varDeclaration name="COB-ID server to client (tx)" uniqueID="UID_RECSUB_120102">
-              <UDINT />
-            </q1:varDeclaration>
-            <q1:varDeclaration name="Node-ID of the SDO client" uniqueID="UID_RECSUB_120103">
-              <USINT />
             </q1:varDeclaration>
           </q1:struct>
           <q1:struct name="SDO client parameter" uniqueID="UID_REC_1280">
@@ -217,20 +155,6 @@
               <USINT />
             </q1:varDeclaration>
             <q1:varDeclaration name="Event timer" uniqueID="UID_RECSUB_140305">
-              <UINT />
-            </q1:varDeclaration>
-          </q1:struct>
-          <q1:struct name="RPDO communication parameter" uniqueID="UID_REC_1404">
-            <q1:varDeclaration name="Highest sub-index supported" uniqueID="UID_RECSUB_140400">
-              <USINT />
-            </q1:varDeclaration>
-            <q1:varDeclaration name="COB-ID used by RPDO" uniqueID="UID_RECSUB_140401">
-              <UDINT />
-            </q1:varDeclaration>
-            <q1:varDeclaration name="Transmission type" uniqueID="UID_RECSUB_140402">
-              <USINT />
-            </q1:varDeclaration>
-            <q1:varDeclaration name="Event timer" uniqueID="UID_RECSUB_140405">
               <UINT />
             </q1:varDeclaration>
           </q1:struct>
@@ -350,35 +274,6 @@
               <UDINT />
             </q1:varDeclaration>
           </q1:struct>
-          <q1:struct name="RPDO mapping parameter" uniqueID="UID_REC_1604">
-            <q1:varDeclaration name="Number of mapped application objects in PDO" uniqueID="UID_RECSUB_160400">
-              <USINT />
-            </q1:varDeclaration>
-            <q1:varDeclaration name="Application object 1" uniqueID="UID_RECSUB_160401">
-              <UDINT />
-            </q1:varDeclaration>
-            <q1:varDeclaration name="Application object 2" uniqueID="UID_RECSUB_160402">
-              <UDINT />
-            </q1:varDeclaration>
-            <q1:varDeclaration name="Application object 3" uniqueID="UID_RECSUB_160403">
-              <UDINT />
-            </q1:varDeclaration>
-            <q1:varDeclaration name="Application object 4" uniqueID="UID_RECSUB_160404">
-              <UDINT />
-            </q1:varDeclaration>
-            <q1:varDeclaration name="Application object 5" uniqueID="UID_RECSUB_160405">
-              <UDINT />
-            </q1:varDeclaration>
-            <q1:varDeclaration name="Application object 6" uniqueID="UID_RECSUB_160406">
-              <UDINT />
-            </q1:varDeclaration>
-            <q1:varDeclaration name="Application object 7" uniqueID="UID_RECSUB_160407">
-              <UDINT />
-            </q1:varDeclaration>
-            <q1:varDeclaration name="Application object 8" uniqueID="UID_RECSUB_160408">
-              <UDINT />
-            </q1:varDeclaration>
-          </q1:struct>
           <q1:struct name="TPDO communication parameter" uniqueID="UID_REC_1800">
             <q1:varDeclaration name="Highest sub-index supported" uniqueID="UID_RECSUB_180000">
               <USINT />
@@ -456,26 +351,6 @@
               <UINT />
             </q1:varDeclaration>
             <q1:varDeclaration name="SYNC start value" uniqueID="UID_RECSUB_180306">
-              <USINT />
-            </q1:varDeclaration>
-          </q1:struct>
-          <q1:struct name="TPDO communication parameter" uniqueID="UID_REC_1804">
-            <q1:varDeclaration name="Highest sub-index supported" uniqueID="UID_RECSUB_180400">
-              <USINT />
-            </q1:varDeclaration>
-            <q1:varDeclaration name="COB-ID used by TPDO" uniqueID="UID_RECSUB_180401">
-              <UDINT />
-            </q1:varDeclaration>
-            <q1:varDeclaration name="Transmission type" uniqueID="UID_RECSUB_180402">
-              <USINT />
-            </q1:varDeclaration>
-            <q1:varDeclaration name="Inhibit time" uniqueID="UID_RECSUB_180403">
-              <UINT />
-            </q1:varDeclaration>
-            <q1:varDeclaration name="Event timer" uniqueID="UID_RECSUB_180405">
-              <UINT />
-            </q1:varDeclaration>
-            <q1:varDeclaration name="SYNC start value" uniqueID="UID_RECSUB_180406">
               <USINT />
             </q1:varDeclaration>
           </q1:struct>
@@ -595,35 +470,6 @@
               <UDINT />
             </q1:varDeclaration>
           </q1:struct>
-          <q1:struct name="TPDO mapping parameter" uniqueID="UID_REC_1A04">
-            <q1:varDeclaration name="Number of mapped application objects in PDO" uniqueID="UID_RECSUB_1A0400">
-              <USINT />
-            </q1:varDeclaration>
-            <q1:varDeclaration name="Application object 1" uniqueID="UID_RECSUB_1A0401">
-              <UDINT />
-            </q1:varDeclaration>
-            <q1:varDeclaration name="Application object 2" uniqueID="UID_RECSUB_1A0402">
-              <UDINT />
-            </q1:varDeclaration>
-            <q1:varDeclaration name="Application object 3" uniqueID="UID_RECSUB_1A0403">
-              <UDINT />
-            </q1:varDeclaration>
-            <q1:varDeclaration name="Application object 4" uniqueID="UID_RECSUB_1A0404">
-              <UDINT />
-            </q1:varDeclaration>
-            <q1:varDeclaration name="Application object 5" uniqueID="UID_RECSUB_1A0405">
-              <UDINT />
-            </q1:varDeclaration>
-            <q1:varDeclaration name="Application object 6" uniqueID="UID_RECSUB_1A0406">
-              <UDINT />
-            </q1:varDeclaration>
-            <q1:varDeclaration name="Application object 7" uniqueID="UID_RECSUB_1A0407">
-              <UDINT />
-            </q1:varDeclaration>
-            <q1:varDeclaration name="Application object 8" uniqueID="UID_RECSUB_1A0408">
-              <UDINT />
-            </q1:varDeclaration>
-          </q1:struct>
         </q1:dataTypeList>
         <q1:parameterList>
           <q1:parameter uniqueID="UID_OBJ_1000">
@@ -647,12 +493,6 @@
             <q1:defaultValue value="0x00" />
             <q1:property name="CO_countLabel" value="EM" />
           </q1:parameter>
-          <q1:parameter uniqueID="UID_OBJ_1002">
-            <label lang="en">Manufacturer status register</label>
-            <UDINT />
-            <q1:defaultValue value="0" />
-            <q1:property name="CO_disabled" value="true" />
-          </q1:parameter>
           <q1:parameter uniqueID="UID_OBJ_1003">
             <description lang="en">* Sub Index 0: Contains number of actual errors. 0 can be written to clear error history.
 * sub-index 1 and above:
@@ -661,71 +501,71 @@
             <q1:dataTypeIDRef uniqueIDRef="UID_ARR_1003" />
           </q1:parameter>
           <q1:parameter uniqueID="UID_SUB_100300" access="readWrite">
-            <label lang="en">Number of errors</label>
+            <description lang="en">Number of stored errors. Write 0 to clear the list.</description>
             <USINT />
           </q1:parameter>
           <q1:parameter uniqueID="UID_SUB_100301">
-            <label lang="en">Standard error field</label>
+            <description lang="en">Stored error, 01 is the newest: error code in bits 15..0, extra information in bits 31..16.</description>
             <UDINT />
           </q1:parameter>
           <q1:parameter uniqueID="UID_SUB_100302">
-            <label lang="en">Standard error field</label>
+            <description lang="en">Stored error, 01 is the newest: error code in bits 15..0, extra information in bits 31..16.</description>
             <UDINT />
           </q1:parameter>
           <q1:parameter uniqueID="UID_SUB_100303">
-            <label lang="en">Standard error field</label>
+            <description lang="en">Stored error, 01 is the newest: error code in bits 15..0, extra information in bits 31..16.</description>
             <UDINT />
           </q1:parameter>
           <q1:parameter uniqueID="UID_SUB_100304">
-            <label lang="en">Standard error field</label>
+            <description lang="en">Stored error, 01 is the newest: error code in bits 15..0, extra information in bits 31..16.</description>
             <UDINT />
           </q1:parameter>
           <q1:parameter uniqueID="UID_SUB_100305">
-            <label lang="en">Standard error field</label>
+            <description lang="en">Stored error, 01 is the newest: error code in bits 15..0, extra information in bits 31..16.</description>
             <UDINT />
           </q1:parameter>
           <q1:parameter uniqueID="UID_SUB_100306">
-            <label lang="en">Standard error field</label>
+            <description lang="en">Stored error, 01 is the newest: error code in bits 15..0, extra information in bits 31..16.</description>
             <UDINT />
           </q1:parameter>
           <q1:parameter uniqueID="UID_SUB_100307">
-            <label lang="en">Standard error field</label>
+            <description lang="en">Stored error, 01 is the newest: error code in bits 15..0, extra information in bits 31..16.</description>
             <UDINT />
           </q1:parameter>
           <q1:parameter uniqueID="UID_SUB_100308">
-            <label lang="en">Standard error field</label>
+            <description lang="en">Stored error, 01 is the newest: error code in bits 15..0, extra information in bits 31..16.</description>
             <UDINT />
           </q1:parameter>
           <q1:parameter uniqueID="UID_SUB_100309">
-            <label lang="en">Standard error field</label>
+            <description lang="en">Stored error, 01 is the newest: error code in bits 15..0, extra information in bits 31..16.</description>
             <UDINT />
           </q1:parameter>
           <q1:parameter uniqueID="UID_SUB_10030A">
-            <label lang="en">Standard error field</label>
+            <description lang="en">Stored error, 01 is the newest: error code in bits 15..0, extra information in bits 31..16.</description>
             <UDINT />
           </q1:parameter>
           <q1:parameter uniqueID="UID_SUB_10030B">
-            <label lang="en">Standard error field</label>
+            <description lang="en">Stored error, 01 is the newest: error code in bits 15..0, extra information in bits 31..16.</description>
             <UDINT />
           </q1:parameter>
           <q1:parameter uniqueID="UID_SUB_10030C">
-            <label lang="en">Standard error field</label>
+            <description lang="en">Stored error, 01 is the newest: error code in bits 15..0, extra information in bits 31..16.</description>
             <UDINT />
           </q1:parameter>
           <q1:parameter uniqueID="UID_SUB_10030D">
-            <label lang="en">Standard error field</label>
+            <description lang="en">Stored error, 01 is the newest: error code in bits 15..0, extra information in bits 31..16.</description>
             <UDINT />
           </q1:parameter>
           <q1:parameter uniqueID="UID_SUB_10030E">
-            <label lang="en">Standard error field</label>
+            <description lang="en">Stored error, 01 is the newest: error code in bits 15..0, extra information in bits 31..16.</description>
             <UDINT />
           </q1:parameter>
           <q1:parameter uniqueID="UID_SUB_10030F">
-            <label lang="en">Standard error field</label>
+            <description lang="en">Stored error, 01 is the newest: error code in bits 15..0, extra information in bits 31..16.</description>
             <UDINT />
           </q1:parameter>
           <q1:parameter uniqueID="UID_SUB_100310">
-            <label lang="en">Standard error field</label>
+            <description lang="en">Stored error, 01 is the newest: error code in bits 15..0, extra information in bits 31..16.</description>
             <UDINT />
           </q1:parameter>
           <q1:parameter uniqueID="UID_OBJ_1005" access="readWrite">
@@ -751,38 +591,6 @@
             <q1:defaultValue value="0" />
             <q1:property name="CO_storageGroup" value="PERSIST_COMM" />
           </q1:parameter>
-          <q1:parameter uniqueID="UID_OBJ_1008">
-            <label lang="en">Manufacturer device name</label>
-            <STRING />
-            <q1:property name="CO_disabled" value="true" />
-            <q1:property name="CO_storageGroup" value="PERSIST_COMM" />
-          </q1:parameter>
-          <q1:parameter uniqueID="UID_OBJ_1009">
-            <label lang="en">Manufacturer hardware version</label>
-            <STRING />
-            <q1:property name="CO_disabled" value="true" />
-            <q1:property name="CO_storageGroup" value="PERSIST_COMM" />
-          </q1:parameter>
-          <q1:parameter uniqueID="UID_OBJ_100A">
-            <label lang="en">Manufacturer software version</label>
-            <STRING />
-            <q1:property name="CO_disabled" value="true" />
-            <q1:property name="CO_storageGroup" value="PERSIST_COMM" />
-          </q1:parameter>
-          <q1:parameter uniqueID="UID_OBJ_100C" access="readWrite">
-            <label lang="en">Guard time</label>
-            <UINT />
-            <q1:defaultValue value="0" />
-            <q1:property name="CO_disabled" value="true" />
-            <q1:property name="CO_storageGroup" value="PERSIST_COMM" />
-          </q1:parameter>
-          <q1:parameter uniqueID="UID_OBJ_100D" access="readWrite">
-            <label lang="en">Life time factor</label>
-            <USINT />
-            <q1:defaultValue value="0" />
-            <q1:property name="CO_disabled" value="true" />
-            <q1:property name="CO_storageGroup" value="PERSIST_COMM" />
-          </q1:parameter>
           <q1:parameter uniqueID="UID_OBJ_1010">
             <description lang="en">Sub-indexes 1 and above:
 * Reading provides information about its storage functionality:
@@ -793,27 +601,27 @@
             <q1:property name="CO_countLabel" value="STORAGE" />
           </q1:parameter>
           <q1:parameter uniqueID="UID_SUB_101000">
-            <label lang="en">Highest sub-index supported</label>
+            <description lang="en">Last sub-index of this object.</description>
             <USINT />
             <q1:defaultValue value="0x04" />
           </q1:parameter>
           <q1:parameter uniqueID="UID_SUB_101001" access="readWrite">
-            <label lang="en">Save all parameters</label>
+            <description lang="en">Reads 1. A write changes RAM only: parameter storage is not built in this firmware.</description>
             <UDINT />
             <q1:defaultValue value="0x00000001" />
           </q1:parameter>
           <q1:parameter uniqueID="UID_SUB_101002" access="readWrite">
-            <label lang="en">Save communication parameters</label>
+            <description lang="en">Reads 1. A write changes RAM only: parameter storage is not built in this firmware.</description>
             <UDINT />
             <q1:defaultValue value="0x00000001" />
           </q1:parameter>
           <q1:parameter uniqueID="UID_SUB_101003" access="readWrite">
-            <label lang="en">Save application parameters</label>
+            <description lang="en">Reads 1. A write changes RAM only: parameter storage is not built in this firmware.</description>
             <UDINT />
             <q1:defaultValue value="0x00000001" />
           </q1:parameter>
           <q1:parameter uniqueID="UID_SUB_101004" access="readWrite">
-            <label lang="en">Save manufacturer defined parameters</label>
+            <description lang="en">Reads 1. A write changes RAM only: parameter storage is not built in this firmware.</description>
             <UDINT />
             <q1:defaultValue value="0x00000001" />
           </q1:parameter>
@@ -825,27 +633,27 @@
             <q1:dataTypeIDRef uniqueIDRef="UID_ARR_1011" />
           </q1:parameter>
           <q1:parameter uniqueID="UID_SUB_101100">
-            <label lang="en">Highest sub-index supported</label>
+            <description lang="en">Last sub-index of this object.</description>
             <USINT />
             <q1:defaultValue value="0x04" />
           </q1:parameter>
           <q1:parameter uniqueID="UID_SUB_101101" access="readWrite">
-            <label lang="en">Restore all default parameters</label>
+            <description lang="en">Reads 1. A write changes RAM only: parameter storage is not built in this firmware.</description>
             <UDINT />
             <q1:defaultValue value="0x00000001" />
           </q1:parameter>
           <q1:parameter uniqueID="UID_SUB_101102" access="readWrite">
-            <label lang="en">Restore communication default parameters</label>
+            <description lang="en">Reads 1. A write changes RAM only: parameter storage is not built in this firmware.</description>
             <UDINT />
             <q1:defaultValue value="0x00000001" />
           </q1:parameter>
           <q1:parameter uniqueID="UID_SUB_101103" access="readWrite">
-            <label lang="en">Restore application default parameters</label>
+            <description lang="en">Reads 1. A write changes RAM only: parameter storage is not built in this firmware.</description>
             <UDINT />
             <q1:defaultValue value="0x00000001" />
           </q1:parameter>
           <q1:parameter uniqueID="UID_SUB_101104" access="readWrite">
-            <label lang="en">Restore manufacturer defined default parameters</label>
+            <description lang="en">Reads 1. A write changes RAM only: parameter storage is not built in this firmware.</description>
             <UDINT />
             <q1:defaultValue value="0x00000001" />
           </q1:parameter>
@@ -858,12 +666,6 @@
             <q1:defaultValue value="0x00000100" />
             <q1:property name="CO_countLabel" value="TIME" />
             <q1:property name="CO_storageGroup" value="PERSIST_COMM" />
-          </q1:parameter>
-          <q1:parameter uniqueID="UID_OBJ_1013" access="readWrite">
-            <label lang="en">High resolution time stamp</label>
-            <UDINT />
-            <q1:defaultValue value="0" />
-            <q1:property name="CO_disabled" value="true" />
           </q1:parameter>
           <q1:parameter uniqueID="UID_OBJ_1014" access="readWrite">
             <description lang="en">* bit 31: If set, EMCY does NOT exist / is NOT valid
@@ -890,47 +692,47 @@
             <q1:property name="CO_storageGroup" value="PERSIST_COMM" />
           </q1:parameter>
           <q1:parameter uniqueID="UID_SUB_101600">
-            <label lang="en">Highest sub-index supported</label>
+            <description lang="en">Last sub-index of this object.</description>
             <USINT />
             <q1:defaultValue value="0x08" />
           </q1:parameter>
           <q1:parameter uniqueID="UID_SUB_101601" access="readWrite">
-            <label lang="en">Consumer heartbeat time</label>
+            <description lang="en">Watched heartbeat: node-ID in bits 23..16, time in ms in bits 15..0, 0 = off. Stays in RAM: the master writes it after each boot of the drive.</description>
             <UDINT />
             <q1:defaultValue value="0x00000000" />
           </q1:parameter>
           <q1:parameter uniqueID="UID_SUB_101602" access="readWrite">
-            <label lang="en">Consumer heartbeat time</label>
+            <description lang="en">Watched heartbeat: node-ID in bits 23..16, time in ms in bits 15..0, 0 = off. Stays in RAM: the master writes it after each boot of the drive.</description>
             <UDINT />
             <q1:defaultValue value="0x00000000" />
           </q1:parameter>
           <q1:parameter uniqueID="UID_SUB_101603" access="readWrite">
-            <label lang="en">Consumer heartbeat time</label>
+            <description lang="en">Watched heartbeat: node-ID in bits 23..16, time in ms in bits 15..0, 0 = off. Stays in RAM: the master writes it after each boot of the drive.</description>
             <UDINT />
             <q1:defaultValue value="0x00000000" />
           </q1:parameter>
           <q1:parameter uniqueID="UID_SUB_101604" access="readWrite">
-            <label lang="en">Consumer heartbeat time</label>
+            <description lang="en">Watched heartbeat: node-ID in bits 23..16, time in ms in bits 15..0, 0 = off. Stays in RAM: the master writes it after each boot of the drive.</description>
             <UDINT />
             <q1:defaultValue value="0x00000000" />
           </q1:parameter>
           <q1:parameter uniqueID="UID_SUB_101605" access="readWrite">
-            <label lang="en">Consumer heartbeat time</label>
+            <description lang="en">Watched heartbeat: node-ID in bits 23..16, time in ms in bits 15..0, 0 = off. Stays in RAM: the master writes it after each boot of the drive.</description>
             <UDINT />
             <q1:defaultValue value="0x00000000" />
           </q1:parameter>
           <q1:parameter uniqueID="UID_SUB_101606" access="readWrite">
-            <label lang="en">Consumer heartbeat time</label>
+            <description lang="en">Watched heartbeat: node-ID in bits 23..16, time in ms in bits 15..0, 0 = off. Stays in RAM: the master writes it after each boot of the drive.</description>
             <UDINT />
             <q1:defaultValue value="0x00000000" />
           </q1:parameter>
           <q1:parameter uniqueID="UID_SUB_101607" access="readWrite">
-            <label lang="en">Consumer heartbeat time</label>
+            <description lang="en">Watched heartbeat: node-ID in bits 23..16, time in ms in bits 15..0, 0 = off. Stays in RAM: the master writes it after each boot of the drive.</description>
             <UDINT />
             <q1:defaultValue value="0x00000000" />
           </q1:parameter>
           <q1:parameter uniqueID="UID_SUB_101608" access="readWrite">
-            <label lang="en">Consumer heartbeat time</label>
+            <description lang="en">Watched heartbeat: node-ID in bits 23..16, time in ms in bits 15..0, 0 = off. Stays in RAM: the master writes it after each boot of the drive.</description>
             <UDINT />
             <q1:defaultValue value="0x00000000" />
           </q1:parameter>
@@ -952,27 +754,27 @@
             <q1:property name="CO_storageGroup" value="PERSIST_COMM" />
           </q1:parameter>
           <q1:parameter uniqueID="UID_SUB_101800">
-            <label lang="en">Highest sub-index supported</label>
+            <description lang="en">Last sub-index of this object.</description>
             <USINT />
             <q1:defaultValue value="0x04" />
           </q1:parameter>
           <q1:parameter uniqueID="UID_SUB_101801">
-            <label lang="en">Vendor-ID</label>
+            <description lang="en">Vendor-ID given by CiA, 0 = not assigned.</description>
             <UDINT />
             <q1:defaultValue value="0x00000000" />
           </q1:parameter>
           <q1:parameter uniqueID="UID_SUB_101802">
-            <label lang="en">Product code</label>
+            <description lang="en">Product code of the drive.</description>
             <UDINT />
             <q1:defaultValue value="0x00000001" />
           </q1:parameter>
           <q1:parameter uniqueID="UID_SUB_101803">
-            <label lang="en">Revision number</label>
+            <description lang="en">Revision number of the drive.</description>
             <UDINT />
             <q1:defaultValue value="0x00010000" />
           </q1:parameter>
           <q1:parameter uniqueID="UID_SUB_101804">
-            <label lang="en">Serial number</label>
+            <description lang="en">Serial number of the drive.</description>
             <UDINT />
             <q1:defaultValue value="0x00000000" />
           </q1:parameter>
@@ -985,206 +787,6 @@
             <q1:defaultValue value="0" />
             <q1:property name="CO_storageGroup" value="PERSIST_COMM" />
           </q1:parameter>
-          <q1:parameter uniqueID="UID_OBJ_1020">
-            <label lang="en">Verify configuration</label>
-            <q1:dataTypeIDRef uniqueIDRef="UID_ARR_1020" />
-            <q1:property name="CO_disabled" value="true" />
-            <q1:property name="CO_storageGroup" value="PERSIST_COMM" />
-          </q1:parameter>
-          <q1:parameter uniqueID="UID_SUB_102000">
-            <label lang="en">Highest sub-index supported</label>
-            <USINT />
-            <q1:defaultValue value="0x02" />
-          </q1:parameter>
-          <q1:parameter uniqueID="UID_SUB_102001" access="readWrite">
-            <label lang="en">Configuration date</label>
-            <UDINT />
-            <q1:defaultValue value="0" />
-          </q1:parameter>
-          <q1:parameter uniqueID="UID_SUB_102002" access="readWrite">
-            <label lang="en">Configuration time</label>
-            <UDINT />
-            <q1:defaultValue value="0" />
-          </q1:parameter>
-          <q1:parameter uniqueID="UID_OBJ_1021">
-            <label lang="en">Store EDS</label>
-            <BITSTRING />
-            <q1:property name="CO_disabled" value="true" />
-          </q1:parameter>
-          <q1:parameter uniqueID="UID_OBJ_1022">
-            <label lang="en">Store format</label>
-            <UINT />
-            <q1:defaultValue value="0x0000" />
-            <q1:property name="CO_disabled" value="true" />
-            <q1:property name="CO_storageGroup" value="PERSIST_COMM" />
-          </q1:parameter>
-          <q1:parameter uniqueID="UID_OBJ_1023">
-            <label lang="en">OS command</label>
-            <q1:dataTypeIDRef uniqueIDRef="UID_REC_1023" />
-            <q1:property name="CO_disabled" value="true" />
-          </q1:parameter>
-          <q1:parameter uniqueID="UID_SUB_102300">
-            <label lang="en">Highest sub-index supported</label>
-            <USINT />
-            <q1:defaultValue value="0x03" />
-          </q1:parameter>
-          <q1:parameter uniqueID="UID_SUB_102301" access="readWrite">
-            <label lang="en">Command</label>
-            <BITSTRING />
-          </q1:parameter>
-          <q1:parameter uniqueID="UID_SUB_102302">
-            <label lang="en">Status</label>
-            <USINT />
-          </q1:parameter>
-          <q1:parameter uniqueID="UID_SUB_102303">
-            <label lang="en">Reply</label>
-            <BITSTRING />
-          </q1:parameter>
-          <q1:parameter uniqueID="UID_OBJ_1024" access="write">
-            <label lang="en">OS command mode</label>
-            <USINT />
-            <q1:defaultValue value="0x00" />
-            <q1:property name="CO_disabled" value="true" />
-            <q1:property name="CO_storageGroup" value="PERSIST_COMM" />
-          </q1:parameter>
-          <q1:parameter uniqueID="UID_OBJ_1025">
-            <label lang="en">OS debugger interface</label>
-            <q1:dataTypeIDRef uniqueIDRef="UID_REC_1025" />
-            <q1:property name="CO_disabled" value="true" />
-          </q1:parameter>
-          <q1:parameter uniqueID="UID_SUB_102500">
-            <label lang="en">Highest sub-index supported</label>
-            <USINT />
-            <q1:defaultValue value="0x03" />
-          </q1:parameter>
-          <q1:parameter uniqueID="UID_SUB_102501" access="readWrite">
-            <label lang="en">Command</label>
-            <BITSTRING />
-          </q1:parameter>
-          <q1:parameter uniqueID="UID_SUB_102502">
-            <label lang="en">Status</label>
-            <USINT />
-          </q1:parameter>
-          <q1:parameter uniqueID="UID_SUB_102503">
-            <label lang="en">Reply</label>
-            <BITSTRING />
-          </q1:parameter>
-          <q1:parameter uniqueID="UID_OBJ_1026">
-            <label lang="en">OS prompt</label>
-            <q1:dataTypeIDRef uniqueIDRef="UID_ARR_1026" />
-            <q1:property name="CO_disabled" value="true" />
-          </q1:parameter>
-          <q1:parameter uniqueID="UID_SUB_102600">
-            <label lang="en">Highest sub-index supported</label>
-            <USINT />
-            <q1:defaultValue value="0x03" />
-          </q1:parameter>
-          <q1:parameter uniqueID="UID_SUB_102601" access="readWrite">
-            <label lang="en">StdIn</label>
-            <USINT />
-          </q1:parameter>
-          <q1:parameter uniqueID="UID_SUB_102602" access="readWrite">
-            <label lang="en">StdOut</label>
-            <USINT />
-          </q1:parameter>
-          <q1:parameter uniqueID="UID_SUB_102603" access="readWrite">
-            <label lang="en">StdErr</label>
-            <USINT />
-          </q1:parameter>
-          <q1:parameter uniqueID="UID_OBJ_1027">
-            <label lang="en">Module list</label>
-            <q1:dataTypeIDRef uniqueIDRef="UID_ARR_1027" />
-            <q1:property name="CO_disabled" value="true" />
-            <q1:property name="CO_storageGroup" value="PERSIST_COMM" />
-          </q1:parameter>
-          <q1:parameter uniqueID="UID_SUB_102700">
-            <label lang="en">Number of connected modules</label>
-            <USINT />
-            <q1:defaultValue value="1" />
-          </q1:parameter>
-          <q1:parameter uniqueID="UID_SUB_102701">
-            <label lang="en">Module 1</label>
-            <UINT />
-            <q1:defaultValue value="0x0000" />
-          </q1:parameter>
-          <q1:parameter uniqueID="UID_OBJ_1028">
-            <description lang="en">Emergency consumer 1 to 127:
-* bit 31: If set, EMCY consumer does NOT exist / is NOT valid
-* bit 11-30: set to 0
-* bit 0-10: 11-bit CAN-ID</description>
-            <q1:dataTypeIDRef uniqueIDRef="UID_ARR_1028" />
-            <q1:property name="CO_disabled" value="true" />
-            <q1:property name="CO_storageGroup" value="PERSIST_COMM" />
-          </q1:parameter>
-          <q1:parameter uniqueID="UID_SUB_102800">
-            <label lang="en">Highest sub-index supported</label>
-            <USINT />
-            <q1:defaultValue value="0x08" />
-          </q1:parameter>
-          <q1:parameter uniqueID="UID_SUB_102801" access="readWrite">
-            <label lang="en">Emergency consumer 1</label>
-            <UDINT />
-            <q1:defaultValue value="0" />
-          </q1:parameter>
-          <q1:parameter uniqueID="UID_SUB_102802" access="readWrite">
-            <label lang="en">Emergency consumer 2</label>
-            <UDINT />
-            <q1:defaultValue value="0" />
-          </q1:parameter>
-          <q1:parameter uniqueID="UID_SUB_102803" access="readWrite">
-            <label lang="en">Emergency consumer 3</label>
-            <UDINT />
-            <q1:defaultValue value="0" />
-          </q1:parameter>
-          <q1:parameter uniqueID="UID_SUB_102804" access="readWrite">
-            <label lang="en">Emergency consumer 4</label>
-            <UDINT />
-            <q1:defaultValue value="0" />
-          </q1:parameter>
-          <q1:parameter uniqueID="UID_SUB_102805" access="readWrite">
-            <label lang="en">Emergency consumer 5</label>
-            <UDINT />
-            <q1:defaultValue value="0" />
-          </q1:parameter>
-          <q1:parameter uniqueID="UID_SUB_102806" access="readWrite">
-            <label lang="en">Emergency consumer 6</label>
-            <UDINT />
-            <q1:defaultValue value="0" />
-          </q1:parameter>
-          <q1:parameter uniqueID="UID_SUB_102807" access="readWrite">
-            <label lang="en">Emergency consumer 7</label>
-            <UDINT />
-            <q1:defaultValue value="0" />
-          </q1:parameter>
-          <q1:parameter uniqueID="UID_SUB_102808" access="readWrite">
-            <label lang="en">Emergency consumer 8</label>
-            <UDINT />
-            <q1:defaultValue value="0" />
-          </q1:parameter>
-          <q1:parameter uniqueID="UID_OBJ_1029">
-            <description lang="en">Sub-indexes 1 and above:
-* Value 0x00: on error change to NMT state Pre-operational (only if currently in NMT state Operational)
-* Value 0x01: on error do nothing
-* Value 0x02: on error change to NMT state Stopped</description>
-            <q1:dataTypeIDRef uniqueIDRef="UID_ARR_1029" />
-            <q1:property name="CO_disabled" value="true" />
-            <q1:property name="CO_storageGroup" value="PERSIST_COMM" />
-          </q1:parameter>
-          <q1:parameter uniqueID="UID_SUB_102900">
-            <label lang="en">Highest sub-index supported</label>
-            <USINT />
-            <q1:defaultValue value="0x02" />
-          </q1:parameter>
-          <q1:parameter uniqueID="UID_SUB_102901" access="readWrite">
-            <label lang="en">Communication error</label>
-            <USINT />
-            <q1:defaultValue value="0x00" />
-          </q1:parameter>
-          <q1:parameter uniqueID="UID_SUB_102902" access="readWrite">
-            <label lang="en">Profile- or manufacturer-specific error</label>
-            <USINT />
-            <q1:defaultValue value="0x00" />
-          </q1:parameter>
           <q1:parameter uniqueID="UID_OBJ_1200">
             <description lang="en">Sub-indexes 1 and 2:
 * bit 11-31: set to 0
@@ -1193,51 +795,19 @@
             <q1:property name="CO_countLabel" value="SDO_SRV" />
           </q1:parameter>
           <q1:parameter uniqueID="UID_SUB_120000">
-            <label lang="en">Highest sub-index supported</label>
+            <description lang="en">Last sub-index of this object.</description>
             <USINT />
             <q1:defaultValue value="2" />
           </q1:parameter>
           <q1:parameter uniqueID="UID_SUB_120001">
-            <label lang="en">COB-ID client to server (rx)</label>
+            <description lang="en">COB-ID of the SDO requests this node receives: 0x600 + node-ID.</description>
             <UDINT />
             <q1:defaultValue value="$NODEID+0x600" />
           </q1:parameter>
           <q1:parameter uniqueID="UID_SUB_120002">
-            <label lang="en">COB-ID server to client (tx)</label>
+            <description lang="en">COB-ID of the SDO responses this node sends: 0x580 + node-ID.</description>
             <UDINT />
             <q1:defaultValue value="$NODEID+0x580" />
-          </q1:parameter>
-          <q1:parameter uniqueID="UID_OBJ_1201">
-            <description lang="en">* Sub-indexes 1 and 2:
-  * bit 31: If set, SDO does NOT exist / is NOT valid
-  * bit 30: If set, value is assigned dynamically
-  * bit 11-29: set to 0
-  * bit 0-10: 11-bit CAN-ID
-* Node-ID of the SDO client, 0x01 to 0x7F</description>
-            <q1:dataTypeIDRef uniqueIDRef="UID_REC_1201" />
-            <q1:property name="CO_disabled" value="true" />
-            <q1:property name="CO_countLabel" value="SDO_SRV" />
-            <q1:property name="CO_storageGroup" value="PERSIST_COMM" />
-          </q1:parameter>
-          <q1:parameter uniqueID="UID_SUB_120100">
-            <label lang="en">Highest sub-index supported</label>
-            <USINT />
-            <q1:defaultValue value="0x03" />
-          </q1:parameter>
-          <q1:parameter uniqueID="UID_SUB_120101" access="readWrite">
-            <label lang="en">COB-ID client to server (rx)</label>
-            <UDINT />
-            <q1:defaultValue value="0x80000000" />
-          </q1:parameter>
-          <q1:parameter uniqueID="UID_SUB_120102" access="readWrite">
-            <label lang="en">COB-ID server to client (tx)</label>
-            <UDINT />
-            <q1:defaultValue value="0x80000000" />
-          </q1:parameter>
-          <q1:parameter uniqueID="UID_SUB_120103" access="readWrite">
-            <label lang="en">Node-ID of the SDO client</label>
-            <USINT />
-            <q1:defaultValue value="0x01" />
           </q1:parameter>
           <q1:parameter uniqueID="UID_OBJ_1280">
             <description lang="en">* Sub-indexes 1 and 2:
@@ -1251,22 +821,22 @@
             <q1:property name="CO_storageGroup" value="PERSIST_COMM" />
           </q1:parameter>
           <q1:parameter uniqueID="UID_SUB_128000">
-            <label lang="en">Highest sub-index supported</label>
+            <description lang="en">Last sub-index of this object.</description>
             <USINT />
             <q1:defaultValue value="0x03" />
           </q1:parameter>
           <q1:parameter uniqueID="UID_SUB_128001" access="readWrite">
-            <label lang="en">COB-ID client to server (tx)</label>
+            <description lang="en">COB-ID of the requests this client sends. Bit 31 = 1: not valid.</description>
             <UDINT />
             <q1:defaultValue value="0x80000000" />
           </q1:parameter>
           <q1:parameter uniqueID="UID_SUB_128002" access="readWrite">
-            <label lang="en">COB-ID server to client (rx)</label>
+            <description lang="en">COB-ID of the responses this client receives. Bit 31 = 1: not valid.</description>
             <UDINT />
             <q1:defaultValue value="0x80000000" />
           </q1:parameter>
           <q1:parameter uniqueID="UID_SUB_128003" access="readWrite">
-            <label lang="en">Node-ID of the SDO server</label>
+            <description lang="en">Node-ID of the SDO server.</description>
             <USINT />
             <q1:defaultValue value="0x01" />
           </q1:parameter>
@@ -1286,22 +856,22 @@
             <q1:property name="CO_storageGroup" value="PERSIST_COMM" />
           </q1:parameter>
           <q1:parameter uniqueID="UID_SUB_140000">
-            <label lang="en">Highest sub-index supported</label>
+            <description lang="en">Last sub-index of this object.</description>
             <USINT />
             <q1:defaultValue value="0x05" />
           </q1:parameter>
           <q1:parameter uniqueID="UID_SUB_140001" access="readWrite">
-            <label lang="en">COB-ID used by RPDO</label>
+            <description lang="en">COB-ID of this PDO. Bit 31 = 1: the PDO is off.</description>
             <UDINT />
             <q1:defaultValue value="$NODEID+0x00000200" />
           </q1:parameter>
           <q1:parameter uniqueID="UID_SUB_140002" access="readWrite">
-            <label lang="en">Transmission type</label>
+            <description lang="en">Transmission type: 254 = applied on receipt, 0 to 240 = applied at the next SYNC.</description>
             <USINT />
             <q1:defaultValue value="254" />
           </q1:parameter>
           <q1:parameter uniqueID="UID_SUB_140005" access="readWrite">
-            <label lang="en">Event timer</label>
+            <description lang="en">RPDO timeout [ms], 0 = off. Stays in RAM: the master writes it after each boot of the drive.</description>
             <UINT />
             <q1:defaultValue value="0" />
           </q1:parameter>
@@ -1321,22 +891,22 @@
             <q1:property name="CO_storageGroup" value="PERSIST_COMM" />
           </q1:parameter>
           <q1:parameter uniqueID="UID_SUB_140100">
-            <label lang="en">Highest sub-index supported</label>
+            <description lang="en">Last sub-index of this object.</description>
             <USINT />
             <q1:defaultValue value="0x05" />
           </q1:parameter>
           <q1:parameter uniqueID="UID_SUB_140101" access="readWrite">
-            <label lang="en">COB-ID used by RPDO</label>
+            <description lang="en">COB-ID of this PDO. Bit 31 = 1: the PDO is off.</description>
             <UDINT />
             <q1:defaultValue value="$NODEID+0x00000300" />
           </q1:parameter>
           <q1:parameter uniqueID="UID_SUB_140102" access="readWrite">
-            <label lang="en">Transmission type</label>
+            <description lang="en">Transmission type: 254 = applied on receipt, 0 to 240 = applied at the next SYNC.</description>
             <USINT />
             <q1:defaultValue value="254" />
           </q1:parameter>
           <q1:parameter uniqueID="UID_SUB_140105" access="readWrite">
-            <label lang="en">Event timer</label>
+            <description lang="en">RPDO timeout [ms], 0 = off. Stays in RAM: the master writes it after each boot of the drive.</description>
             <UINT />
             <q1:defaultValue value="0" />
           </q1:parameter>
@@ -1356,22 +926,22 @@
             <q1:property name="CO_storageGroup" value="PERSIST_COMM" />
           </q1:parameter>
           <q1:parameter uniqueID="UID_SUB_140200">
-            <label lang="en">Highest sub-index supported</label>
+            <description lang="en">Last sub-index of this object.</description>
             <USINT />
             <q1:defaultValue value="0x05" />
           </q1:parameter>
           <q1:parameter uniqueID="UID_SUB_140201" access="readWrite">
-            <label lang="en">COB-ID used by RPDO</label>
+            <description lang="en">COB-ID of this PDO. Bit 31 = 1: the PDO is off.</description>
             <UDINT />
             <q1:defaultValue value="$NODEID+0x80000400" />
           </q1:parameter>
           <q1:parameter uniqueID="UID_SUB_140202" access="readWrite">
-            <label lang="en">Transmission type</label>
+            <description lang="en">Transmission type: 254 = applied on receipt, 0 to 240 = applied at the next SYNC.</description>
             <USINT />
             <q1:defaultValue value="254" />
           </q1:parameter>
           <q1:parameter uniqueID="UID_SUB_140205" access="readWrite">
-            <label lang="en">Event timer</label>
+            <description lang="en">RPDO timeout [ms], 0 = off. Stays in RAM: the master writes it after each boot of the drive.</description>
             <UINT />
             <q1:defaultValue value="0" />
           </q1:parameter>
@@ -1391,58 +961,22 @@
             <q1:property name="CO_storageGroup" value="PERSIST_COMM" />
           </q1:parameter>
           <q1:parameter uniqueID="UID_SUB_140300">
-            <label lang="en">Highest sub-index supported</label>
+            <description lang="en">Last sub-index of this object.</description>
             <USINT />
             <q1:defaultValue value="0x05" />
           </q1:parameter>
           <q1:parameter uniqueID="UID_SUB_140301" access="readWrite">
-            <label lang="en">COB-ID used by RPDO</label>
+            <description lang="en">COB-ID of this PDO. Bit 31 = 1: the PDO is off.</description>
             <UDINT />
             <q1:defaultValue value="$NODEID+0x80000500" />
           </q1:parameter>
           <q1:parameter uniqueID="UID_SUB_140302" access="readWrite">
-            <label lang="en">Transmission type</label>
+            <description lang="en">Transmission type: 254 = applied on receipt, 0 to 240 = applied at the next SYNC.</description>
             <USINT />
             <q1:defaultValue value="254" />
           </q1:parameter>
           <q1:parameter uniqueID="UID_SUB_140305" access="readWrite">
-            <label lang="en">Event timer</label>
-            <UINT />
-            <q1:defaultValue value="0" />
-          </q1:parameter>
-          <q1:parameter uniqueID="UID_OBJ_1404">
-            <description lang="en">* COB-ID used by RPDO:
-  * bit 31: If set, PDO does not exist / is not valid
-  * bit 11-30: set to 0
-  * bit 0-10: 11-bit CAN-ID
-* Transmission type:
-  * Value 0-240: synchronous, processed after next reception of SYNC object
-  * Value 241-253: not used
-  * Value 254: event-driven (manufacturer-specific)
-  * Value 255: event-driven (device profile and application profile specific)
-* Event timer in ms (0 = disabled) for deadline monitoring.</description>
-            <q1:dataTypeIDRef uniqueIDRef="UID_REC_1404" />
-            <q1:property name="CO_disabled" value="true" />
-            <q1:property name="CO_countLabel" value="RPDO" />
-            <q1:property name="CO_storageGroup" value="PERSIST_COMM" />
-          </q1:parameter>
-          <q1:parameter uniqueID="UID_SUB_140400">
-            <label lang="en">Highest sub-index supported</label>
-            <USINT />
-            <q1:defaultValue value="0x05" />
-          </q1:parameter>
-          <q1:parameter uniqueID="UID_SUB_140401" access="readWrite">
-            <label lang="en">COB-ID used by RPDO</label>
-            <UDINT />
-            <q1:defaultValue value="0x80000000" />
-          </q1:parameter>
-          <q1:parameter uniqueID="UID_SUB_140402" access="readWrite">
-            <label lang="en">Transmission type</label>
-            <USINT />
-            <q1:defaultValue value="254" />
-          </q1:parameter>
-          <q1:parameter uniqueID="UID_SUB_140405" access="readWrite">
-            <label lang="en">Event timer</label>
+            <description lang="en">RPDO timeout [ms], 0 = off. Stays in RAM: the master writes it after each boot of the drive.</description>
             <UINT />
             <q1:defaultValue value="0" />
           </q1:parameter>
@@ -1459,47 +993,47 @@
             <q1:property name="CO_storageGroup" value="PERSIST_COMM" />
           </q1:parameter>
           <q1:parameter uniqueID="UID_SUB_160000" access="readWrite">
-            <label lang="en">Number of mapped application objects in PDO</label>
+            <description lang="en">Number of mapped objects, 0 to 8. Write 0 before changing the mapping.</description>
             <USINT />
             <q1:defaultValue value="2" />
           </q1:parameter>
           <q1:parameter uniqueID="UID_SUB_160001" access="readWrite">
-            <label lang="en">Application object 1</label>
+            <description lang="en">Mapped object: index in bits 31..16, sub-index in bits 15..8, length in bits in the low byte (bits 7..0).</description>
             <UDINT />
             <q1:defaultValue value="0x60400010" />
           </q1:parameter>
           <q1:parameter uniqueID="UID_SUB_160002" access="readWrite">
-            <label lang="en">Application object 2</label>
+            <description lang="en">Mapped object: index in bits 31..16, sub-index in bits 15..8, length in bits in the low byte (bits 7..0).</description>
             <UDINT />
             <q1:defaultValue value="0x60FF0020" />
           </q1:parameter>
           <q1:parameter uniqueID="UID_SUB_160003" access="readWrite">
-            <label lang="en">Application object 3</label>
+            <description lang="en">Mapped object: index in bits 31..16, sub-index in bits 15..8, length in bits in the low byte (bits 7..0).</description>
             <UDINT />
             <q1:defaultValue value="0x00000000" />
           </q1:parameter>
           <q1:parameter uniqueID="UID_SUB_160004" access="readWrite">
-            <label lang="en">Application object 4</label>
+            <description lang="en">Mapped object: index in bits 31..16, sub-index in bits 15..8, length in bits in the low byte (bits 7..0).</description>
             <UDINT />
             <q1:defaultValue value="0x00000000" />
           </q1:parameter>
           <q1:parameter uniqueID="UID_SUB_160005" access="readWrite">
-            <label lang="en">Application object 5</label>
+            <description lang="en">Mapped object: index in bits 31..16, sub-index in bits 15..8, length in bits in the low byte (bits 7..0).</description>
             <UDINT />
             <q1:defaultValue value="0x00000000" />
           </q1:parameter>
           <q1:parameter uniqueID="UID_SUB_160006" access="readWrite">
-            <label lang="en">Application object 6</label>
+            <description lang="en">Mapped object: index in bits 31..16, sub-index in bits 15..8, length in bits in the low byte (bits 7..0).</description>
             <UDINT />
             <q1:defaultValue value="0x00000000" />
           </q1:parameter>
           <q1:parameter uniqueID="UID_SUB_160007" access="readWrite">
-            <label lang="en">Application object 7</label>
+            <description lang="en">Mapped object: index in bits 31..16, sub-index in bits 15..8, length in bits in the low byte (bits 7..0).</description>
             <UDINT />
             <q1:defaultValue value="0x00000000" />
           </q1:parameter>
           <q1:parameter uniqueID="UID_SUB_160008" access="readWrite">
-            <label lang="en">Application object 8</label>
+            <description lang="en">Mapped object: index in bits 31..16, sub-index in bits 15..8, length in bits in the low byte (bits 7..0).</description>
             <UDINT />
             <q1:defaultValue value="0x00000000" />
           </q1:parameter>
@@ -1516,47 +1050,47 @@
             <q1:property name="CO_storageGroup" value="PERSIST_COMM" />
           </q1:parameter>
           <q1:parameter uniqueID="UID_SUB_160100" access="readWrite">
-            <label lang="en">Number of mapped application objects in PDO</label>
+            <description lang="en">Number of mapped objects, 0 to 8. Write 0 before changing the mapping.</description>
             <USINT />
             <q1:defaultValue value="2" />
           </q1:parameter>
           <q1:parameter uniqueID="UID_SUB_160101" access="readWrite">
-            <label lang="en">Application object 1</label>
+            <description lang="en">Mapped object: index in bits 31..16, sub-index in bits 15..8, length in bits in the low byte (bits 7..0).</description>
             <UDINT />
             <q1:defaultValue value="0x60400010" />
           </q1:parameter>
           <q1:parameter uniqueID="UID_SUB_160102" access="readWrite">
-            <label lang="en">Application object 2</label>
+            <description lang="en">Mapped object: index in bits 31..16, sub-index in bits 15..8, length in bits in the low byte (bits 7..0).</description>
             <UDINT />
             <q1:defaultValue value="0x60710010" />
           </q1:parameter>
           <q1:parameter uniqueID="UID_SUB_160103" access="readWrite">
-            <label lang="en">Application object 3</label>
+            <description lang="en">Mapped object: index in bits 31..16, sub-index in bits 15..8, length in bits in the low byte (bits 7..0).</description>
             <UDINT />
             <q1:defaultValue value="0x00000000" />
           </q1:parameter>
           <q1:parameter uniqueID="UID_SUB_160104" access="readWrite">
-            <label lang="en">Application object 4</label>
+            <description lang="en">Mapped object: index in bits 31..16, sub-index in bits 15..8, length in bits in the low byte (bits 7..0).</description>
             <UDINT />
             <q1:defaultValue value="0x00000000" />
           </q1:parameter>
           <q1:parameter uniqueID="UID_SUB_160105" access="readWrite">
-            <label lang="en">Application object 5</label>
+            <description lang="en">Mapped object: index in bits 31..16, sub-index in bits 15..8, length in bits in the low byte (bits 7..0).</description>
             <UDINT />
             <q1:defaultValue value="0x00000000" />
           </q1:parameter>
           <q1:parameter uniqueID="UID_SUB_160106" access="readWrite">
-            <label lang="en">Application object 6</label>
+            <description lang="en">Mapped object: index in bits 31..16, sub-index in bits 15..8, length in bits in the low byte (bits 7..0).</description>
             <UDINT />
             <q1:defaultValue value="0x00000000" />
           </q1:parameter>
           <q1:parameter uniqueID="UID_SUB_160107" access="readWrite">
-            <label lang="en">Application object 7</label>
+            <description lang="en">Mapped object: index in bits 31..16, sub-index in bits 15..8, length in bits in the low byte (bits 7..0).</description>
             <UDINT />
             <q1:defaultValue value="0x00000000" />
           </q1:parameter>
           <q1:parameter uniqueID="UID_SUB_160108" access="readWrite">
-            <label lang="en">Application object 8</label>
+            <description lang="en">Mapped object: index in bits 31..16, sub-index in bits 15..8, length in bits in the low byte (bits 7..0).</description>
             <UDINT />
             <q1:defaultValue value="0x00000000" />
           </q1:parameter>
@@ -1573,47 +1107,47 @@
             <q1:property name="CO_storageGroup" value="PERSIST_COMM" />
           </q1:parameter>
           <q1:parameter uniqueID="UID_SUB_160200" access="readWrite">
-            <label lang="en">Number of mapped application objects in PDO</label>
+            <description lang="en">Number of mapped objects, 0 to 8. Write 0 before changing the mapping.</description>
             <USINT />
             <q1:defaultValue value="0" />
           </q1:parameter>
           <q1:parameter uniqueID="UID_SUB_160201" access="readWrite">
-            <label lang="en">Application object 1</label>
+            <description lang="en">Mapped object: index in bits 31..16, sub-index in bits 15..8, length in bits in the low byte (bits 7..0).</description>
             <UDINT />
             <q1:defaultValue value="0x00000000" />
           </q1:parameter>
           <q1:parameter uniqueID="UID_SUB_160202" access="readWrite">
-            <label lang="en">Application object 2</label>
+            <description lang="en">Mapped object: index in bits 31..16, sub-index in bits 15..8, length in bits in the low byte (bits 7..0).</description>
             <UDINT />
             <q1:defaultValue value="0x00000000" />
           </q1:parameter>
           <q1:parameter uniqueID="UID_SUB_160203" access="readWrite">
-            <label lang="en">Application object 3</label>
+            <description lang="en">Mapped object: index in bits 31..16, sub-index in bits 15..8, length in bits in the low byte (bits 7..0).</description>
             <UDINT />
             <q1:defaultValue value="0x00000000" />
           </q1:parameter>
           <q1:parameter uniqueID="UID_SUB_160204" access="readWrite">
-            <label lang="en">Application object 4</label>
+            <description lang="en">Mapped object: index in bits 31..16, sub-index in bits 15..8, length in bits in the low byte (bits 7..0).</description>
             <UDINT />
             <q1:defaultValue value="0x00000000" />
           </q1:parameter>
           <q1:parameter uniqueID="UID_SUB_160205" access="readWrite">
-            <label lang="en">Application object 5</label>
+            <description lang="en">Mapped object: index in bits 31..16, sub-index in bits 15..8, length in bits in the low byte (bits 7..0).</description>
             <UDINT />
             <q1:defaultValue value="0x00000000" />
           </q1:parameter>
           <q1:parameter uniqueID="UID_SUB_160206" access="readWrite">
-            <label lang="en">Application object 6</label>
+            <description lang="en">Mapped object: index in bits 31..16, sub-index in bits 15..8, length in bits in the low byte (bits 7..0).</description>
             <UDINT />
             <q1:defaultValue value="0x00000000" />
           </q1:parameter>
           <q1:parameter uniqueID="UID_SUB_160207" access="readWrite">
-            <label lang="en">Application object 7</label>
+            <description lang="en">Mapped object: index in bits 31..16, sub-index in bits 15..8, length in bits in the low byte (bits 7..0).</description>
             <UDINT />
             <q1:defaultValue value="0x00000000" />
           </q1:parameter>
           <q1:parameter uniqueID="UID_SUB_160208" access="readWrite">
-            <label lang="en">Application object 8</label>
+            <description lang="en">Mapped object: index in bits 31..16, sub-index in bits 15..8, length in bits in the low byte (bits 7..0).</description>
             <UDINT />
             <q1:defaultValue value="0x00000000" />
           </q1:parameter>
@@ -1630,105 +1164,47 @@
             <q1:property name="CO_storageGroup" value="PERSIST_COMM" />
           </q1:parameter>
           <q1:parameter uniqueID="UID_SUB_160300" access="readWrite">
-            <label lang="en">Number of mapped application objects in PDO</label>
+            <description lang="en">Number of mapped objects, 0 to 8. Write 0 before changing the mapping.</description>
             <USINT />
             <q1:defaultValue value="0" />
           </q1:parameter>
           <q1:parameter uniqueID="UID_SUB_160301" access="readWrite">
-            <label lang="en">Application object 1</label>
+            <description lang="en">Mapped object: index in bits 31..16, sub-index in bits 15..8, length in bits in the low byte (bits 7..0).</description>
             <UDINT />
             <q1:defaultValue value="0x00000000" />
           </q1:parameter>
           <q1:parameter uniqueID="UID_SUB_160302" access="readWrite">
-            <label lang="en">Application object 2</label>
+            <description lang="en">Mapped object: index in bits 31..16, sub-index in bits 15..8, length in bits in the low byte (bits 7..0).</description>
             <UDINT />
             <q1:defaultValue value="0x00000000" />
           </q1:parameter>
           <q1:parameter uniqueID="UID_SUB_160303" access="readWrite">
-            <label lang="en">Application object 3</label>
+            <description lang="en">Mapped object: index in bits 31..16, sub-index in bits 15..8, length in bits in the low byte (bits 7..0).</description>
             <UDINT />
             <q1:defaultValue value="0x00000000" />
           </q1:parameter>
           <q1:parameter uniqueID="UID_SUB_160304" access="readWrite">
-            <label lang="en">Application object 4</label>
+            <description lang="en">Mapped object: index in bits 31..16, sub-index in bits 15..8, length in bits in the low byte (bits 7..0).</description>
             <UDINT />
             <q1:defaultValue value="0x00000000" />
           </q1:parameter>
           <q1:parameter uniqueID="UID_SUB_160305" access="readWrite">
-            <label lang="en">Application object 5</label>
+            <description lang="en">Mapped object: index in bits 31..16, sub-index in bits 15..8, length in bits in the low byte (bits 7..0).</description>
             <UDINT />
             <q1:defaultValue value="0x00000000" />
           </q1:parameter>
           <q1:parameter uniqueID="UID_SUB_160306" access="readWrite">
-            <label lang="en">Application object 6</label>
+            <description lang="en">Mapped object: index in bits 31..16, sub-index in bits 15..8, length in bits in the low byte (bits 7..0).</description>
             <UDINT />
             <q1:defaultValue value="0x00000000" />
           </q1:parameter>
           <q1:parameter uniqueID="UID_SUB_160307" access="readWrite">
-            <label lang="en">Application object 7</label>
+            <description lang="en">Mapped object: index in bits 31..16, sub-index in bits 15..8, length in bits in the low byte (bits 7..0).</description>
             <UDINT />
             <q1:defaultValue value="0x00000000" />
           </q1:parameter>
           <q1:parameter uniqueID="UID_SUB_160308" access="readWrite">
-            <label lang="en">Application object 8</label>
-            <UDINT />
-            <q1:defaultValue value="0x00000000" />
-          </q1:parameter>
-          <q1:parameter uniqueID="UID_OBJ_1604">
-            <description lang="en">* Number of mapped application objects in PDO:
-  * Value 0: mapping is disabled.
-  * Value 1: sub-index 0x01 is valid.
-  * Value 2-8: sub-indexes 0x01 to (0x02 to 0x08) are valid.
-* Application object 1-8:
-  * bit 16-31: index
-  * bit 8-15: sub-index
-  * bit 0-7: data length in bits</description>
-            <q1:dataTypeIDRef uniqueIDRef="UID_REC_1604" />
-            <q1:property name="CO_disabled" value="true" />
-            <q1:property name="CO_storageGroup" value="PERSIST_COMM" />
-          </q1:parameter>
-          <q1:parameter uniqueID="UID_SUB_160400" access="readWrite">
-            <label lang="en">Number of mapped application objects in PDO</label>
-            <USINT />
-            <q1:defaultValue value="0" />
-          </q1:parameter>
-          <q1:parameter uniqueID="UID_SUB_160401" access="readWrite">
-            <label lang="en">Application object 1</label>
-            <UDINT />
-            <q1:defaultValue value="0x00000000" />
-          </q1:parameter>
-          <q1:parameter uniqueID="UID_SUB_160402" access="readWrite">
-            <label lang="en">Application object 2</label>
-            <UDINT />
-            <q1:defaultValue value="0x00000000" />
-          </q1:parameter>
-          <q1:parameter uniqueID="UID_SUB_160403" access="readWrite">
-            <label lang="en">Application object 3</label>
-            <UDINT />
-            <q1:defaultValue value="0x00000000" />
-          </q1:parameter>
-          <q1:parameter uniqueID="UID_SUB_160404" access="readWrite">
-            <label lang="en">Application object 4</label>
-            <UDINT />
-            <q1:defaultValue value="0x00000000" />
-          </q1:parameter>
-          <q1:parameter uniqueID="UID_SUB_160405" access="readWrite">
-            <label lang="en">Application object 5</label>
-            <UDINT />
-            <q1:defaultValue value="0x00000000" />
-          </q1:parameter>
-          <q1:parameter uniqueID="UID_SUB_160406" access="readWrite">
-            <label lang="en">Application object 6</label>
-            <UDINT />
-            <q1:defaultValue value="0x00000000" />
-          </q1:parameter>
-          <q1:parameter uniqueID="UID_SUB_160407" access="readWrite">
-            <label lang="en">Application object 7</label>
-            <UDINT />
-            <q1:defaultValue value="0x00000000" />
-          </q1:parameter>
-          <q1:parameter uniqueID="UID_SUB_160408" access="readWrite">
-            <label lang="en">Application object 8</label>
+            <description lang="en">Mapped object: index in bits 31..16, sub-index in bits 15..8, length in bits in the low byte (bits 7..0).</description>
             <UDINT />
             <q1:defaultValue value="0x00000000" />
           </q1:parameter>
@@ -1754,32 +1230,32 @@
             <q1:property name="CO_storageGroup" value="PERSIST_COMM" />
           </q1:parameter>
           <q1:parameter uniqueID="UID_SUB_180000">
-            <label lang="en">Highest sub-index supported</label>
+            <description lang="en">Last sub-index of this object.</description>
             <USINT />
             <q1:defaultValue value="0x06" />
           </q1:parameter>
           <q1:parameter uniqueID="UID_SUB_180001" access="readWrite">
-            <label lang="en">COB-ID used by TPDO</label>
+            <description lang="en">COB-ID of this PDO. Bit 31 = 1: the PDO is off.</description>
             <UDINT />
             <q1:defaultValue value="$NODEID+0x40000180" />
           </q1:parameter>
           <q1:parameter uniqueID="UID_SUB_180002" access="readWrite">
-            <label lang="en">Transmission type</label>
+            <description lang="en">Transmission type: 0 = at SYNC after an event, 1 to 240 = every N SYNC, 254 = event driven.</description>
             <USINT />
             <q1:defaultValue value="254" />
           </q1:parameter>
           <q1:parameter uniqueID="UID_SUB_180003" access="readWrite">
-            <label lang="en">Inhibit time</label>
+            <description lang="en">Shortest time between two sends [100 us], 0 = no limit.</description>
             <UINT />
             <q1:defaultValue value="0" />
           </q1:parameter>
           <q1:parameter uniqueID="UID_SUB_180005" access="readWrite">
-            <label lang="en">Event timer</label>
+            <description lang="en">Send period for event-driven types [ms], 0 = off.</description>
             <UINT />
             <q1:defaultValue value="100" />
           </q1:parameter>
           <q1:parameter uniqueID="UID_SUB_180006" access="readWrite">
-            <label lang="en">SYNC start value</label>
+            <description lang="en">SYNC counter value that starts the sends, 0 = not used.</description>
             <USINT />
             <q1:defaultValue value="0" />
           </q1:parameter>
@@ -1805,32 +1281,32 @@
             <q1:property name="CO_storageGroup" value="PERSIST_COMM" />
           </q1:parameter>
           <q1:parameter uniqueID="UID_SUB_180100">
-            <label lang="en">Highest sub-index supported</label>
+            <description lang="en">Last sub-index of this object.</description>
             <USINT />
             <q1:defaultValue value="0x06" />
           </q1:parameter>
           <q1:parameter uniqueID="UID_SUB_180101" access="readWrite">
-            <label lang="en">COB-ID used by TPDO</label>
+            <description lang="en">COB-ID of this PDO. Bit 31 = 1: the PDO is off.</description>
             <UDINT />
             <q1:defaultValue value="$NODEID+0x40000280" />
           </q1:parameter>
           <q1:parameter uniqueID="UID_SUB_180102" access="readWrite">
-            <label lang="en">Transmission type</label>
+            <description lang="en">Transmission type: 0 = at SYNC after an event, 1 to 240 = every N SYNC, 254 = event driven.</description>
             <USINT />
             <q1:defaultValue value="254" />
           </q1:parameter>
           <q1:parameter uniqueID="UID_SUB_180103" access="readWrite">
-            <label lang="en">Inhibit time</label>
+            <description lang="en">Shortest time between two sends [100 us], 0 = no limit.</description>
             <UINT />
             <q1:defaultValue value="0" />
           </q1:parameter>
           <q1:parameter uniqueID="UID_SUB_180105" access="readWrite">
-            <label lang="en">Event timer</label>
+            <description lang="en">Send period for event-driven types [ms], 0 = off.</description>
             <UINT />
             <q1:defaultValue value="100" />
           </q1:parameter>
           <q1:parameter uniqueID="UID_SUB_180106" access="readWrite">
-            <label lang="en">SYNC start value</label>
+            <description lang="en">SYNC counter value that starts the sends, 0 = not used.</description>
             <USINT />
             <q1:defaultValue value="0" />
           </q1:parameter>
@@ -1856,32 +1332,32 @@
             <q1:property name="CO_storageGroup" value="PERSIST_COMM" />
           </q1:parameter>
           <q1:parameter uniqueID="UID_SUB_180200">
-            <label lang="en">Highest sub-index supported</label>
+            <description lang="en">Last sub-index of this object.</description>
             <USINT />
             <q1:defaultValue value="0x06" />
           </q1:parameter>
           <q1:parameter uniqueID="UID_SUB_180201" access="readWrite">
-            <label lang="en">COB-ID used by TPDO</label>
+            <description lang="en">COB-ID of this PDO. Bit 31 = 1: the PDO is off.</description>
             <UDINT />
             <q1:defaultValue value="$NODEID+0xC0000380" />
           </q1:parameter>
           <q1:parameter uniqueID="UID_SUB_180202" access="readWrite">
-            <label lang="en">Transmission type</label>
+            <description lang="en">Transmission type: 0 = at SYNC after an event, 1 to 240 = every N SYNC, 254 = event driven.</description>
             <USINT />
             <q1:defaultValue value="254" />
           </q1:parameter>
           <q1:parameter uniqueID="UID_SUB_180203" access="readWrite">
-            <label lang="en">Inhibit time</label>
+            <description lang="en">Shortest time between two sends [100 us], 0 = no limit.</description>
             <UINT />
             <q1:defaultValue value="0" />
           </q1:parameter>
           <q1:parameter uniqueID="UID_SUB_180205" access="readWrite">
-            <label lang="en">Event timer</label>
+            <description lang="en">Send period for event-driven types [ms], 0 = off.</description>
             <UINT />
             <q1:defaultValue value="0" />
           </q1:parameter>
           <q1:parameter uniqueID="UID_SUB_180206" access="readWrite">
-            <label lang="en">SYNC start value</label>
+            <description lang="en">SYNC counter value that starts the sends, 0 = not used.</description>
             <USINT />
             <q1:defaultValue value="0" />
           </q1:parameter>
@@ -1907,84 +1383,32 @@
             <q1:property name="CO_storageGroup" value="PERSIST_COMM" />
           </q1:parameter>
           <q1:parameter uniqueID="UID_SUB_180300">
-            <label lang="en">Highest sub-index supported</label>
+            <description lang="en">Last sub-index of this object.</description>
             <USINT />
             <q1:defaultValue value="0x06" />
           </q1:parameter>
           <q1:parameter uniqueID="UID_SUB_180301" access="readWrite">
-            <label lang="en">COB-ID used by TPDO</label>
+            <description lang="en">COB-ID of this PDO. Bit 31 = 1: the PDO is off.</description>
             <UDINT />
             <q1:defaultValue value="$NODEID+0xC0000480" />
           </q1:parameter>
           <q1:parameter uniqueID="UID_SUB_180302" access="readWrite">
-            <label lang="en">Transmission type</label>
+            <description lang="en">Transmission type: 0 = at SYNC after an event, 1 to 240 = every N SYNC, 254 = event driven.</description>
             <USINT />
             <q1:defaultValue value="254" />
           </q1:parameter>
           <q1:parameter uniqueID="UID_SUB_180303" access="readWrite">
-            <label lang="en">Inhibit time</label>
+            <description lang="en">Shortest time between two sends [100 us], 0 = no limit.</description>
             <UINT />
             <q1:defaultValue value="0" />
           </q1:parameter>
           <q1:parameter uniqueID="UID_SUB_180305" access="readWrite">
-            <label lang="en">Event timer</label>
+            <description lang="en">Send period for event-driven types [ms], 0 = off.</description>
             <UINT />
             <q1:defaultValue value="0" />
           </q1:parameter>
           <q1:parameter uniqueID="UID_SUB_180306" access="readWrite">
-            <label lang="en">SYNC start value</label>
-            <USINT />
-            <q1:defaultValue value="0" />
-          </q1:parameter>
-          <q1:parameter uniqueID="UID_OBJ_1804">
-            <description lang="en">* COB-ID used by RPDO:
-  * bit 31: If set, PDO does not exist / is not valid
-  * bit 30: If set, NO RTR is allowed on this PDO
-  * bit 11-29: set to 0
-  * bit 0-10: 11-bit CAN-ID
-* Transmission type:
-  * Value 0: synchronous (acyclic)
-  * Value 1-240: synchronous (cyclic every (1-240)-th sync)
-  * Value 241-253: not used
-  * Value 254: event-driven (manufacturer-specific)
-  * Value 255: event-driven (device profile and application profile specific)
-* Inhibit time in multiple of 100µs, if the transmission type is set to 254 or 255 (0 = disabled).
-* Event timer interval in ms, if the transmission type is set to 254 or 255 (0 = disabled).
-* SYNC start value
-  * Value 0: Counter of the SYNC message shall not be processed.
-  * Value 1-240: The SYNC message with the counter value equal to this value shall be regarded as the first received SYNC message.</description>
-            <q1:dataTypeIDRef uniqueIDRef="UID_REC_1804" />
-            <q1:property name="CO_disabled" value="true" />
-            <q1:property name="CO_countLabel" value="TPDO" />
-            <q1:property name="CO_storageGroup" value="PERSIST_COMM" />
-          </q1:parameter>
-          <q1:parameter uniqueID="UID_SUB_180400">
-            <label lang="en">Highest sub-index supported</label>
-            <USINT />
-            <q1:defaultValue value="0x06" />
-          </q1:parameter>
-          <q1:parameter uniqueID="UID_SUB_180401" access="readWrite">
-            <label lang="en">COB-ID used by TPDO</label>
-            <UDINT />
-            <q1:defaultValue value="0xC0000000" />
-          </q1:parameter>
-          <q1:parameter uniqueID="UID_SUB_180402" access="readWrite">
-            <label lang="en">Transmission type</label>
-            <USINT />
-            <q1:defaultValue value="254" />
-          </q1:parameter>
-          <q1:parameter uniqueID="UID_SUB_180403" access="readWrite">
-            <label lang="en">Inhibit time</label>
-            <UINT />
-            <q1:defaultValue value="0" />
-          </q1:parameter>
-          <q1:parameter uniqueID="UID_SUB_180405" access="readWrite">
-            <label lang="en">Event timer</label>
-            <UINT />
-            <q1:defaultValue value="0" />
-          </q1:parameter>
-          <q1:parameter uniqueID="UID_SUB_180406" access="readWrite">
-            <label lang="en">SYNC start value</label>
+            <description lang="en">SYNC counter value that starts the sends, 0 = not used.</description>
             <USINT />
             <q1:defaultValue value="0" />
           </q1:parameter>
@@ -2001,47 +1425,47 @@
             <q1:property name="CO_storageGroup" value="PERSIST_COMM" />
           </q1:parameter>
           <q1:parameter uniqueID="UID_SUB_1A0000" access="readWrite">
-            <label lang="en">Number of mapped application objects in PDO</label>
+            <description lang="en">Number of mapped objects, 0 to 8. Write 0 before changing the mapping.</description>
             <USINT />
             <q1:defaultValue value="2" />
           </q1:parameter>
           <q1:parameter uniqueID="UID_SUB_1A0001" access="readWrite">
-            <label lang="en">Application object 1</label>
+            <description lang="en">Mapped object: index in bits 31..16, sub-index in bits 15..8, length in bits in the low byte (bits 7..0).</description>
             <UDINT />
             <q1:defaultValue value="0x60410010" />
           </q1:parameter>
           <q1:parameter uniqueID="UID_SUB_1A0002" access="readWrite">
-            <label lang="en">Application object 2</label>
+            <description lang="en">Mapped object: index in bits 31..16, sub-index in bits 15..8, length in bits in the low byte (bits 7..0).</description>
             <UDINT />
             <q1:defaultValue value="0x606C0020" />
           </q1:parameter>
           <q1:parameter uniqueID="UID_SUB_1A0003" access="readWrite">
-            <label lang="en">Application object 3</label>
+            <description lang="en">Mapped object: index in bits 31..16, sub-index in bits 15..8, length in bits in the low byte (bits 7..0).</description>
             <UDINT />
             <q1:defaultValue value="0x00000000" />
           </q1:parameter>
           <q1:parameter uniqueID="UID_SUB_1A0004" access="readWrite">
-            <label lang="en">Application object 4</label>
+            <description lang="en">Mapped object: index in bits 31..16, sub-index in bits 15..8, length in bits in the low byte (bits 7..0).</description>
             <UDINT />
             <q1:defaultValue value="0x00000000" />
           </q1:parameter>
           <q1:parameter uniqueID="UID_SUB_1A0005" access="readWrite">
-            <label lang="en">Application object 5</label>
+            <description lang="en">Mapped object: index in bits 31..16, sub-index in bits 15..8, length in bits in the low byte (bits 7..0).</description>
             <UDINT />
             <q1:defaultValue value="0x00000000" />
           </q1:parameter>
           <q1:parameter uniqueID="UID_SUB_1A0006" access="readWrite">
-            <label lang="en">Application object 6</label>
+            <description lang="en">Mapped object: index in bits 31..16, sub-index in bits 15..8, length in bits in the low byte (bits 7..0).</description>
             <UDINT />
             <q1:defaultValue value="0x00000000" />
           </q1:parameter>
           <q1:parameter uniqueID="UID_SUB_1A0007" access="readWrite">
-            <label lang="en">Application object 7</label>
+            <description lang="en">Mapped object: index in bits 31..16, sub-index in bits 15..8, length in bits in the low byte (bits 7..0).</description>
             <UDINT />
             <q1:defaultValue value="0x00000000" />
           </q1:parameter>
           <q1:parameter uniqueID="UID_SUB_1A0008" access="readWrite">
-            <label lang="en">Application object 8</label>
+            <description lang="en">Mapped object: index in bits 31..16, sub-index in bits 15..8, length in bits in the low byte (bits 7..0).</description>
             <UDINT />
             <q1:defaultValue value="0x00000000" />
           </q1:parameter>
@@ -2058,47 +1482,47 @@
             <q1:property name="CO_storageGroup" value="PERSIST_COMM" />
           </q1:parameter>
           <q1:parameter uniqueID="UID_SUB_1A0100" access="readWrite">
-            <label lang="en">Number of mapped application objects in PDO</label>
+            <description lang="en">Number of mapped objects, 0 to 8. Write 0 before changing the mapping.</description>
             <USINT />
             <q1:defaultValue value="3" />
           </q1:parameter>
           <q1:parameter uniqueID="UID_SUB_1A0101" access="readWrite">
-            <label lang="en">Application object 1</label>
+            <description lang="en">Mapped object: index in bits 31..16, sub-index in bits 15..8, length in bits in the low byte (bits 7..0).</description>
             <UDINT />
             <q1:defaultValue value="0x60410010" />
           </q1:parameter>
           <q1:parameter uniqueID="UID_SUB_1A0102" access="readWrite">
-            <label lang="en">Application object 2</label>
+            <description lang="en">Mapped object: index in bits 31..16, sub-index in bits 15..8, length in bits in the low byte (bits 7..0).</description>
             <UDINT />
             <q1:defaultValue value="0x60770010" />
           </q1:parameter>
           <q1:parameter uniqueID="UID_SUB_1A0103" access="readWrite">
-            <label lang="en">Application object 3</label>
+            <description lang="en">Mapped object: index in bits 31..16, sub-index in bits 15..8, length in bits in the low byte (bits 7..0).</description>
             <UDINT />
             <q1:defaultValue value="0x60610008" />
           </q1:parameter>
           <q1:parameter uniqueID="UID_SUB_1A0104" access="readWrite">
-            <label lang="en">Application object 4</label>
+            <description lang="en">Mapped object: index in bits 31..16, sub-index in bits 15..8, length in bits in the low byte (bits 7..0).</description>
             <UDINT />
             <q1:defaultValue value="0x00000000" />
           </q1:parameter>
           <q1:parameter uniqueID="UID_SUB_1A0105" access="readWrite">
-            <label lang="en">Application object 5</label>
+            <description lang="en">Mapped object: index in bits 31..16, sub-index in bits 15..8, length in bits in the low byte (bits 7..0).</description>
             <UDINT />
             <q1:defaultValue value="0x00000000" />
           </q1:parameter>
           <q1:parameter uniqueID="UID_SUB_1A0106" access="readWrite">
-            <label lang="en">Application object 6</label>
+            <description lang="en">Mapped object: index in bits 31..16, sub-index in bits 15..8, length in bits in the low byte (bits 7..0).</description>
             <UDINT />
             <q1:defaultValue value="0x00000000" />
           </q1:parameter>
           <q1:parameter uniqueID="UID_SUB_1A0107" access="readWrite">
-            <label lang="en">Application object 7</label>
+            <description lang="en">Mapped object: index in bits 31..16, sub-index in bits 15..8, length in bits in the low byte (bits 7..0).</description>
             <UDINT />
             <q1:defaultValue value="0x00000000" />
           </q1:parameter>
           <q1:parameter uniqueID="UID_SUB_1A0108" access="readWrite">
-            <label lang="en">Application object 8</label>
+            <description lang="en">Mapped object: index in bits 31..16, sub-index in bits 15..8, length in bits in the low byte (bits 7..0).</description>
             <UDINT />
             <q1:defaultValue value="0x00000000" />
           </q1:parameter>
@@ -2115,47 +1539,47 @@
             <q1:property name="CO_storageGroup" value="PERSIST_COMM" />
           </q1:parameter>
           <q1:parameter uniqueID="UID_SUB_1A0200" access="readWrite">
-            <label lang="en">Number of mapped application objects in PDO</label>
+            <description lang="en">Number of mapped objects, 0 to 8. Write 0 before changing the mapping.</description>
             <USINT />
             <q1:defaultValue value="0" />
           </q1:parameter>
           <q1:parameter uniqueID="UID_SUB_1A0201" access="readWrite">
-            <label lang="en">Application object 1</label>
+            <description lang="en">Mapped object: index in bits 31..16, sub-index in bits 15..8, length in bits in the low byte (bits 7..0).</description>
             <UDINT />
             <q1:defaultValue value="0x00000000" />
           </q1:parameter>
           <q1:parameter uniqueID="UID_SUB_1A0202" access="readWrite">
-            <label lang="en">Application object 2</label>
+            <description lang="en">Mapped object: index in bits 31..16, sub-index in bits 15..8, length in bits in the low byte (bits 7..0).</description>
             <UDINT />
             <q1:defaultValue value="0x00000000" />
           </q1:parameter>
           <q1:parameter uniqueID="UID_SUB_1A0203" access="readWrite">
-            <label lang="en">Application object 3</label>
+            <description lang="en">Mapped object: index in bits 31..16, sub-index in bits 15..8, length in bits in the low byte (bits 7..0).</description>
             <UDINT />
             <q1:defaultValue value="0x00000000" />
           </q1:parameter>
           <q1:parameter uniqueID="UID_SUB_1A0204" access="readWrite">
-            <label lang="en">Application object 4</label>
+            <description lang="en">Mapped object: index in bits 31..16, sub-index in bits 15..8, length in bits in the low byte (bits 7..0).</description>
             <UDINT />
             <q1:defaultValue value="0x00000000" />
           </q1:parameter>
           <q1:parameter uniqueID="UID_SUB_1A0205" access="readWrite">
-            <label lang="en">Application object 5</label>
+            <description lang="en">Mapped object: index in bits 31..16, sub-index in bits 15..8, length in bits in the low byte (bits 7..0).</description>
             <UDINT />
             <q1:defaultValue value="0x00000000" />
           </q1:parameter>
           <q1:parameter uniqueID="UID_SUB_1A0206" access="readWrite">
-            <label lang="en">Application object 6</label>
+            <description lang="en">Mapped object: index in bits 31..16, sub-index in bits 15..8, length in bits in the low byte (bits 7..0).</description>
             <UDINT />
             <q1:defaultValue value="0x00000000" />
           </q1:parameter>
           <q1:parameter uniqueID="UID_SUB_1A0207" access="readWrite">
-            <label lang="en">Application object 7</label>
+            <description lang="en">Mapped object: index in bits 31..16, sub-index in bits 15..8, length in bits in the low byte (bits 7..0).</description>
             <UDINT />
             <q1:defaultValue value="0x00000000" />
           </q1:parameter>
           <q1:parameter uniqueID="UID_SUB_1A0208" access="readWrite">
-            <label lang="en">Application object 8</label>
+            <description lang="en">Mapped object: index in bits 31..16, sub-index in bits 15..8, length in bits in the low byte (bits 7..0).</description>
             <UDINT />
             <q1:defaultValue value="0x00000000" />
           </q1:parameter>
@@ -2172,125 +1596,67 @@
             <q1:property name="CO_storageGroup" value="PERSIST_COMM" />
           </q1:parameter>
           <q1:parameter uniqueID="UID_SUB_1A0300" access="readWrite">
-            <label lang="en">Number of mapped application objects in PDO</label>
+            <description lang="en">Number of mapped objects, 0 to 8. Write 0 before changing the mapping.</description>
             <USINT />
             <q1:defaultValue value="0" />
           </q1:parameter>
           <q1:parameter uniqueID="UID_SUB_1A0301" access="readWrite">
-            <label lang="en">Application object 1</label>
+            <description lang="en">Mapped object: index in bits 31..16, sub-index in bits 15..8, length in bits in the low byte (bits 7..0).</description>
             <UDINT />
             <q1:defaultValue value="0x00000000" />
           </q1:parameter>
           <q1:parameter uniqueID="UID_SUB_1A0302" access="readWrite">
-            <label lang="en">Application object 2</label>
+            <description lang="en">Mapped object: index in bits 31..16, sub-index in bits 15..8, length in bits in the low byte (bits 7..0).</description>
             <UDINT />
             <q1:defaultValue value="0x00000000" />
           </q1:parameter>
           <q1:parameter uniqueID="UID_SUB_1A0303" access="readWrite">
-            <label lang="en">Application object 3</label>
+            <description lang="en">Mapped object: index in bits 31..16, sub-index in bits 15..8, length in bits in the low byte (bits 7..0).</description>
             <UDINT />
             <q1:defaultValue value="0x00000000" />
           </q1:parameter>
           <q1:parameter uniqueID="UID_SUB_1A0304" access="readWrite">
-            <label lang="en">Application object 4</label>
+            <description lang="en">Mapped object: index in bits 31..16, sub-index in bits 15..8, length in bits in the low byte (bits 7..0).</description>
             <UDINT />
             <q1:defaultValue value="0x00000000" />
           </q1:parameter>
           <q1:parameter uniqueID="UID_SUB_1A0305" access="readWrite">
-            <label lang="en">Application object 5</label>
+            <description lang="en">Mapped object: index in bits 31..16, sub-index in bits 15..8, length in bits in the low byte (bits 7..0).</description>
             <UDINT />
             <q1:defaultValue value="0x00000000" />
           </q1:parameter>
           <q1:parameter uniqueID="UID_SUB_1A0306" access="readWrite">
-            <label lang="en">Application object 6</label>
+            <description lang="en">Mapped object: index in bits 31..16, sub-index in bits 15..8, length in bits in the low byte (bits 7..0).</description>
             <UDINT />
             <q1:defaultValue value="0x00000000" />
           </q1:parameter>
           <q1:parameter uniqueID="UID_SUB_1A0307" access="readWrite">
-            <label lang="en">Application object 7</label>
+            <description lang="en">Mapped object: index in bits 31..16, sub-index in bits 15..8, length in bits in the low byte (bits 7..0).</description>
             <UDINT />
             <q1:defaultValue value="0x00000000" />
           </q1:parameter>
           <q1:parameter uniqueID="UID_SUB_1A0308" access="readWrite">
-            <label lang="en">Application object 8</label>
-            <UDINT />
-            <q1:defaultValue value="0x00000000" />
-          </q1:parameter>
-          <q1:parameter uniqueID="UID_OBJ_1A04">
-            <description lang="en">* Number of mapped application objects in PDO:
-  * Value 0: mapping is disabled.
-  * Value 1: sub-index 0x01 is valid.
-  * Value 2-8: sub-indexes 0x01 to (0x02 to 0x08) are valid.
-* Application object 1-8:
-  * bit 16-31: index
-  * bit 8-15: sub-index
-  * bit 0-7: data length in bits</description>
-            <q1:dataTypeIDRef uniqueIDRef="UID_REC_1A04" />
-            <q1:property name="CO_disabled" value="true" />
-            <q1:property name="CO_storageGroup" value="PERSIST_COMM" />
-          </q1:parameter>
-          <q1:parameter uniqueID="UID_SUB_1A0400" access="readWrite">
-            <label lang="en">Number of mapped application objects in PDO</label>
-            <USINT />
-            <q1:defaultValue value="0" />
-          </q1:parameter>
-          <q1:parameter uniqueID="UID_SUB_1A0401" access="readWrite">
-            <label lang="en">Application object 1</label>
-            <UDINT />
-            <q1:defaultValue value="0x00000000" />
-          </q1:parameter>
-          <q1:parameter uniqueID="UID_SUB_1A0402" access="readWrite">
-            <label lang="en">Application object 2</label>
-            <UDINT />
-            <q1:defaultValue value="0x00000000" />
-          </q1:parameter>
-          <q1:parameter uniqueID="UID_SUB_1A0403" access="readWrite">
-            <label lang="en">Application object 3</label>
-            <UDINT />
-            <q1:defaultValue value="0x00000000" />
-          </q1:parameter>
-          <q1:parameter uniqueID="UID_SUB_1A0404" access="readWrite">
-            <label lang="en">Application object 4</label>
-            <UDINT />
-            <q1:defaultValue value="0x00000000" />
-          </q1:parameter>
-          <q1:parameter uniqueID="UID_SUB_1A0405" access="readWrite">
-            <label lang="en">Application object 5</label>
-            <UDINT />
-            <q1:defaultValue value="0x00000000" />
-          </q1:parameter>
-          <q1:parameter uniqueID="UID_SUB_1A0406" access="readWrite">
-            <label lang="en">Application object 6</label>
-            <UDINT />
-            <q1:defaultValue value="0x00000000" />
-          </q1:parameter>
-          <q1:parameter uniqueID="UID_SUB_1A0407" access="readWrite">
-            <label lang="en">Application object 7</label>
-            <UDINT />
-            <q1:defaultValue value="0x00000000" />
-          </q1:parameter>
-          <q1:parameter uniqueID="UID_SUB_1A0408" access="readWrite">
-            <label lang="en">Application object 8</label>
+            <description lang="en">Mapped object: index in bits 31..16, sub-index in bits 15..8, length in bits in the low byte (bits 7..0).</description>
             <UDINT />
             <q1:defaultValue value="0x00000000" />
           </q1:parameter>
           <q1:parameter uniqueID="UID_OBJ_2000">
-            <label lang="en">Vdc mV</label>
+            <description lang="en">DC bus voltage [mV]. Example: 24.1 V reads 24100.</description>
             <UINT />
             <q1:defaultValue value="0" />
           </q1:parameter>
           <q1:parameter uniqueID="UID_OBJ_2001">
-            <label lang="en">Speed rpm</label>
+            <description lang="en">Actual speed [rpm]: from the SMO while the SMO gives the angle, otherwise the Hall speed.</description>
             <INT />
             <q1:defaultValue value="0" />
           </q1:parameter>
           <q1:parameter uniqueID="UID_OBJ_2002">
-            <label lang="en">Motor state</label>
+            <description lang="en">Motor state: 0 INIT, 1 IDLE, 2 ALIGN, 3 OPEN_LOOP, 4 CLOSED_LOOP, 5 FAULT, 6 CALIBRATING.</description>
             <USINT />
             <q1:defaultValue value="0" />
           </q1:parameter>
           <q1:parameter uniqueID="UID_OBJ_2003">
-            <label lang="en">Fault code</label>
+            <description lang="en">Active fault: 0 none, 1 driver nFAULT, 2 motor over-current, 3 driver over-current, 4 over-voltage, 5 under-voltage, 6 motor over-temperature, 7 driver over-temperature, 8 sensor error, 9 sensorless lost, 10 communication lost.</description>
             <USINT />
             <q1:defaultValue value="0" />
           </q1:parameter>
@@ -2300,7 +1666,7 @@
             <q1:defaultValue value="0" />
           </q1:parameter>
           <q1:parameter uniqueID="UID_OBJ_2011" access="readWrite">
-            <label lang="en">Command</label>
+            <description lang="en">Command: 2 stop, 4 Hall calibration (only while CANopen owns the motor). Other values do nothing. Goes back to 0 once handled.</description>
             <USINT />
             <q1:defaultValue value="0" />
           </q1:parameter>
@@ -2396,12 +1762,11 @@
         <ProfileTechnology>CANopen</ProfileTechnology>
       </ISO15745Reference>
     </ProfileHeader>
-    <ProfileBody xmlns:q2="http://www.canopen.org/xml/1.1" xsi:type="q2:ProfileBody_CommunicationNetwork_CANopen" formatName="CANopen" formatVersion="1.0" fileName="bldc_drive.xdd" fileCreator="" fileCreationDate="2020-11-23" fileCreationTime="14:00:00.0000000+03:00" fileModificationDate="2026-11-02" fileModificationTime="09:35:26.3244512+03:00" fileVersion="1" supportedLanguages="en" xmlns="">
+    <ProfileBody xmlns:q2="http://www.canopen.org/xml/1.1" xsi:type="q2:ProfileBody_CommunicationNetwork_CANopen" formatName="CANopen" formatVersion="1.0" fileName="bldc_drive.xdd" fileCreator="" fileCreationDate="2020-11-23" fileCreationTime="14:00:00.0000000+03:00" fileModificationDate="2026-11-02" fileModificationTime="16:57:12.4222393+03:00" fileVersion="1" supportedLanguages="en" xmlns="">
       <ApplicationLayers>
         <q2:CANopenObjectList>
           <CANopenObject index="1000" name="Device type" objectType="7" PDOmapping="no" uniqueIDRef="UID_OBJ_1000" />
           <CANopenObject index="1001" name="Error register" objectType="7" PDOmapping="TPDO" uniqueIDRef="UID_OBJ_1001" />
-          <CANopenObject index="1002" name="Manufacturer status register" objectType="7" PDOmapping="optional" uniqueIDRef="UID_OBJ_1002" />
           <CANopenObject index="1003" name="Pre-defined error field" objectType="8" uniqueIDRef="UID_OBJ_1003" subNumber="17">
             <CANopenSubObject subIndex="00" name="Number of errors" objectType="7" PDOmapping="no" uniqueIDRef="UID_SUB_100300" />
             <CANopenSubObject subIndex="01" name="Standard error field" objectType="7" PDOmapping="no" uniqueIDRef="UID_SUB_100301" />
@@ -2424,11 +1789,6 @@
           <CANopenObject index="1005" name="COB-ID SYNC message" objectType="7" PDOmapping="no" uniqueIDRef="UID_OBJ_1005" />
           <CANopenObject index="1006" name="Communication cycle period" objectType="7" PDOmapping="no" uniqueIDRef="UID_OBJ_1006" />
           <CANopenObject index="1007" name="Synchronous window length" objectType="7" PDOmapping="no" uniqueIDRef="UID_OBJ_1007" />
-          <CANopenObject index="1008" name="Manufacturer device name" objectType="7" PDOmapping="no" uniqueIDRef="UID_OBJ_1008" />
-          <CANopenObject index="1009" name="Manufacturer hardware version" objectType="7" PDOmapping="no" uniqueIDRef="UID_OBJ_1009" />
-          <CANopenObject index="100A" name="Manufacturer software version" objectType="7" PDOmapping="no" uniqueIDRef="UID_OBJ_100A" />
-          <CANopenObject index="100C" name="Guard time" objectType="7" PDOmapping="no" uniqueIDRef="UID_OBJ_100C" />
-          <CANopenObject index="100D" name="Life time factor" objectType="7" PDOmapping="no" uniqueIDRef="UID_OBJ_100D" />
           <CANopenObject index="1010" name="Store parameters" objectType="8" uniqueIDRef="UID_OBJ_1010" subNumber="5">
             <CANopenSubObject subIndex="00" name="Highest sub-index supported" objectType="7" PDOmapping="no" uniqueIDRef="UID_SUB_101000" />
             <CANopenSubObject subIndex="01" name="Save all parameters" objectType="7" PDOmapping="no" uniqueIDRef="UID_SUB_101001" />
@@ -2444,7 +1804,6 @@
             <CANopenSubObject subIndex="04" name="Restore manufacturer defined default parameters" objectType="7" PDOmapping="no" uniqueIDRef="UID_SUB_101104" />
           </CANopenObject>
           <CANopenObject index="1012" name="COB-ID time stamp object" objectType="7" PDOmapping="no" uniqueIDRef="UID_OBJ_1012" />
-          <CANopenObject index="1013" name="High resolution time stamp" objectType="7" PDOmapping="optional" uniqueIDRef="UID_OBJ_1013" />
           <CANopenObject index="1014" name="COB-ID EMCY" objectType="7" PDOmapping="no" uniqueIDRef="UID_OBJ_1014" />
           <CANopenObject index="1015" name="Inhibit time EMCY" objectType="7" PDOmapping="no" uniqueIDRef="UID_OBJ_1015" />
           <CANopenObject index="1016" name="Consumer heartbeat time" objectType="8" uniqueIDRef="UID_OBJ_1016" subNumber="9">
@@ -2467,62 +1826,10 @@
             <CANopenSubObject subIndex="04" name="Serial number" objectType="7" PDOmapping="no" uniqueIDRef="UID_SUB_101804" />
           </CANopenObject>
           <CANopenObject index="1019" name="Synchronous counter overflow value" objectType="7" PDOmapping="no" uniqueIDRef="UID_OBJ_1019" />
-          <CANopenObject index="1020" name="Verify configuration" objectType="8" uniqueIDRef="UID_OBJ_1020" subNumber="3">
-            <CANopenSubObject subIndex="00" name="Highest sub-index supported" objectType="7" PDOmapping="no" uniqueIDRef="UID_SUB_102000" />
-            <CANopenSubObject subIndex="01" name="Configuration date" objectType="7" PDOmapping="no" uniqueIDRef="UID_SUB_102001" />
-            <CANopenSubObject subIndex="02" name="Configuration time" objectType="7" PDOmapping="no" uniqueIDRef="UID_SUB_102002" />
-          </CANopenObject>
-          <CANopenObject index="1021" name="Store EDS" objectType="7" PDOmapping="no" uniqueIDRef="UID_OBJ_1021" />
-          <CANopenObject index="1022" name="Store format" objectType="7" PDOmapping="no" uniqueIDRef="UID_OBJ_1022" />
-          <CANopenObject index="1023" name="OS command" objectType="9" uniqueIDRef="UID_OBJ_1023" subNumber="4">
-            <CANopenSubObject subIndex="00" name="Highest sub-index supported" objectType="7" PDOmapping="no" uniqueIDRef="UID_SUB_102300" />
-            <CANopenSubObject subIndex="01" name="Command" objectType="7" PDOmapping="no" uniqueIDRef="UID_SUB_102301" />
-            <CANopenSubObject subIndex="02" name="Status" objectType="7" PDOmapping="no" uniqueIDRef="UID_SUB_102302" />
-            <CANopenSubObject subIndex="03" name="Reply" objectType="7" PDOmapping="no" uniqueIDRef="UID_SUB_102303" />
-          </CANopenObject>
-          <CANopenObject index="1024" name="OS command mode" objectType="7" PDOmapping="no" uniqueIDRef="UID_OBJ_1024" />
-          <CANopenObject index="1025" name="OS debugger interface" objectType="9" uniqueIDRef="UID_OBJ_1025" subNumber="4">
-            <CANopenSubObject subIndex="00" name="Highest sub-index supported" objectType="7" PDOmapping="no" uniqueIDRef="UID_SUB_102500" />
-            <CANopenSubObject subIndex="01" name="Command" objectType="7" PDOmapping="no" uniqueIDRef="UID_SUB_102501" />
-            <CANopenSubObject subIndex="02" name="Status" objectType="7" PDOmapping="no" uniqueIDRef="UID_SUB_102502" />
-            <CANopenSubObject subIndex="03" name="Reply" objectType="7" PDOmapping="no" uniqueIDRef="UID_SUB_102503" />
-          </CANopenObject>
-          <CANopenObject index="1026" name="OS prompt" objectType="8" uniqueIDRef="UID_OBJ_1026" subNumber="4">
-            <CANopenSubObject subIndex="00" name="Highest sub-index supported" objectType="7" PDOmapping="no" uniqueIDRef="UID_SUB_102600" />
-            <CANopenSubObject subIndex="01" name="StdIn" objectType="7" PDOmapping="optional" uniqueIDRef="UID_SUB_102601" />
-            <CANopenSubObject subIndex="02" name="StdOut" objectType="7" PDOmapping="optional" uniqueIDRef="UID_SUB_102602" />
-            <CANopenSubObject subIndex="03" name="StdErr" objectType="7" PDOmapping="optional" uniqueIDRef="UID_SUB_102603" />
-          </CANopenObject>
-          <CANopenObject index="1027" name="Module list" objectType="8" uniqueIDRef="UID_OBJ_1027" subNumber="2">
-            <CANopenSubObject subIndex="00" name="Number of connected modules" objectType="7" PDOmapping="no" uniqueIDRef="UID_SUB_102700" />
-            <CANopenSubObject subIndex="01" name="Module 1" objectType="7" PDOmapping="no" uniqueIDRef="UID_SUB_102701" />
-          </CANopenObject>
-          <CANopenObject index="1028" name="Emergency consumer object" objectType="8" uniqueIDRef="UID_OBJ_1028" subNumber="9">
-            <CANopenSubObject subIndex="00" name="Highest sub-index supported" objectType="7" PDOmapping="no" uniqueIDRef="UID_SUB_102800" />
-            <CANopenSubObject subIndex="01" name="Emergency consumer 1" objectType="7" PDOmapping="no" uniqueIDRef="UID_SUB_102801" />
-            <CANopenSubObject subIndex="02" name="Emergency consumer 2" objectType="7" PDOmapping="no" uniqueIDRef="UID_SUB_102802" />
-            <CANopenSubObject subIndex="03" name="Emergency consumer 3" objectType="7" PDOmapping="no" uniqueIDRef="UID_SUB_102803" />
-            <CANopenSubObject subIndex="04" name="Emergency consumer 4" objectType="7" PDOmapping="no" uniqueIDRef="UID_SUB_102804" />
-            <CANopenSubObject subIndex="05" name="Emergency consumer 5" objectType="7" PDOmapping="no" uniqueIDRef="UID_SUB_102805" />
-            <CANopenSubObject subIndex="06" name="Emergency consumer 6" objectType="7" PDOmapping="no" uniqueIDRef="UID_SUB_102806" />
-            <CANopenSubObject subIndex="07" name="Emergency consumer 7" objectType="7" PDOmapping="no" uniqueIDRef="UID_SUB_102807" />
-            <CANopenSubObject subIndex="08" name="Emergency consumer 8" objectType="7" PDOmapping="no" uniqueIDRef="UID_SUB_102808" />
-          </CANopenObject>
-          <CANopenObject index="1029" name="Error behavior object" objectType="8" uniqueIDRef="UID_OBJ_1029" subNumber="3">
-            <CANopenSubObject subIndex="00" name="Highest sub-index supported" objectType="7" PDOmapping="no" uniqueIDRef="UID_SUB_102900" />
-            <CANopenSubObject subIndex="01" name="Communication error" objectType="7" PDOmapping="no" uniqueIDRef="UID_SUB_102901" />
-            <CANopenSubObject subIndex="02" name="Profile- or manufacturer-specific error" objectType="7" PDOmapping="no" uniqueIDRef="UID_SUB_102902" />
-          </CANopenObject>
           <CANopenObject index="1200" name="SDO server parameter" objectType="9" uniqueIDRef="UID_OBJ_1200" subNumber="3">
             <CANopenSubObject subIndex="00" name="Highest sub-index supported" objectType="7" PDOmapping="no" uniqueIDRef="UID_SUB_120000" />
             <CANopenSubObject subIndex="01" name="COB-ID client to server (rx)" objectType="7" PDOmapping="TPDO" uniqueIDRef="UID_SUB_120001" />
             <CANopenSubObject subIndex="02" name="COB-ID server to client (tx)" objectType="7" PDOmapping="TPDO" uniqueIDRef="UID_SUB_120002" />
-          </CANopenObject>
-          <CANopenObject index="1201" name="SDO server parameter" objectType="9" uniqueIDRef="UID_OBJ_1201" subNumber="4">
-            <CANopenSubObject subIndex="00" name="Highest sub-index supported" objectType="7" PDOmapping="no" uniqueIDRef="UID_SUB_120100" />
-            <CANopenSubObject subIndex="01" name="COB-ID client to server (rx)" objectType="7" PDOmapping="optional" uniqueIDRef="UID_SUB_120101" />
-            <CANopenSubObject subIndex="02" name="COB-ID server to client (tx)" objectType="7" PDOmapping="optional" uniqueIDRef="UID_SUB_120102" />
-            <CANopenSubObject subIndex="03" name="Node-ID of the SDO client" objectType="7" PDOmapping="no" uniqueIDRef="UID_SUB_120103" />
           </CANopenObject>
           <CANopenObject index="1280" name="SDO client parameter" objectType="9" uniqueIDRef="UID_OBJ_1280" subNumber="4">
             <CANopenSubObject subIndex="00" name="Highest sub-index supported" objectType="7" PDOmapping="no" uniqueIDRef="UID_SUB_128000" />
@@ -2553,12 +1860,6 @@
             <CANopenSubObject subIndex="01" name="COB-ID used by RPDO" objectType="7" PDOmapping="no" uniqueIDRef="UID_SUB_140301" />
             <CANopenSubObject subIndex="02" name="Transmission type" objectType="7" PDOmapping="no" uniqueIDRef="UID_SUB_140302" />
             <CANopenSubObject subIndex="05" name="Event timer" objectType="7" PDOmapping="no" uniqueIDRef="UID_SUB_140305" />
-          </CANopenObject>
-          <CANopenObject index="1404" name="RPDO communication parameter" objectType="9" uniqueIDRef="UID_OBJ_1404" subNumber="4">
-            <CANopenSubObject subIndex="00" name="Highest sub-index supported" objectType="7" PDOmapping="no" uniqueIDRef="UID_SUB_140400" />
-            <CANopenSubObject subIndex="01" name="COB-ID used by RPDO" objectType="7" PDOmapping="no" uniqueIDRef="UID_SUB_140401" />
-            <CANopenSubObject subIndex="02" name="Transmission type" objectType="7" PDOmapping="no" uniqueIDRef="UID_SUB_140402" />
-            <CANopenSubObject subIndex="05" name="Event timer" objectType="7" PDOmapping="no" uniqueIDRef="UID_SUB_140405" />
           </CANopenObject>
           <CANopenObject index="1600" name="RPDO mapping parameter" objectType="9" uniqueIDRef="UID_OBJ_1600" subNumber="9">
             <CANopenSubObject subIndex="00" name="Number of mapped application objects in PDO" objectType="7" PDOmapping="no" uniqueIDRef="UID_SUB_160000" />
@@ -2604,17 +1905,6 @@
             <CANopenSubObject subIndex="07" name="Application object 7" objectType="7" PDOmapping="no" uniqueIDRef="UID_SUB_160307" />
             <CANopenSubObject subIndex="08" name="Application object 8" objectType="7" PDOmapping="no" uniqueIDRef="UID_SUB_160308" />
           </CANopenObject>
-          <CANopenObject index="1604" name="RPDO mapping parameter" objectType="9" uniqueIDRef="UID_OBJ_1604" subNumber="9">
-            <CANopenSubObject subIndex="00" name="Number of mapped application objects in PDO" objectType="7" PDOmapping="no" uniqueIDRef="UID_SUB_160400" />
-            <CANopenSubObject subIndex="01" name="Application object 1" objectType="7" PDOmapping="no" uniqueIDRef="UID_SUB_160401" />
-            <CANopenSubObject subIndex="02" name="Application object 2" objectType="7" PDOmapping="no" uniqueIDRef="UID_SUB_160402" />
-            <CANopenSubObject subIndex="03" name="Application object 3" objectType="7" PDOmapping="no" uniqueIDRef="UID_SUB_160403" />
-            <CANopenSubObject subIndex="04" name="Application object 4" objectType="7" PDOmapping="no" uniqueIDRef="UID_SUB_160404" />
-            <CANopenSubObject subIndex="05" name="Application object 5" objectType="7" PDOmapping="no" uniqueIDRef="UID_SUB_160405" />
-            <CANopenSubObject subIndex="06" name="Application object 6" objectType="7" PDOmapping="no" uniqueIDRef="UID_SUB_160406" />
-            <CANopenSubObject subIndex="07" name="Application object 7" objectType="7" PDOmapping="no" uniqueIDRef="UID_SUB_160407" />
-            <CANopenSubObject subIndex="08" name="Application object 8" objectType="7" PDOmapping="no" uniqueIDRef="UID_SUB_160408" />
-          </CANopenObject>
           <CANopenObject index="1800" name="TPDO communication parameter" objectType="9" uniqueIDRef="UID_OBJ_1800" subNumber="6">
             <CANopenSubObject subIndex="00" name="Highest sub-index supported" objectType="7" PDOmapping="no" uniqueIDRef="UID_SUB_180000" />
             <CANopenSubObject subIndex="01" name="COB-ID used by TPDO" objectType="7" PDOmapping="no" uniqueIDRef="UID_SUB_180001" />
@@ -2646,14 +1936,6 @@
             <CANopenSubObject subIndex="03" name="Inhibit time" objectType="7" PDOmapping="no" uniqueIDRef="UID_SUB_180303" />
             <CANopenSubObject subIndex="05" name="Event timer" objectType="7" PDOmapping="no" uniqueIDRef="UID_SUB_180305" />
             <CANopenSubObject subIndex="06" name="SYNC start value" objectType="7" PDOmapping="no" uniqueIDRef="UID_SUB_180306" />
-          </CANopenObject>
-          <CANopenObject index="1804" name="TPDO communication parameter" objectType="9" uniqueIDRef="UID_OBJ_1804" subNumber="6">
-            <CANopenSubObject subIndex="00" name="Highest sub-index supported" objectType="7" PDOmapping="no" uniqueIDRef="UID_SUB_180400" />
-            <CANopenSubObject subIndex="01" name="COB-ID used by TPDO" objectType="7" PDOmapping="no" uniqueIDRef="UID_SUB_180401" />
-            <CANopenSubObject subIndex="02" name="Transmission type" objectType="7" PDOmapping="no" uniqueIDRef="UID_SUB_180402" />
-            <CANopenSubObject subIndex="03" name="Inhibit time" objectType="7" PDOmapping="no" uniqueIDRef="UID_SUB_180403" />
-            <CANopenSubObject subIndex="05" name="Event timer" objectType="7" PDOmapping="no" uniqueIDRef="UID_SUB_180405" />
-            <CANopenSubObject subIndex="06" name="SYNC start value" objectType="7" PDOmapping="no" uniqueIDRef="UID_SUB_180406" />
           </CANopenObject>
           <CANopenObject index="1A00" name="TPDO mapping parameter" objectType="9" uniqueIDRef="UID_OBJ_1A00" subNumber="9">
             <CANopenSubObject subIndex="00" name="Number of mapped application objects in PDO" objectType="7" PDOmapping="no" uniqueIDRef="UID_SUB_1A0000" />
@@ -2698,17 +1980,6 @@
             <CANopenSubObject subIndex="06" name="Application object 6" objectType="7" PDOmapping="no" uniqueIDRef="UID_SUB_1A0306" />
             <CANopenSubObject subIndex="07" name="Application object 7" objectType="7" PDOmapping="no" uniqueIDRef="UID_SUB_1A0307" />
             <CANopenSubObject subIndex="08" name="Application object 8" objectType="7" PDOmapping="no" uniqueIDRef="UID_SUB_1A0308" />
-          </CANopenObject>
-          <CANopenObject index="1A04" name="TPDO mapping parameter" objectType="9" uniqueIDRef="UID_OBJ_1A04" subNumber="9">
-            <CANopenSubObject subIndex="00" name="Number of mapped application objects in PDO" objectType="7" PDOmapping="no" uniqueIDRef="UID_SUB_1A0400" />
-            <CANopenSubObject subIndex="01" name="Application object 1" objectType="7" PDOmapping="no" uniqueIDRef="UID_SUB_1A0401" />
-            <CANopenSubObject subIndex="02" name="Application object 2" objectType="7" PDOmapping="no" uniqueIDRef="UID_SUB_1A0402" />
-            <CANopenSubObject subIndex="03" name="Application object 3" objectType="7" PDOmapping="no" uniqueIDRef="UID_SUB_1A0403" />
-            <CANopenSubObject subIndex="04" name="Application object 4" objectType="7" PDOmapping="no" uniqueIDRef="UID_SUB_1A0404" />
-            <CANopenSubObject subIndex="05" name="Application object 5" objectType="7" PDOmapping="no" uniqueIDRef="UID_SUB_1A0405" />
-            <CANopenSubObject subIndex="06" name="Application object 6" objectType="7" PDOmapping="no" uniqueIDRef="UID_SUB_1A0406" />
-            <CANopenSubObject subIndex="07" name="Application object 7" objectType="7" PDOmapping="no" uniqueIDRef="UID_SUB_1A0407" />
-            <CANopenSubObject subIndex="08" name="Application object 8" objectType="7" PDOmapping="no" uniqueIDRef="UID_SUB_1A0408" />
           </CANopenObject>
           <CANopenObject index="2000" name="Vdc mV" objectType="7" PDOmapping="TPDO" uniqueIDRef="UID_OBJ_2000" />
           <CANopenObject index="2001" name="Speed rpm" objectType="7" PDOmapping="TPDO" uniqueIDRef="UID_OBJ_2001" />

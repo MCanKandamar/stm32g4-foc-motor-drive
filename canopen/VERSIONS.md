@@ -8,4 +8,4 @@
 
 - `CANopenNode/` is the commit CanOpenSTM32 pins as its submodule; keep it unmodified.
 - `CANopenNode_STM32/` is adapted to this project (FreeRTOS, BASEPRI locking); changes are ours.
-- `od/`: edit `bldc_drive.xdd` in CANopenEditor, then export OD.c/OD.h (CANopenNode V4) and the EDS; do not hand-edit OD.c.
+- `od/`: edit `bldc_drive.xdd` in CANopenEditor, then export OD.c/OD.h (CANopenNode V4) and the EDS; do not hand-edit OD.c. Command-line export: `EDSSharp.exe --infile bldc_drive.xdd --outfile OD --type CanOpenNodeV4`, then `--outfile bldc_drive.eds --type ElectronicDataSheet` (the `net8.0` folder of the CANopenEditor binary).
