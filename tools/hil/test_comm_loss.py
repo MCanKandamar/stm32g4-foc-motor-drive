@@ -3,13 +3,16 @@
 The PC plays a master with node-ID 1: it sends 0x701 [05] every 100 ms.
 Usage (python-can, SLCAN adapter on test_pdo.PORT):
     python tools/hil/test_comm_loss.py --tests H,R
-    python tools/hil/test_comm_loss.py --tests H,M,O,R,S --motor-ok
+    python tools/hil/test_comm_loss.py --tests B,C --motor-ok    (B and C need you at the bus)
 
 H: heartbeat consumer 0x1016, motor off: config / timeout / recovery / master reset
 M: sensorless pv at 1000 rpm, the master goes silent, 0x6007 = 1 must stop the motor (--motor-ok only)
 O: 0x6007 write guard, then values 2, 3 and 0 with NMT pre-op at 1000 rpm (--motor-ok only)
 R: RPDO timeout 0x1400:05 and 0x1401:05, motor off
 S: sensorless pv at 1000 rpm, the RPDO stream stops, 0x6007 = 1 must stop the motor (--motor-ok only)
+B: real bus-off with the motor off: the script waits, you short CAN_H to CAN_L for about 1 s
+C: the same bus-off at 1000 rpm, 0x6007 = 1 must stop the motor (--motor-ok only)
+Do not force bus-off with a wrong adapter bitrate: it worked once, then this adapter stopped reading USB twice.
 On every exit: 0x1016:01 = 0, 0x1400:05 = 0, 0x1401:05 = 0, 0x6007 = 1, NMT start, 0x6040 = 0, 0x2011 = 2,
 0x6060/0x2012 restored. These objects stay in RAM: a real master must write them after each boot of the drive.
 Log: tools/hil/logs/comm_loss_<date>_<time>.json
@@ -36,6 +39,8 @@ ERR_REG_COMM = 0x10
 FAULT_COMM_LOST = 10
 SW_FAULT = 0x0218
 PV_RPM = 1000
+EMC_BUS_OFF, ERR_BUS_OFF = 0x8140, 0x12
+SHORT_WAIT_S = 60
 
 
 class Cyclic:
@@ -398,6 +403,52 @@ def test_s():
     record_recovery('S2', 'RPDO timeout off')
 
 
+# --- B, C: real bus-off, the operator shorts CAN_H to CAN_L ---------------------
+
+def wait_bus_off():
+    """No frame gets through during the short. The EMCY comes out after it, so wait for that."""
+    t_from = t.now()
+    print(f">>> short CAN_H to CAN_L for about 1 s, then remove it (waiting {SHORT_WAIT_S} s)", flush=True)
+    seen = wait_emcy(t_from, ERR_BUS_OFF, timeout=SHORT_WAIT_S, code=EMC_BUS_OFF) is not None
+    time.sleep(1.0)
+    return seen
+
+
+def test_b():
+    t.to_switch_on_disabled()
+    seen = wait_bus_off()
+    reg = wait_comm_error_clear()
+    fault = t.sdo_read(0x2003)
+    t.record('B1', 'bus-off: EMCY 0x8140 bit 0x12, restarts by itself, error clears, NMT 7F, no motor fault',
+             f"seen {seen}, 0x1001 = {reg:#04x}, NMT {nmt_state():#04x}, 0x2003 = {fault}",
+             seen and (reg & ERR_REG_COMM) == 0 and nmt_state() == NMT_PRE_OP and fault == 0)
+
+    started = nmt_start()
+    t_tpdo = t.now()
+    time.sleep(1.0)
+    n = len(t.frames(t.TPDO1, t_tpdo))
+    t.record('B2', 'NMT start gives 05, TPDO1 ~10 in 1 s', f"NMT {nmt_state():#04x}, TPDO1 {n}", started and 9 <= n <= 11)
+
+
+def test_c():
+    t_from = t.now()
+    t.to_switch_on_disabled()
+    t.sdo_write(0x6007, 0, 1, 2)
+    nmt_start()
+    try:
+        start_pv(t_from)
+        seen = wait_bus_off()
+        sw, err_code = t.sdo_read(0x6041), t.sdo_read(0x603F)
+        fault, state = t.sdo_read(0x2003), t.sdo_read(0x2002)
+        t.record('C1', f'bus-off with the motor at {PV_RPM} rpm: EMCY 0x8140 bit 0x12, sw 0x0218, 0x603F = 0x8100, '
+                       '0x2003 = 10, motor state FAULT',
+                 f"seen {seen}, sw {sw:#06x}, 0x603F = {err_code:#06x}, 0x2003 = {fault}, state {state}",
+                 seen and sw == SW_FAULT and err_code == 0x8100 and fault == FAULT_COMM_LOST and state == t.ST_FAULT)
+    finally:
+        t.safe_state()
+    record_recovery('C2', 'bus-off over')
+
+
 # --- main ---------------------------------------------------------------------
 
 def clean_up(master):
@@ -437,7 +488,7 @@ def main():
     try:
         if t.preflight():
             for name in tests:
-                if name in ('M', 'O', 'S') and not args.motor_ok:
+                if name in ('M', 'O', 'S', 'C') and not args.motor_ok:
                     t.record(name, 'motor test', 'not run: --motor-ok missing', False, skipped=True)
                     continue
                 try:
@@ -451,6 +502,10 @@ def main():
                         test_r()
                     elif name == 'S':
                         test_s()
+                    elif name == 'B':
+                        test_b()
+                    elif name == 'C':
+                        test_c()
                 except t.SafetyStop:
                     raise
                 except Exception as e:
