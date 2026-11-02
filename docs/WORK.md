@@ -36,8 +36,9 @@ Release: `v0.4.0` is the latest; next is `v1.0.0`, the first stable release.
 ## Open questions
 <!-- question · impact · default used meanwhile -->
 - Is Hall calibration in flash still wanted after the phase 8 decision? · decides Next 2 · kept in Next until the user answers
-- How to clean the git history of the Microsoft-licensed ThreadX/USBX files? · repo is public, tags `v0.1.0`–`v0.3.0` expose 317 files · user decided 2026-10-30 to stay public, clean-up not decided
-- ThreadX wording left in `canopen/VERSIONS.md` line 10 and `CO_app_STM32.c` line 191 · cosmetic · unchanged
+- How to clean the git history of the Microsoft-licensed ThreadX/USBX files? · repo is public, tags `v0.1.0`–`v0.3.0` expose 317 files · user decided 2026-10-30 to stay public, clean-up not decided. Findings 2026-11-02: free STM32G4 use covers production and binaries; MS terms 2(a)(iii) and 3(c) still limit source; Microsoft says 6.x is also MIT (repo copy is 6.2.0); gap: `usbx_stm32_device_controllers` files are not in eclipse-threadx/usbx
+- ThreadX wording left in `CO_app_STM32.c` line 191 · cosmetic · unchanged
+- `motor_parameters.hpp` pole count is not used: `isr.cpp` lines 25–26, `app.hpp` line 39 and `app.cpp` line 64 hard-code 4 · isr.cpp fix asked by the user 2026-11-02 · unchanged
 - Why does 0x6077 read 7–12 % under target during acceleration? · not measured · pdo C passes with ~8 ‰ of margin
 - One `test_pdo.py` start got no SDO answer in preflight (pdo_20261030_122547) · cause not found · rerun once and report it
 - CANdamar CiA 402 panel: does it resend 06/07 on a target change? · user's Trace check is open · none
