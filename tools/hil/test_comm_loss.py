@@ -1,16 +1,18 @@
-"""CANopen phase 7 hardware test: heartbeat consumer 0x1016, node-ID 13.
+"""CANopen phase 7 hardware test: communication loss, node-ID 13.
 
 The PC plays a master with node-ID 1: it sends 0x701 [05] every 100 ms.
 Usage (python-can, SLCAN adapter on test_pdo.PORT):
-    python tools/hil/test_heartbeat.py
-    python tools/hil/test_heartbeat.py --tests H,M,O --motor-ok
+    python tools/hil/test_comm_loss.py --tests H,R
+    python tools/hil/test_comm_loss.py --tests H,M,O,R,S --motor-ok
 
-H: motor off, config / timeout / recovery / master reset
+H: heartbeat consumer 0x1016, motor off: config / timeout / recovery / master reset
 M: sensorless pv at 1000 rpm, the master goes silent, 0x6007 = 1 must stop the motor (--motor-ok only)
 O: 0x6007 write guard, then values 2, 3 and 0 with NMT pre-op at 1000 rpm (--motor-ok only)
-On every exit: 0x1016:01 = 0, 0x6007 = 1, NMT start, 0x6040 = 0, 0x2011 = 2, 0x6060/0x2012 restored.
-0x1016 stays in RAM: a real master must write it after each boot of the drive.
-Log: tools/hil/logs/heartbeat_<date>_<time>.json
+R: RPDO timeout 0x1400:05 and 0x1401:05, motor off
+S: sensorless pv at 1000 rpm, the RPDO stream stops, 0x6007 = 1 must stop the motor (--motor-ok only)
+On every exit: 0x1016:01 = 0, 0x1400:05 = 0, 0x1401:05 = 0, 0x6007 = 1, NMT start, 0x6040 = 0, 0x2011 = 2,
+0x6060/0x2012 restored. These objects stay in RAM: a real master must write them after each boot of the drive.
+Log: tools/hil/logs/comm_loss_<date>_<time>.json
 """
 import argparse
 import json
@@ -25,8 +27,10 @@ MASTER_HB = 0x701
 HB_PERIOD_S = 0.1
 CONSUMER_MS = 500
 ENTRY = (1 << 16) | CONSUMER_MS              # node-ID in bits 16..23, time in bits 0..15
-EMC_HEARTBEAT = 0x8130
+RPDO_PERIOD_MS, RPDO_TIMEOUT_MS = 100, 300
+EMC_HEARTBEAT, EMC_RPDO_TIMEOUT = 0x8130, 0x8250
 ERR_TIMEOUT, ERR_REMOTE_RESET = 0x1B, 0x1C   # byte 3 of the EMCY frame
+ERR_RPDO_TIMEOUT = 0x17
 NMT_OPERATIONAL, NMT_PRE_OP = 0x05, 0x7F
 ERR_REG_COMM = 0x10
 FAULT_COMM_LOST = 10
@@ -34,19 +38,20 @@ SW_FAULT = 0x0218
 PV_RPM = 1000
 
 
-class Master:
-    """Heartbeat of the simulated master. start() and stop() can be called again."""
+class Cyclic:
+    """One frame sent at a fixed period. start() and stop() can be called again."""
 
-    def __init__(self):
+    def __init__(self, cid, data, period_s):
+        self.cid, self.data, self.period_s = cid, data, period_s
         self.stop_flag = threading.Event()
         self.thread = None
         self.last_sent = None
 
     def _run(self):
         while not self.stop_flag.is_set():
-            t.send(MASTER_HB, [NMT_OPERATIONAL])
+            t.send(self.cid, self.data)
             self.last_sent = t.now()
-            self.stop_flag.wait(HB_PERIOD_S)
+            self.stop_flag.wait(self.period_s)
 
     def start(self):
         if self.thread is None:
@@ -74,15 +79,23 @@ def wait_nmt(state, timeout=1.5):
     return nmt_state() == state
 
 
-def hb_emcys(t_from, bit):
+def emcys(t_from, bit, code):
     return [tm for tm, d in t.frames(t.EMCY, t_from)
-            if int.from_bytes(d[0:2], 'little') == EMC_HEARTBEAT and d[3] == bit]
+            if int.from_bytes(d[0:2], 'little') == code and d[3] == bit]
 
 
-def wait_emcy(t_from, bit, timeout=1.0):
+def hb_emcys(t_from, bit):
+    return emcys(t_from, bit, EMC_HEARTBEAT)
+
+
+def rpdo_emcys(t_from):
+    return emcys(t_from, ERR_RPDO_TIMEOUT, EMC_RPDO_TIMEOUT)
+
+
+def wait_emcy(t_from, bit, timeout=1.0, code=EMC_HEARTBEAT):
     t_end = t.now() + timeout
     while t.now() < t_end:
-        found = hb_emcys(t_from, bit)
+        found = emcys(t_from, bit, code)
         if found:
             return found[0]
         time.sleep(0.005)
@@ -232,6 +245,10 @@ def test_m(master):
         t.safe_state()                       # SDO still works in pre-operational, RPDO does not
 
     master.start()
+    record_recovery('M2', 'master back')
+
+
+def record_recovery(name, what):
     reg = wait_comm_error_clear()
     started = nmt_start()
     t.coast(False)
@@ -239,7 +256,7 @@ def test_m(master):
         t.sdo_write(0x6040, 0, cw, 2)
         time.sleep(0.05)
     t.wait_state(t.ST_IDLE, 8.0, t.now())
-    t.record('M2', 'master back, NMT start, fault reset: motor IDLE, 0x2003 = 0',
+    t.record(name, f'{what}, NMT start, fault reset: motor IDLE, 0x2003 = 0',
              f"0x1001 = {reg:#04x}, NMT {nmt_state():#04x}, state {t.sdo_read(0x2002)}, 0x2003 = {t.sdo_read(0x2003)}",
              (reg & ERR_REG_COMM) == 0 and started and t.sdo_read(0x2002) == t.ST_IDLE and t.sdo_read(0x2003) == 0)
 
@@ -282,12 +299,113 @@ def test_o():
         t.coast(False)
 
 
+# --- R: RPDO timeout, motor off -------------------------------------------------
+
+def rpdo1_frame(cw, rpm):
+    return cw.to_bytes(2, 'little') + (rpm & 0xFFFFFFFF).to_bytes(4, 'little')
+
+
+def delay_ok(delay_ms):
+    return delay_ms is not None and RPDO_TIMEOUT_MS - 30 <= delay_ms <= RPDO_TIMEOUT_MS + 150
+
+
+def rpdo_delay_ms(t_from, last):
+    t_emcy = wait_emcy(t_from, ERR_RPDO_TIMEOUT, code=EMC_RPDO_TIMEOUT)
+    return None if t_emcy is None else round((t_emcy - last) * 1000.0)
+
+
+def test_r():
+    t.to_switch_on_disabled()
+    t.sdo_write(0x1400, 5, RPDO_TIMEOUT_MS, 2)
+    t.sdo_write(0x1401, 5, RPDO_TIMEOUT_MS, 2)
+    back = t.sdo_read(0x1400, 5), t.sdo_read(0x1401, 5)
+    t_from = t.now()
+    time.sleep(2.0 * RPDO_TIMEOUT_MS / 1000.0)
+    bad = rpdo_emcys(t_from)
+    t.record('R1', f'0x1400:05 and 0x1401:05 = {RPDO_TIMEOUT_MS}; no RPDO seen yet: no EMCY 0x8250, NMT 05',
+             f"read back {back}, EMCY {len(bad)}, NMT {nmt_state():#04x}",
+             back == (RPDO_TIMEOUT_MS, RPDO_TIMEOUT_MS) and not bad and nmt_state() == NMT_OPERATIONAL)
+
+    rpdo = Cyclic(t.RPDO1, rpdo1_frame(0x0000, 0), RPDO_PERIOD_MS / 1000.0)
+    t_from = t.now()
+    rpdo.start()
+    time.sleep(1.5)
+    bad = rpdo_emcys(t_from)
+    t.record('R2', f'RPDO1 every {RPDO_PERIOD_MS} ms for 1.5 s: no EMCY 0x8250, NMT 05',
+             f"EMCY {len(bad)}, NMT {nmt_state():#04x}", not bad and nmt_state() == NMT_OPERATIONAL)
+
+    t_from = t.now()
+    last = rpdo.stop()
+    delay_ms = rpdo_delay_ms(t_from, last)
+    pre_op = wait_nmt(NMT_PRE_OP)
+    reg = wait_comm_error_clear()
+    fault = t.sdo_read(0x2003)
+    t.record('R3', f'RPDO1 stops: EMCY 0x8250 bit 0x17 after ~{RPDO_TIMEOUT_MS} ms, NMT 7F, '
+                   'error clears in pre-op, no motor fault (the motor is off)',
+             f"delay {delay_ms} ms, NMT {nmt_state():#04x}, 0x1001 = {reg:#04x}, 0x2003 = {fault}",
+             delay_ok(delay_ms) and pre_op and (reg & ERR_REG_COMM) == 0 and fault == 0)
+
+    started = nmt_start()
+    t_from = t.now()
+    time.sleep(1.0)
+    bad = rpdo_emcys(t_from)
+    t.record('R4', 'NMT start, no RPDO for 1 s: stays NMT 05, watching restarts at the next RPDO',
+             f"EMCY {len(bad)}, NMT {nmt_state():#04x}", started and not bad and nmt_state() == NMT_OPERATIONAL)
+
+    t_from = t.now()
+    t.rpdo2(0x0000, 0)
+    delay_ms = rpdo_delay_ms(t_from, t_from)
+    pre_op = wait_nmt(NMT_PRE_OP)
+    reg = wait_comm_error_clear()
+    started = nmt_start()
+    t.record('R5', f'one RPDO2 frame: EMCY 0x8250 bit 0x17 after ~{RPDO_TIMEOUT_MS} ms, NMT 7F, NMT start gives 05',
+             f"delay {delay_ms} ms, NMT 7F {pre_op}, 0x1001 = {reg:#04x}, NMT {nmt_state():#04x}",
+             delay_ok(delay_ms) and pre_op and (reg & ERR_REG_COMM) == 0 and started)
+    t.sdo_write(0x1400, 5, 0, 2)
+    t.sdo_write(0x1401, 5, 0, 2)
+
+
+# --- S: the motor runs when the RPDO stream stops -------------------------------
+
+def test_s():
+    t_from = t.now()
+    t.to_switch_on_disabled()
+    t.sdo_write(0x6007, 0, 1, 2)
+    nmt_start()
+    rpdo = Cyclic(t.RPDO1, rpdo1_frame(0x0F, PV_RPM), RPDO_PERIOD_MS / 1000.0)
+    try:
+        start_pv(t_from)
+        rpdo.start()                         # the motor start is slower than the timeout, so arm it after the start
+        time.sleep(0.3)
+        t.sdo_write(0x1400, 5, RPDO_TIMEOUT_MS, 2)
+        time.sleep(0.5)
+
+        t_stop = t.now()
+        last = rpdo.stop()
+        delay_ms = rpdo_delay_ms(t_stop, last)
+        sw = t.wait_sw(SW_FAULT, 1.0)
+        t_fault = t.now()
+        err_code, fault, state = t.sdo_read(0x603F), t.sdo_read(0x2003), t.sdo_read(0x2002)
+        t.record('S1', f'RPDO1 stops with the motor at {PV_RPM} rpm: EMCY 0x8250 after ~{RPDO_TIMEOUT_MS} ms, '
+                       'sw 0x0218, 0x603F = 0x8100, 0x2003 = 10, motor state FAULT',
+                 f"delay {delay_ms} ms, sw {sw:#06x} {round((t_fault - last) * 1000.0)} ms after the last RPDO, "
+                 f"0x603F = {err_code:#06x}, 0x2003 = {fault}, state {state}",
+                 delay_ok(delay_ms) and err_code == 0x8100 and fault == FAULT_COMM_LOST and state == t.ST_FAULT)
+    finally:
+        rpdo.stop()
+        t.safe_state()
+        t.sdo_write(0x1400, 5, 0, 2)
+    record_recovery('S2', 'RPDO timeout off')
+
+
 # --- main ---------------------------------------------------------------------
 
 def clean_up(master):
     try:
         t.sdo_write(0x1016, 1, 0, 4)         # first: a stopped master must not cause a timeout now
         t.sdo_write(0x1016, 2, 0, 4)
+        t.sdo_write(0x1400, 5, 0, 2)
+        t.sdo_write(0x1401, 5, 0, 2)
         t.sdo_write(0x6007, 0, 1, 2)
     except Exception as e:
         print(f"  clean up: write failed: {e}")
@@ -301,24 +419,25 @@ def clean_up(master):
                 t.sdo_write(idx, 0, t.orig[key], 1)
             except Exception as e:
                 print(f"  restore 0x{idx:04X} failed: {e}")
-    print("safe state: 0x1016:01 = 0, NMT start, 0x6040 = 0, 0x2011 = 2, 0x6060/0x2012 restored", flush=True)
+    print("safe state: 0x1016:01, 0x1400:05, 0x1401:05 = 0, 0x6007 = 1, NMT start, 0x6040 = 0, 0x2011 = 2, "
+          "0x6060/0x2012 restored", flush=True)
 
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument('--tests', default='H')
+    ap.add_argument('--tests', default='H,R')
     ap.add_argument('--log', default=str(Path(__file__).parent / 'logs'))
     ap.add_argument('--motor-ok', action='store_true', help='allow M (motor rotates)')
     args = ap.parse_args()
     tests = [x.strip().upper() for x in args.tests.split(',')]
 
-    master = Master()
+    master = Cyclic(MASTER_HB, [NMT_OPERATIONAL], HB_PERIOD_S)
     t.bus = can.Bus(interface='slcan', channel=t.PORT, bitrate=500000)
     threading.Thread(target=t._rx_thread, daemon=True).start()
     try:
         if t.preflight():
             for name in tests:
-                if name in ('M', 'O') and not args.motor_ok:
+                if name in ('M', 'O', 'S') and not args.motor_ok:
                     t.record(name, 'motor test', 'not run: --motor-ok missing', False, skipped=True)
                     continue
                 try:
@@ -328,6 +447,10 @@ def main():
                         test_m(master)
                     elif name == 'O':
                         test_o()
+                    elif name == 'R':
+                        test_r()
+                    elif name == 'S':
+                        test_s()
                 except t.SafetyStop:
                     raise
                 except Exception as e:
@@ -348,7 +471,7 @@ def main():
             print(f"{r['test']:4} | {r['verdict']:4} | {r['expected']} | {r['measured']}")
         out = Path(args.log)
         out.mkdir(exist_ok=True)
-        f = out / time.strftime('heartbeat_%Y%m%d_%H%M%S.json')
+        f = out / time.strftime('comm_loss_%Y%m%d_%H%M%S.json')
         f.write_text(json.dumps(dict(results=t.results, frames=[f"{tm - t.T0:9.4f} 0x{i:03X} {d.hex(' ')}"
                                                                  for tm, i, d in t.log]), indent=1))
         print(f"log: {f}")
