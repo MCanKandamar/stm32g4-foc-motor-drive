@@ -18,8 +18,8 @@ Goal: the motor must not keep running when the CAN master is lost; the node must
 - [x] RPDO timeout: no firmware change, the stack and OD already have it (PROJECT.md 2026-11-02), tests R and S added — HW verified (agent, 2026-11-02): `test_comm_loss.py --tests H,R,S --motor-ok` all PASS, EMCY 0x8250 303 ms after the last RPDO with 0x1400:05 = 300, Fault at 309 ms
 - [x] Bus-off recovery: no driver change. HW verified (user ran it, agent read the logs, 2026-11-02): `test_comm_loss.py --tests B` with a CAN_H to CAN_L short, B1 and B2 PASS, log `comm_loss_20261102_122735.json`: bus silent about 0.4 s, 6 EMCY 0x8140 bit 0x12 sets (repeated bus-off), EMCY queue overflow 0x1000 bit 0x20 once, all errors cleared, 0x1001 = 0, NMT 7F, no motor fault, NMT start gives 05, TPDO1 10 in 1 s. `--tests C --motor-ok`: C1 and C2 PASS, log `comm_loss_20261102_123448.json`: at 1000 rpm sw 0x0218, 0x603F = 0x8100, 0x2003 = 10, motor FAULT; NMT start and fault reset give IDLE, 0x2003 = 0
 - [x] Under-voltage at power-up: `Monitor.cpp` waits until Vdc reaches `VDC_READY` = 14 V once, while INIT or IDLE; built ✓, HW test skipped by the user (2026-11-02), they will fix it if a problem shows up
-- [ ] (in progress) NMT return: the master sends NMT start (user 2026-11-02, PROJECT.md). Control owner `cmd.can_control` by the agent on the user's request — verified: `ctest --preset HostTests` 164/164 ✓, built ✓ (Debug flash 167.7/512 KB, RAM 34.3/128 KB, 0 warnings), needs HW test
-- [ ] HIL test: new script in `tools/hil/`, cable pull and silent master
+- [ ] (in progress) NMT return: the master sends NMT start (user 2026-11-02, PROJECT.md). Control owner by the agent on the user's request: the bool version HW verified (user, 2026-11-02: 3 Scrutiny checks, `test_pdo.py --tests A,B,C --motor-ok` PASS as reported); then changed to enum `cmd.control_source` on the user's request, needs HW test
+- [ ] (in progress) HIL test: silent master is covered by tests M and S; cable pull is test K in `test_comm_loss.py`, needs HW test
 
 ## Next
 <!-- Order set by the user 2026-10-30 -->

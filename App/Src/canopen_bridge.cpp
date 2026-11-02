@@ -60,6 +60,11 @@ static bool is_operation_enabled()
     return cia402.getState() == Cia402State::OPERATION_ENABLED;
 }
 
+static bool can_owns_motor()
+{
+    return cmd.control_source == ControlSource::CANOPEN;
+}
+
 // ‰ (of 0x6076) ↔ iq [A]: T = iq · kt. 1000 ‰ = 400 mNm = 6.06 A
 static float permille_per_amp()
 {
@@ -239,7 +244,7 @@ static void handle_command_object()
     switch (OD_RAM.x2011_command)
     {
         case COMMAND_STOP:      cmd.stop      = true; break;
-        case COMMAND_CALIBRATE: if (cmd.can_control) cmd.calibrate = true; break;
+        case COMMAND_CALIBRATE: if (can_owns_motor()) cmd.calibrate = true; break;
         default:                                      break;
     }
     OD_RAM.x2011_command = 0;
@@ -248,15 +253,15 @@ static void handle_command_object()
 // A new owner must not inherit a running motor.
 static void handle_owner_change()
 {
-    static bool last_can_control = true;
-    const bool  can_control      = cmd.can_control;
+    static ControlSource last_source = ControlSource::CANOPEN;
+    const ControlSource  source      = cmd.control_source;
 
-    if (can_control != last_can_control)
+    if (source != last_source)
     {
         cmd.start = false;
         cmd.stop  = true;
     }
-    last_can_control = can_control;
+    last_source = source;
 }
 
 // Write the mode to cmd before START; the Supervisor fixes it at START.
@@ -346,7 +351,7 @@ static void write_statusword()
 
     if (is_operation_enabled())
         sw |= profile_status_bits();
-    if (!cmd.can_control)
+    if (!can_owns_motor())
         sw &= static_cast<uint16_t>(~SW_REMOTE);
 
     OD_RAM.x6041_statusword = sw;
@@ -375,7 +380,7 @@ void CanopenBridgeUpdate(void)
 
     fault_update();
 
-    const uint16_t controlword = cmd.can_control ? OD_RAM.x6040_controlword : CW_DISABLE;
+    const uint16_t controlword = can_owns_motor() ? OD_RAM.x6040_controlword : CW_DISABLE;
 
     apply_cia402_actions(cia402.update(controlword, ms, comm_lost(),
                                        OD_RAM.x6007_abortConnectionOptionCode));
@@ -384,5 +389,5 @@ void CanopenBridgeUpdate(void)
 
 bool CanopenBridgeStartAllowed(void)
 {
-    return !cmd.can_control || is_operation_enabled();
+    return !can_owns_motor() || is_operation_enabled();
 }

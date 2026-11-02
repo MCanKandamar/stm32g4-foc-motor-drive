@@ -3,7 +3,7 @@
 The PC plays a master with node-ID 1: it sends 0x701 [05] every 100 ms.
 Usage (python-can, SLCAN adapter on test_pdo.PORT):
     python tools/hil/test_comm_loss.py --tests H,R
-    python tools/hil/test_comm_loss.py --tests B,C --motor-ok    (B and C need you at the bus)
+    python tools/hil/test_comm_loss.py --tests B,C,K --motor-ok    (B, C and K need you at the bus)
 
 H: heartbeat consumer 0x1016, motor off: config / timeout / recovery / master reset
 M: sensorless pv at 1000 rpm, the master goes silent, 0x6007 = 1 must stop the motor (--motor-ok only)
@@ -12,6 +12,7 @@ R: RPDO timeout 0x1400:05 and 0x1401:05, motor off
 S: sensorless pv at 1000 rpm, the RPDO stream stops, 0x6007 = 1 must stop the motor (--motor-ok only)
 B: real bus-off with the motor off: the script waits, you short CAN_H to CAN_L for about 1 s
 C: the same bus-off at 1000 rpm, 0x6007 = 1 must stop the motor (--motor-ok only)
+K: cable pull at 1000 rpm: you pull the CAN cable at the board, 0x6007 = 1 must stop the motor (--motor-ok only)
 Do not force bus-off with a wrong adapter bitrate: it worked once, then this adapter stopped reading USB twice.
 On every exit: 0x1016:01 = 0, 0x1400:05 = 0, 0x1401:05 = 0, 0x6007 = 1, NMT start, 0x6040 = 0, 0x2011 = 2,
 0x6060/0x2012 restored. These objects stay in RAM: a real master must write them after each boot of the drive.
@@ -41,6 +42,7 @@ SW_FAULT = 0x0218
 PV_RPM = 1000
 EMC_BUS_OFF, ERR_BUS_OFF = 0x8140, 0x12
 SHORT_WAIT_S = 60
+CABLE_QUIET_S = 0.5                          # TPDO1 comes every 100 ms, so this much silence means the cable is out
 
 
 class Cyclic:
@@ -449,6 +451,50 @@ def test_c():
     record_recovery('C2', 'bus-off over')
 
 
+# --- K: cable pull, the operator pulls the CAN cable at the board ------------------
+
+def wait_cable_out():
+    print(f">>> pull the CAN cable at the board, keep it out until asked (waiting {SHORT_WAIT_S} s)", flush=True)
+    t_end = t.now() + SHORT_WAIT_S
+    while t.now() < t_end:
+        if not t.frames(t.TPDO1, t.now() - CABLE_QUIET_S):
+            return True
+        time.sleep(0.01)
+    return False
+
+
+def wait_cable_back():
+    t_from = t.now()
+    print(f">>> put the CAN cable back (waiting {SHORT_WAIT_S} s)", flush=True)
+    t_end = t.now() + SHORT_WAIT_S
+    while t.now() < t_end and not t.frames(t.HB, t_from):
+        time.sleep(0.01)
+    time.sleep(1.0)
+    return len(t.frames(t.HB, t_from)) > 0
+
+
+def test_k():
+    t_from = t.now()
+    t.to_switch_on_disabled()
+    t.sdo_write(0x6007, 0, 1, 2)
+    nmt_start()
+    try:
+        start_pv(t_from)
+        pulled = wait_cable_out()
+        time.sleep(1.0)                      # no ACK: the TX buffer has to fill up first
+        back = wait_cable_back()
+        sw, err_code = t.sdo_read(0x6041), t.sdo_read(0x603F)
+        fault, state = t.sdo_read(0x2003), t.sdo_read(0x2002)
+        t.record('K1', f'cable pull with the motor at {PV_RPM} rpm: sw 0x0218, 0x603F = 0x8100, 0x2003 = 10, '
+                       'motor state FAULT',
+                 f"pulled {pulled}, back {back}, sw {sw:#06x}, 0x603F = {err_code:#06x}, 0x2003 = {fault}, state {state}",
+                 pulled and back and sw == SW_FAULT and err_code == 0x8100 and fault == FAULT_COMM_LOST
+                 and state == t.ST_FAULT)
+    finally:
+        t.safe_state()
+    record_recovery('K2', 'cable back')
+
+
 # --- main ---------------------------------------------------------------------
 
 def clean_up(master):
@@ -488,7 +534,7 @@ def main():
     try:
         if t.preflight():
             for name in tests:
-                if name in ('M', 'O', 'S', 'C') and not args.motor_ok:
+                if name in ('M', 'O', 'S', 'C', 'K') and not args.motor_ok:
                     t.record(name, 'motor test', 'not run: --motor-ok missing', False, skipped=True)
                     continue
                 try:
@@ -506,6 +552,8 @@ def main():
                         test_b()
                     elif name == 'C':
                         test_c()
+                    elif name == 'K':
+                        test_k()
                 except t.SafetyStop:
                     raise
                 except Exception as e:

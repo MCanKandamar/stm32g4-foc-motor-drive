@@ -112,6 +112,13 @@ struct Status
     motor_control::Idq_fdb_t    idq_fdb;
 };
 
+// Who owns the motor. The names CAN and USB are taken: stm32g473xx.h defines them as macros.
+enum class ControlSource : uint8_t
+{
+    CANOPEN  = 0,
+    SCRUTINY = 1
+};
+
 struct Commands
 {
     volatile bool  start         = false;
@@ -119,7 +126,7 @@ struct Commands
     volatile bool  reset_fault   = false;
     volatile bool  calibrate     = false;   // Hall calibration (only in IDLE)
     volatile bool  offset_cal    = false;   // refresh the current offset (only in IDLE, CiA 402 Switch On)
-    volatile bool  can_control   = true;    // true: CAN owns the motor; false: USB (Scrutiny) owns it. A change stops the motor
+    volatile ControlSource control_source = ControlSource::CANOPEN; // a change stops the motor
     volatile motor_control::SensorMode sensor = motor_control::SensorMode::SENSORLESS;  // fixed at START
     volatile motor_control::LoopMode   loop   = motor_control::LoopMode::SPEED;         // fixed at START
     volatile float speed_ref_rpm = 0.0f;    // in SPEED mode
