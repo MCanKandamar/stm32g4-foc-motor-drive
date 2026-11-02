@@ -28,6 +28,8 @@ static constexpr uint8_t  COMMAND_CALIBRATE = 4U;       // 0x2011
 
 static constexpr uint16_t SW_TARGET_REACHED = 0x0400U;  // statusword bit 10
 static constexpr uint16_t SW_SPEED_ZERO     = 0x1000U;  // statusword bit 12, pv only
+static constexpr uint16_t SW_REMOTE         = 0x0200U;  // statusword bit 9: the controlword is obeyed
+static constexpr uint16_t CW_DISABLE        = 0x0000U;  // Disable Voltage
 
 static constexpr float    BRIDGE_DT         = 0.001f;   // CanopenBridgeUpdate period [s]
 static constexpr float    VEL_WINDOW_RPM    = 30.0f;    // pv bit 10: |actual − target| below this
@@ -231,16 +233,30 @@ static void update_ramps(MotorState ms, float speed_rpm)
 
 /* Commands: OD → cmd --------------------------------------------------------*/
 
-// 0x2011. Start and fault reset come only from the CiA 402 controlword.
+// 0x2011. Start and fault reset come only from the CiA 402 controlword. Stop is always allowed.
 static void handle_command_object()
 {
     switch (OD_RAM.x2011_command)
     {
         case COMMAND_STOP:      cmd.stop      = true; break;
-        case COMMAND_CALIBRATE: cmd.calibrate = true; break;
+        case COMMAND_CALIBRATE: if (cmd.can_control) cmd.calibrate = true; break;
         default:                                      break;
     }
     OD_RAM.x2011_command = 0;
+}
+
+// A new owner must not inherit a running motor.
+static void handle_owner_change()
+{
+    static bool last_can_control = true;
+    const bool  can_control      = cmd.can_control;
+
+    if (can_control != last_can_control)
+    {
+        cmd.start = false;
+        cmd.stop  = true;
+    }
+    last_can_control = can_control;
 }
 
 // Write the mode to cmd before START; the Supervisor fixes it at START.
@@ -330,6 +346,8 @@ static void write_statusword()
 
     if (is_operation_enabled())
         sw |= profile_status_bits();
+    if (!cmd.can_control)
+        sw &= static_cast<uint16_t>(~SW_REMOTE);
 
     OD_RAM.x6041_statusword = sw;
 }
@@ -353,10 +371,18 @@ void CanopenBridgeUpdate(void)
     update_targets();
     update_ramps(ms, speed_rpm);
     handle_command_object();
+    handle_owner_change();
 
     fault_update();
 
-    apply_cia402_actions(cia402.update(OD_RAM.x6040_controlword, ms, comm_lost(),
+    const uint16_t controlword = cmd.can_control ? OD_RAM.x6040_controlword : CW_DISABLE;
+
+    apply_cia402_actions(cia402.update(controlword, ms, comm_lost(),
                                        OD_RAM.x6007_abortConnectionOptionCode));
     write_statusword();
+}
+
+bool CanopenBridgeStartAllowed(void)
+{
+    return !cmd.can_control || is_operation_enabled();
 }

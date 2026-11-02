@@ -1,6 +1,7 @@
 #include "Supervisor.h"
 #include "StartupSeq.hpp"
 #include "app.hpp"
+#include "canopen_bridge.h"
 #include "FreeRTOS.h"
 #include "task.h"
 #include <cstdint>
@@ -166,7 +167,7 @@ static void handle_commands()
     if (cmd.start)
     {
         cmd.start = false;
-        if (motor_state_machine.getState() == MotorState::IDLE)
+        if (motor_state_machine.getState() == MotorState::IDLE && CanopenBridgeStartAllowed())
             motor_state_machine.event_handler(prepare_start());     // START_HALL / START_SENSORLESS
     }
     if (cmd.calibrate)
