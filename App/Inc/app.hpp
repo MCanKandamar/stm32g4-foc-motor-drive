@@ -25,6 +25,7 @@ constexpr float     SHUNT_RES_OHM   = 0.0015f;     // 0.0015 Ohm
 constexpr float     I_MAX           = 20.0f;
 constexpr float     VDC_MAX         = 30.0f;
 constexpr float     VDC_MIN         = 12.0f;
+constexpr float     VDC_READY       = 14.0f;                     // above VDC_MIN so a slow rise does not fault at the limit
 
 constexpr float     I_ALIGN         = 1.0f;
 constexpr uint32_t  ALIGN_MS        = 1000;

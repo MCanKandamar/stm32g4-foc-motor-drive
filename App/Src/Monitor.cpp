@@ -3,6 +3,7 @@
 #include "app.hpp"
 
 static uint32_t t_led = 0;
+static bool vdc_seen = false;
 
 void MonitorInit(void)
 {
@@ -22,13 +23,21 @@ void MonitorRun(void)
                                                39.0f,
                                                2.2f    );
                                         
+    // The MCU can start before the DC supply: stay quiet until the supply is seen once.
+    // A start without the supply still faults, because the motor is no longer waiting.
+    if (status.Vdc >= VDC_READY)
+        vdc_seen = true;
+
+    const MotorState state = motor_state_machine.getState();
+    const bool waiting = !vdc_seen && (state == MotorState::INIT || state == MotorState::IDLE);
+
     if (status.Vdc > VDC_MAX) {
         powerOff();
         fault = FaultCode::OVER_VOLTAGE;
     }
-    else if (status.Vdc < VDC_MIN) {
+    else if (status.Vdc < VDC_MIN && !waiting) {
         powerOff();
-        fault = FaultCode::UNDER_VOLTAGE; 
+        fault = FaultCode::UNDER_VOLTAGE;
     }
 
     uint32_t now = HAL_GetTick();
