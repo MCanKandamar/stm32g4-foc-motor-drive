@@ -18,15 +18,15 @@ Task: Password reset · branch: feature/reset · started: 2026-10-25
 1. Persistent Hall calibration in a reserved flash page: see Open questions
 Parked by the user: USB command refactor steps 4–6; DC-bus sag and regen/over-voltage control.
 Later: commit e-mail in history; Docker image for CI; rename the working folder (steps in PROJECT.md).
-Release: `v0.4.0` is the latest; next is `v1.0.0`, the first stable release.
+Release: `v0.5.0` is the latest; `v1.0.0` waits for the "v1:" items in Open questions.
 
 ## Done
 <!-- Newest first, one line each, with evidence label and commit if any. Older items: git log. -->
-- 2026-11-02 KISS/YAGNI trim: dead code, repeated constants, CMake leftovers, CANopen storage files and printf, `status.rpm`/`theta_deg`, divider array, `test_cia402.py` rename; 22 disabled objects out of `bldc_drive.xdd`, all empty descriptions filled (up to this commit) — built ✓ (Debug flash 166.4/512 KB, RAM 34.3/128 KB; Release flash 95.1/512 KB), verified: `ctest --preset HostTests` 164/164 ✓, OD.c unchanged and Debug binary identical after the XDD step, HW verified (agent, user flashed Release 8efa2303…, 2026-11-02): CiA 402, PDO, comm loss H/R/M/O/S, Hall and sensorless steps, Hall calibration. Not run: comm loss B, C, K (need the user at the bus), power cycle
-- 2026-11-02 README brought up to date (no stored parameters, Status, limits, agent-lite, licence note); isr.cpp uses `POLE_PAIRS` from the motor data — built ✓ (Debug flash 167.7/512 KB, RAM 34.3/128 KB), verified: `ctest --preset HostTests` 164/164 ✓, needs HW test
-- 2026-11-02 CANopen phase 7: 0x6007, heartbeat, RPDO timeout, bus-off, one control owner (up to 32728bd) — built ✓ (Debug flash 167.7/512 KB, RAM 34.3/128 KB), verified: `ctest --preset HostTests` 164/164 ✓, HW verified (agent + user, 2026-11-02). Not checked: under-voltage change on the board, cable pull to motor stop time
-- 2026-10-30 `v0.4.0` released from 22c9be1 — CI ✓, Release has all 4 files; unverified on the board (this build not flashed)
-- 2026-10-30 FreeRTOS + TinyUSB replace ThreadX + USBX — built ✓, verified: `ctest --preset HostTests` 157/157 ✓, HW verified (agent runs reported by the user, 2026-10-30)
+- 2026-11-02 `v0.5.0` tagged, Release result below in git log; unverified on the board (the CI build is not flashed)
+- 2026-11-02 KISS/YAGNI trim and XDD clean-up (757b24c..fe785e7) — built ✓ (Debug flash 166.4/512 KB, RAM 34.3/128 KB; Release flash 95.1/512 KB), verified: `ctest --preset HostTests` 164/164 ✓, HW verified (agent, user flashed Release 8efa2303…, 2026-11-02). Not run: comm loss B, C, K, power cycle
+- 2026-11-02 README brought up to date; isr.cpp uses `POLE_PAIRS` — built ✓, verified: `ctest --preset HostTests` 164/164 ✓
+- 2026-11-02 CANopen phase 7: 0x6007, heartbeat, RPDO timeout, bus-off, one control owner (up to 32728bd) — HW verified (agent + user, 2026-11-02)
+- 2026-10-30 `v0.4.0` released from 22c9be1 — CI ✓; unverified on the board (this build not flashed)
 
 ## Dead ends
 <!-- date · what was tried · why it failed · when it might be worth retrying -->
@@ -35,6 +35,12 @@ Release: `v0.4.0` is the latest; next is `v1.0.0`, the first stable release.
 
 ## Open questions
 <!-- question · impact · default used meanwhile -->
+- v1: add the IWDG watchdog? (`.ioc` change) · a locked task leaves the FOC ISR running without Monitor · no watchdog
+- v1: which DRV8350S registers to write over SPI? · dead time comes from the driver default, TIM8 adds none; `DRIVER_OVER_CURRENT` is never raised · driver defaults
+- v1: read the NTC inputs, with which limits? · `MOTOR_OVER_TEMP` and `DRIVER_OVER_TEMP` are never raised · no temperature protection
+- v1: what load and run time for the load test? · every board test so far is unloaded · not tested
+- v1: limit regen by a deceleration cap or by control? · a fast stop can raise Vdc, checked only every 10 ms · 30 V trip only
+- v1: rerun on the final firmware: power cycle, under-voltage at power-up, bus-off (B, C), cable pull (K); finish the EDS · not run on this firmware
 - Is Hall calibration in flash still wanted after the phase 8 decision? · decides Next 1 · kept in Next until the user answers
 - Why does 0x6077 read 7–12 % under target during acceleration? · not measured · pdo C passes with ~8 ‰ of margin
 - One `test_pdo.py` start got no SDO answer in preflight (pdo_20261030_122547) · cause not found · rerun once and report it

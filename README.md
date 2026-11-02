@@ -54,7 +54,7 @@ One pin assignment differs from the Motor-Control schematic: this firmware reads
 | Hall calibration stored in flash | Not done |
 | DC-bus sag and regenerative over-voltage control | Not done |
 
-`v0.4.0` is the latest release. The `0x6007`, control-owner and under-voltage changes were added later and are not in that release.
+`v0.5.0` is the latest release.
 
 The board results of 2026-10-30 are under [HIL tests](#hil-tests). The communication-loss and bus-off tests ran on 2026-11-02 with [tools/hil/test_comm_loss.py](tools/hil/test_comm_loss.py).
 
