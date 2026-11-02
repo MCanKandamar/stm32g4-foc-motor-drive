@@ -1,5 +1,4 @@
 #include "state_machine.hpp"
-#include <cassert>
 
 namespace motor_control
 {

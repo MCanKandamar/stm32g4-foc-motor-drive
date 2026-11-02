@@ -22,11 +22,5 @@ namespace motor_control
 
             return output;
         }
-
-        void reset()
-        {
-            output = 0.0f;
-            initialized = false;
-        }
     };
 }

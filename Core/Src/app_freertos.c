@@ -126,7 +126,6 @@ void InitTask(void const *argument)
 {
   ScrutinyInit();
   SupervisorInit();
-  MonitorInit();
 
   xTaskCreateStatic(supervisor_task, "Supervisor", SUPERVISOR_TASK_STACK_WORDS, NULL,
                     SUPERVISOR_TASK_PRIO, supervisor_task_stack, &supervisor_task_tcb);

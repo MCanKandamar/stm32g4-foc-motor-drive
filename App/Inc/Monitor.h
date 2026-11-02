@@ -7,7 +7,6 @@
 extern "C" {
 #endif
 
-void MonitorInit(void);
 void MonitorRun(void);
 
 

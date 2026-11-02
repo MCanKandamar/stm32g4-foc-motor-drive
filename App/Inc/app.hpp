@@ -37,7 +37,7 @@ constexpr int       CAL_TURNS       = 4;                         // 4 electrical
 
 constexpr float     SUPERVISOR_DT   = 0.001f;                    // Supervisor period [s]
 constexpr float     I_OL            = 2.0f;                      // open-loop iq [A]
-constexpr float     OMEGA_OL        = 500.0f * motor_control::TWO_PI / 60.0f * 4.0f;  // 500 rpm mechanical ≈ 209 rad/s electrical
+constexpr float     OMEGA_OL        = 500.0f * motor_control::TWO_PI / 60.0f * POLE_PAIRS;  // 500 rpm mechanical ≈ 209 rad/s electrical
 constexpr float     OL_RAMP         = OMEGA_OL / 1.0f;           // reach the target speed in 1 s [rad/s²]
 constexpr uint32_t  OL_HOLD_MS      = 2000;                      // wait at the target speed (to watch the SMO)
 constexpr float     IQ_DOWN_STEP    = 0.002f;                    // iq decrease step in OL [A/ms]: 2 A in 1 s
@@ -58,10 +58,6 @@ extern "C" TIM_HandleTypeDef    htim8;
 extern "C" ADC_HandleTypeDef    hadc3;
 extern "C" ADC_HandleTypeDef    hadc4;
 extern "C" ADC_HandleTypeDef    hadc5;
-extern "C" FDCAN_HandleTypeDef  hfdcan1;
-extern "C" SPI_HandleTypeDef    hspi2;
-extern "C" PCD_HandleTypeDef    hpcd_USB_FS;
-extern "C" CORDIC_HandleTypeDef hcordic;
 extern "C" DMA_HandleTypeDef    hdma_adc4;
 extern "C" DMA_HandleTypeDef    hdma_adc5;
 

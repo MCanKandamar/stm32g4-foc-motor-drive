@@ -12,6 +12,12 @@ Task: Password reset · branch: feature/reset · started: 2026-10-25
 - [x] Token table + migration — verified: `npm test` ✓
 - [ ] (in progress) Send reset e-mail
 - [ ] Reset form -->
+Task: KISS/YAGNI trim, list approved by the user · branch: main · started: 2026-11-02
+Kept by the user's choice: `PidController`, OD 0x1010/0x1011, PDO 3–4, all `motor_parameters.hpp` fields.
+- [x] Dead code, repeated constants, CMake leftovers (A2–A7) — built ✓ (Debug flash 167.4/512 KB, RAM 34.3/128 KB), verified: `ctest --preset HostTests` 164/164 ✓, needs HW test
+- [ ] (in progress) CANopen port: storage files, old comment, `log_printf` off (B1–B3)
+- [ ] `status.rpm`/`theta_deg`, divider array, `test_cia402.py` rename (C2, C3, C5)
+- [ ] `bldc_drive.xdd`: drop the 22 disabled objects, fill empty descriptions, export OD and EDS
 
 ## Next
 <!-- Order set by the user 2026-10-30; CANopen phase 8 dropped 2026-11-02 -->
@@ -37,7 +43,6 @@ Release: `v0.4.0` is the latest; next is `v1.0.0`, the first stable release.
 <!-- question · impact · default used meanwhile -->
 - Is Hall calibration in flash still wanted after the phase 8 decision? · decides Next 1 · kept in Next until the user answers
 - ThreadX wording left in `CO_app_STM32.c` line 191 · cosmetic · unchanged
-- Other hard-coded 4 pole pairs: `app.hpp` `OMEGA_OL`, `app.cpp` Hall config · not asked · unchanged
 - Why does 0x6077 read 7–12 % under target during acceleration? · not measured · pdo C passes with ~8 ‰ of margin
 - One `test_pdo.py` start got no SDO answer in preflight (pdo_20261030_122547) · cause not found · rerun once and report it
 - CANdamar CiA 402 panel: does it resend 06/07 on a target change? · user's Trace check is open · none

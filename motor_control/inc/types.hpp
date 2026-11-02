@@ -59,11 +59,4 @@ namespace motor_control
         float sin;
         float cos;
     };
-
-    struct Hall_pin_t
-    {
-        int Hall_A;
-        int Hall_B;
-        int Hall_C;
-    };
 }

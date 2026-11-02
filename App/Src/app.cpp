@@ -13,7 +13,7 @@ namespace
     {
         .Kp            = 1.3f,
         .Ki            = 500.0f,
-        .step_time     = (1.0f / 20'000.0f),
+        .step_time     = TS,
         .out_max       = 5.0f,
         .out_min       = -5.0f,
     });
@@ -34,7 +34,7 @@ namespace
     {
         .Kp             = 2.0f * 0.8f * (motor_control::TWO_PI * 30.0f),
         .Ki             = (motor_control::TWO_PI * 30.0f) * (motor_control::TWO_PI * 30.0f),
-        .step_time      = 1.0f / 20'000.0f,
+        .step_time      = TS,
         .out_max        =  5000.0f,  
         .out_min        = -5000.0f,
     });
@@ -43,7 +43,7 @@ namespace
     {
         .Kp             = 2.0f * 0.8f * (motor_control::TWO_PI * 30.0f),
         .Ki             = (motor_control::TWO_PI * 30.0f) * (motor_control::TWO_PI * 30.0f),
-        .step_time      = 1.0f / 20'000.0f,
+        .step_time      = TS,
         .out_max        =  2000.0f,  
         .out_min        = -2000.0f,
     });
@@ -52,7 +52,7 @@ namespace
     {
         .phase_resistance_ohm = 0.20f,
         .phase_inductance     = 0.30e-3f,
-        .sample_time          = 1.0f / 20'000.0f,
+        .sample_time          = TS,
         .k_gain               = 20.0f,
         .phi                  = 3.3f,
     });
@@ -61,7 +61,7 @@ namespace
 motor_control::HallSensor hall(
 {
     .f_cnt_hz = 1'000'000.0f,
-    .pole_pairs = 4,
+    .pole_pairs = motor_control::BLF02.number_of_poles / 2,
     .edge_angle_rad = { 283.8f * DEG, 347.7f * DEG,  39.5f  * DEG,
                         99.4f  * DEG, 158.2f * DEG,  217.2f * DEG },
     .timeout_s = 0.05f,

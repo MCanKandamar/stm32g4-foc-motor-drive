@@ -46,8 +46,7 @@ enable_language(C ASM)
 add_executable(${CMAKE_PROJECT_NAME}
     App/Src/isr.cpp
     App/Src/adc_measurements.cpp
-    App/Src/scrutiny.cpp
-    motor_control/inc/filters.hpp)
+    App/Src/scrutiny.cpp)
 
 # Add STM32CubeMX generated sources
 add_subdirectory(cmake/stm32cubemx)
@@ -79,11 +78,6 @@ add_subdirectory(scrutiny-embedded)
 # PUBLIC: also applies to App code that includes the scrutiny headers.
 target_compile_options(scrutiny-embedded PUBLIC $<$<COMPILE_LANGUAGE:CXX>:-Wno-deprecated-enum-enum-conversion>)
 
-# Link directories setup
-target_link_directories(${CMAKE_PROJECT_NAME} PRIVATE
-    # Add user defined library search paths
-)
-
 # Application source files
 target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     App/Src/app.cpp
@@ -99,11 +93,6 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
     # Add user defined include paths
     App/Inc/
-)
-
-# Add project symbols (macros)
-target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE
-    # Add user defined symbols
 )
 
 # Remove wrong libob.a library dependency when using cpp files

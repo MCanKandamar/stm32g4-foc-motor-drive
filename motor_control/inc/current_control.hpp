@@ -23,7 +23,6 @@ namespace motor_control
             duties_t update(const Idq_ref_t& idq_ref, const Iabc_t& currents, const SinCos_t& sin_cos, float Vdc);
 
             Idq_fdb_t get_idq_feedback() const {return idq_fdb; }
-            Vdq_t get_Vdq() const {return V_dq;}
             V_AlphaBeta_t get_Valphabeta() const {return v_alphabeta;}
 
             void reset();

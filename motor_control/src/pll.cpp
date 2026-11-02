@@ -12,14 +12,9 @@ namespace motor_control
 
     float AnglePLL::update(float theta_measured)
     {   
-        pll_angle += pll_speed * step_time;
+        pll_angle = wrap_2pi(pll_angle + pll_speed * step_time);
 
-        if      (pll_angle >= TWO_PI) pll_angle -= TWO_PI;
-        else if (pll_angle <  0.0f)   pll_angle += TWO_PI;
-
-        float error = theta_measured - pll_angle;
-        if      (error >  PI) error -= TWO_PI;
-        else if (error < -PI) error += TWO_PI;
+        float error = wrap_pi(theta_measured - pll_angle);
 
         pll_speed = pll_controller.update(error, 0.0f);
         pll_speed_filtered = pll_controller.getIntegral();
@@ -28,10 +23,7 @@ namespace motor_control
 
     float AnglePLL::update_emf(const Z_alphabeta_t& z_alphabeta)
     {
-        pll_angle += pll_speed * step_time;
-
-        if      (pll_angle >= TWO_PI) pll_angle -= TWO_PI;
-        else if (pll_angle <  0.0f)   pll_angle += TWO_PI;
+        pll_angle = wrap_2pi(pll_angle + pll_speed * step_time);
 
         SinCos_t sc = sincos_(pll_angle);
 

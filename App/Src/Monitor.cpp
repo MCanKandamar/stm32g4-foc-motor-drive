@@ -5,11 +5,6 @@
 static uint32_t t_led = 0;
 static bool vdc_seen = false;
 
-void MonitorInit(void)
-{
-    
-}
-
 void MonitorRun(void)
 {
     using namespace motor_control;
