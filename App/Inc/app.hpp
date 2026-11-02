@@ -30,6 +30,7 @@ constexpr float     VDC_READY       = 14.0f;                     // above VDC_MI
 constexpr float     I_ALIGN         = 1.0f;
 constexpr uint32_t  ALIGN_MS        = 1000;
 
+constexpr float     POLE_PAIRS      = motor_control::BLF02.number_of_poles / 2.0f;
 constexpr float     TS              = 1.0f / 20'000.0f;           // ISR period [s]
 constexpr float     OMEGA_CAL       = motor_control::TWO_PI;     // Hall calibration: 1 Hz electrical [rad/s]
 constexpr int       CAL_TURNS       = 4;                         // 4 electrical turns each way = 1 mechanical turn

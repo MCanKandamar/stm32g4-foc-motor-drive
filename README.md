@@ -45,13 +45,18 @@ One pin assignment differs from the Motor-Control schematic: this firmware reads
 | CiA 402 state machine, fault reporting, EMCY | Tested on the board |
 | PDOs and SYNC | Tested on the board |
 | Speed-step test on FreeRTOS | Accepted without recorded numbers |
-| Communication-loss reaction | Not done |
-| Bus-off recovery | The CAN driver restarts FDCAN, not tested on the board |
-| Final EDS file, `0x1010` store parameters | Not done |
+| Communication-loss reaction (`0x6007`, heartbeat consumer, RPDO timeout) | Tested on the board, time from a cable pull to motor stop not measured |
+| Bus-off recovery | Tested on the board with a CAN_H to CAN_L short, motor off and at 1000 rpm |
+| One control owner (CAN or Scrutiny) | Tested on the board |
+| Under-voltage fault held off until the DC supply is first seen | Not tested on the board |
+| Final EDS file | Not done |
+| `0x1010` store parameters | Dropped, the drive stores no parameters |
 | Hall calibration stored in flash | Not done |
 | DC-bus sag and regenerative over-voltage control | Not done |
 
-The latest board results are under [HIL tests](#hil-tests).
+`v0.4.0` is the latest release. The `0x6007`, control-owner and under-voltage changes were added later and are not in that release.
+
+The board results of 2026-10-30 are under [HIL tests](#hil-tests). The communication-loss and bus-off tests ran on 2026-11-02 with [tools/hil/test_comm_loss.py](tools/hil/test_comm_loss.py).
 
 The speed-loop results below come from the ThreadX firmware of 2026-10-30, not from FreeRTOS. `motor_control/` and [App/Src/isr.cpp](App/Src/isr.cpp) are the same in both versions.
 
@@ -66,12 +71,13 @@ The Hall speed ramp from 1000 to 1500 rpm was measured the same day on an earlie
 
 This is a development project, not a safety-rated drive. Check these points before you power a motor:
 
-- **No motor stop on communication loss:** if the CAN master disappears, nothing stops the motor, and it keeps its last command. The heartbeat consumer is not set up (`0x1016` is empty), `0x6007` does not exist, and RPDOs have no timeout.
+- **Communication loss needs setup by the master:** when the node leaves operational during Operation Enabled, `0x6007` sets the reaction: `0` none, `1` fault (default), `2` disable voltage, `3` quick stop. Values `2` and `3` both let the motor coast. The drive sees a silent master only if the master writes `0x1016` (heartbeat consumer) or `0x1400:05` and `0x1401:05` (RPDO timeout) after each boot, because these are 0 by default and watching starts at the first heartbeat or RPDO. A start by SDO in pre-operational also ends in this fault, so send NMT start first. A cable pull at 1000 rpm gave the fault, but the time from the pull to motor stop has not been measured.
 - **No return to operational:** a CAN communication error, such as the master's adapter closing, moves the node to pre-operational, and PDOs stop. The node stays there until an NMT start or a reset. An NMT start sent while the error is still active has no lasting effect.
 - **No braking:** Quick Stop lets the motor coast.
-- **Basic DC-bus protection:** the Monitor task checks the voltage every 10 ms and turns off the PWM outputs above 30 V or below 12 V. Nothing limits regenerative energy, so a fast deceleration can raise the DC-bus voltage. If the MCU starts before the 24 V supply, the under-voltage fault latches and needs a fault reset.
+- **Basic DC-bus protection:** the Monitor task checks the voltage every 10 ms and turns off the PWM outputs above 30 V or below 12 V. Nothing limits regenerative energy, so a fast deceleration can raise the DC-bus voltage. If the MCU starts before the 24 V supply, the under-voltage fault stays off in `INIT` and `IDLE` until the DC bus first reaches 14 V, and a start without the supply still gives the fault. This change has not been tested on the board.
 - **No temperature protection:** the board has NTC inputs and the fault codes exist, but the firmware does not read the sensors.
 - **Gate driver on its defaults:** the firmware configures SPI2 but never writes the DRV8350S registers. TIM8 adds no dead time, so the dead time comes from the driver's default setting.
+- **No stored parameters:** all object dictionary values live in RAM, so the master must write its settings after each boot. `0x1010` and `0x1011` still report that they work on command, but a write changes only RAM (from reading the code, not tested on the board).
 - **Hall calibration is not saved:** a calibration run updates the table in RAM only. After a reset the drive goes back to the table built into [App/Src/app.cpp](App/Src/app.cpp).
 - **Sensorless limits:** forward only, at 300 rpm or more. Below 200 rpm for 50 ms, the drive reports a fault and turns off the PWM outputs.
 - **Current limits:** the software over-current trip is 20 A per phase. The speed PI limits iq to 9 A. In torque mode iq is limited to 5 A, about 0.33 N·m.
@@ -179,7 +185,7 @@ cmake --build --preset HostTests
 ctest --preset HostTests
 ```
 
-All 157 tests passed on the PC on 2026-10-30.
+All 164 tests passed on the PC on 2026-11-02.
 
 ## HIL tests
 
@@ -193,7 +199,7 @@ python tools/hil/test_cia402_v2.py --tests T5,T6 --motor-ok
 python tools/hil/test_pdo.py --tests D,A,B,C --motor-ok
 ```
 
-### Latest results
+### Results of 2026-10-30
 
 These tests passed on 2026-10-30 on one board with the FreeRTOS firmware, in two runs. Run A used a local Release build, Scrutiny firmware ID `08c84ea7…`. Run B added the tests that need Scrutiny, but its log holds no firmware ID, so its build is not confirmed. The run logs are not in this repository.
 
@@ -291,8 +297,20 @@ The project's own code is under the [MIT licence](LICENSE), © 2026 Can Kandamar
 | FreeRTOS 10.3.1 | `Middlewares/Third_Party/FreeRTOS/` | MIT |
 | [TinyUSB](https://github.com/hathach/tinyusb) 0.21.0 | `tinyusb/` | MIT |
 
+Older code is different: tags `v0.1.0` to `v0.3.0` and their commits include ThreadX and USBX 6.2.0 from ST's X-CUBE-AZRTOS-G4, under the Microsoft Software License Terms for Azure RTOS. Their licence files are in those tags. The current code and `v0.4.0` do not include them, and the MIT licence above does not cover them.
+
 ## More documentation
 
 - [docs/PROJECT.md](docs/PROJECT.md): architecture, environment, hardware and design decisions
 - [canopen/VERSIONS.md](canopen/VERSIONS.md), [tinyusb/VERSIONS.md](tinyusb/VERSIONS.md): versions of the third-party sources
 - [Motor-Control](https://github.com/Sinan-Akbayin/Motor-Control): the board design
+
+## Working with AI agents
+
+This repository uses [agent-lite](https://github.com/mcankandamar/agent-lite), so work continues across sessions and tools:
+
+- [AGENTS.md](AGENTS.md): the rules for AI agents, such as the build commands, what needs the developer's approval and how checks are reported
+- [docs/WORK.md](docs/WORK.md): the current state: next steps, finished work with its evidence, dead ends and open questions
+- [docs/PROJECT.md](docs/PROJECT.md): architecture and decisions
+
+When told to continue, an agent reads these files and the git log to see where the work stopped.
