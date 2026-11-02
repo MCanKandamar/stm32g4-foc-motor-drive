@@ -9,8 +9,6 @@ void MonitorRun(void)
 {
     using namespace motor_control;
 
-    status.theta_deg   = hall.getElectricalAngleRad() * RAD_TO_DEG;
-    status.rpm         = hall.getMechanicalSpeedRpm();
     status.dir         = hall.getDirection();
     status.idq_fdb     = foc.get_idq_feedback();
 

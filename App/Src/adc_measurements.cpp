@@ -127,14 +127,9 @@ motor_control::Vabc_t get_abc_voltages()
     using namespace motor_control;
     /* Get Abc Voltages ------------------------------------------*/ 
     Vabc_t V_abc;
-    float* v_div = meas.Vabc_phase_divider_voltage;
-    for (int i = 0; i < 3; i++)
-    {
-        v_div[i] = adc_dma.Vabc_phase_raw[i] * adc_cal.volt_per_lsb;
-    }
-    V_abc.Va = voltage_divider_get_voltage(v_div[0], 39.0f, 2.2f);
-    V_abc.Vb = voltage_divider_get_voltage(v_div[1], 39.0f, 2.2f);
-    V_abc.Vc = voltage_divider_get_voltage(v_div[2], 39.0f, 2.2f);
+    V_abc.Va = voltage_divider_get_voltage(adc_dma.Vabc_phase_raw[0] * adc_cal.volt_per_lsb, 39.0f, 2.2f);
+    V_abc.Vb = voltage_divider_get_voltage(adc_dma.Vabc_phase_raw[1] * adc_cal.volt_per_lsb, 39.0f, 2.2f);
+    V_abc.Vc = voltage_divider_get_voltage(adc_dma.Vabc_phase_raw[2] * adc_cal.volt_per_lsb, 39.0f, 2.2f);
 
     return V_abc;
 }

@@ -1,9 +1,9 @@
 """CiA 402 hardware-in-the-loop tests (9e) for the BLDC drive, node-ID 13.
 
 Usage (venv with python-can and scrutinydebugger 0.16):
-    python tools/hil/test_cia402_v2.py --tests T1,T9,T2,T3,T7,T8
-    python tools/hil/test_cia402_v2.py --tests T1,T9,T2,T3,T7,T8 --nmt-reset
-    python tools/hil/test_cia402_v2.py --tests T5,T6 --motor-ok
+    python tools/hil/test_cia402.py --tests T1,T9,T2,T3,T7,T8
+    python tools/hil/test_cia402.py --tests T1,T9,T2,T3,T7,T8 --nmt-reset
+    python tools/hil/test_cia402.py --tests T5,T6 --motor-ok
 
 T4 runs inside T3 (it needs the 0x07 of T3). T5/T6 rotate the motor and only run
 with --motor-ok. On every exit the script writes 0x6040 = 0 and 0x2011 = 2.

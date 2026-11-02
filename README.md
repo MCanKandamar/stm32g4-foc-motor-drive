@@ -176,13 +176,13 @@ All 164 tests passed on the PC on 2026-11-02.
 
 ## HIL tests
 
-The scripts in [tools/hil/](tools/hil) test a real board over CAN and Scrutiny: the CiA 402 state machine, PDOs and SYNC, and speed-step response. They need `python-can`, `pyserial` and an SLCAN adapter. Set the adapter port in `PORT` in `test_pdo.py` and `test_cia402_v2.py`. Scripts that use Scrutiny also need `scrutinydebugger` 0.16 and a running Scrutiny server. Any test that turns the motor needs the `--motor-ok` flag.
+The scripts in [tools/hil/](tools/hil) test a real board over CAN and Scrutiny: the CiA 402 state machine, PDOs and SYNC, and speed-step response. They need `python-can`, `pyserial` and an SLCAN adapter. Set the adapter port in `PORT` in `test_pdo.py` and `test_cia402.py`. Scripts that use Scrutiny also need `scrutinydebugger` 0.16 and a running Scrutiny server. Any test that turns the motor needs the `--motor-ok` flag.
 
 T1 and T9 wait for a board reset. With `--nmt-reset`, the script sends the reset itself:
 
 ```shell
-python tools/hil/test_cia402_v2.py --tests T1,T9,T2,T3,T7,T8 --nmt-reset
-python tools/hil/test_cia402_v2.py --tests T5,T6 --motor-ok
+python tools/hil/test_cia402.py --tests T1,T9,T2,T3,T7,T8 --nmt-reset
+python tools/hil/test_cia402.py --tests T5,T6 --motor-ok
 python tools/hil/test_pdo.py --tests D,A,B,C --motor-ok
 ```
 

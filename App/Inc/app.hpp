@@ -66,7 +66,6 @@ extern "C" DMA_HandleTypeDef    hdma_adc5;
 // Writer: ADC3 ISR (20 kHz). Threads only read.
 struct Measurements
 {
-    float                    Vabc_phase_divider_voltage[3];
     volatile float           theta_e_rad_hall;
     volatile float           theta_e_rad_pll;
     volatile float           theta_e_rad_smo;
@@ -102,8 +101,6 @@ struct FocConfig
 // Writer: Monitor. ISR and other threads read.
 struct Status
 {
-    volatile float              theta_deg;
-    volatile float              rpm;
     volatile int                dir;
     volatile float              Vdc;
     motor_control::Idq_fdb_t    idq_fdb;
