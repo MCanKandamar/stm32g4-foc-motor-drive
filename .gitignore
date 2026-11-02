@@ -10,5 +10,8 @@ doc/
 # Personal Scrutiny dashboard layout
 cfg.scdb
 
+# Personal notes for later README changes
+README_TODO.md
+
 # Hardware test (HIL) outputs
 tools/hil/logs/
