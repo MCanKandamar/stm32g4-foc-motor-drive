@@ -1,0 +1,81 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 360" width="1000" height="360" role="img" aria-label="FOC control loop">
+  <title>FOC control loop</title>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 z" fill="#3a4654"/>
+    </marker>
+  </defs>
+  <style>
+    text { font-family: -apple-system, "Segoe UI", Helvetica, Arial, sans-serif; fill: #1f2933; }
+    .box { fill: #e8eefb; stroke: #4a6fa5; stroke-width: 1.5; }
+    .end { fill: #e6f4ea; stroke: #3f8f5f; stroke-width: 1.5; }
+    .sel { fill: #fdf3dc; stroke: #b98a1f; stroke-width: 1.5; }
+    .name { font-size: 16px; text-anchor: middle; dominant-baseline: central; }
+    .sub { font-size: 13px; text-anchor: middle; dominant-baseline: central; fill: #52606d; }
+    .label { font-size: 13px; fill: #52606d; }
+    .wire { fill: none; stroke: #3a4654; stroke-width: 1.5; marker-end: url(#arrow); }
+  </style>
+  <rect width="1000" height="360" rx="8" fill="#ffffff"/>
+
+  <!-- Forward path -->
+  <rect class="end" x="20" y="35" width="110" height="50" rx="25"/>
+  <text class="name" x="75" y="52">Speed</text><text class="name" x="75" y="70">reference</text>
+  <rect class="box" x="160" y="35" width="95" height="50" rx="6"/>
+  <text class="name" x="207" y="52">Speed PI</text><text class="sub" x="207" y="71">1 kHz</text>
+  <rect class="box" x="345" y="35" width="115" height="50" rx="6"/>
+  <text class="name" x="402" y="52">d/q current PI</text><text class="sub" x="402" y="71">20 kHz</text>
+  <rect class="box" x="490" y="35" width="120" height="50" rx="6"/>
+  <text class="name" x="550" y="52">Inverse Park</text><text class="name" x="550" y="70">+ Clarke</text>
+  <rect class="box" x="640" y="35" width="80" height="50" rx="6"/>
+  <text class="name" x="680" y="60">SVPWM</text>
+  <rect class="box" x="750" y="35" width="105" height="50" rx="6"/>
+  <text class="name" x="802" y="52">TIM8 +</text><text class="name" x="802" y="70">DRV8350S</text>
+  <rect class="end" x="885" y="35" width="95" height="50" rx="25"/>
+  <text class="name" x="932" y="60">Motor</text>
+
+  <path class="wire" d="M130 60 H159"/>
+  <path class="wire" d="M255 60 H344"/>
+  <text class="label" x="300" y="50" text-anchor="middle">iq reference</text>
+  <path class="wire" d="M460 60 H489"/>
+  <path class="wire" d="M610 60 H639"/>
+  <path class="wire" d="M720 60 H749"/>
+  <path class="wire" d="M855 60 H884"/>
+
+  <!-- Measurement path -->
+  <rect class="box" x="770" y="150" width="130" height="50" rx="6"/>
+  <text class="name" x="835" y="175" >ADC + AD8418</text>
+  <rect class="box" x="620" y="150" width="100" height="50" rx="6"/>
+  <text class="name" x="670" y="175">Clarke</text>
+  <rect class="box" x="352" y="150" width="100" height="50" rx="6"/>
+  <text class="name" x="402" y="175">Park</text>
+
+  <path class="wire" d="M895 85 V149"/>
+  <text class="label" x="887" y="122" text-anchor="end">phase currents</text>
+  <path class="wire" d="M770 175 H721"/>
+  <path class="wire" d="M620 175 H453"/>
+  <path class="wire" d="M402 150 V86"/>
+
+  <!-- Angle sources -->
+  <rect class="box" x="770" y="260" width="130" height="50" rx="6"/>
+  <text class="name" x="835" y="285">Hall sensor + PLL</text>
+  <rect class="box" x="620" y="260" width="100" height="50" rx="6"/>
+  <text class="name" x="670" y="285">SMO + PLL</text>
+  <polygon class="sel" points="415,285 435,260 510,260 530,285 510,310 435,310"/>
+  <text class="name" x="472" y="285">Angle source</text>
+
+  <path class="wire" d="M960 85 V285 H901"/>
+  <text class="label" x="952" y="232" text-anchor="end">Hall signals</text>
+  <path class="wire" d="M670 200 V259"/>
+  <path class="wire" d="M620 285 H531"/>
+  <text class="label" x="575" y="275" text-anchor="middle">angle, speed</text>
+  <path class="wire" d="M835 310 V340 H472 V311"/>
+  <text class="label" x="650" y="333" text-anchor="middle">angle, speed</text>
+
+  <!-- Outputs of the angle source -->
+  <path class="wire" d="M430 260 V201"/>
+  <text class="label" x="424" y="235" text-anchor="end">angle</text>
+  <path class="wire" d="M515 266 V86"/>
+  <text class="label" x="522" y="235">angle</text>
+  <path class="wire" d="M415 285 H207 V86"/>
+  <text class="label" x="310" y="277" text-anchor="middle">speed</text>
+</svg>

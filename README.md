@@ -88,21 +88,7 @@ This is a development project, not a safety-rated drive. Check these points befo
 
 ### Control loop
 
-```mermaid
-flowchart TB
-    ref(["Speed reference"]) --> spi["Speed PI<br>1 kHz"]
-    spi -- "iq reference" --> cpi["d/q current PI<br>20 kHz"]
-    cpi --> ipark["Inverse Park + Clarke"] --> svm["SVPWM"] --> pwm["TIM8 + DRV8350S"] --> motor(["Motor"])
-    motor -- "phase currents" --> adc["ADC + AD8418"]
-    adc --> clarke["Clarke"] --> park["Park"] --> cpi
-    clarke --> smo["SMO + PLL"]
-    motor -- "Hall signals" --> hall["Hall sensor + PLL"]
-    hall -- "angle, speed" --> sel{{"Angle source"}}
-    smo -- "angle, speed" --> sel
-    sel -- "speed" --> spi
-    sel -- "angle" --> park
-    sel -- "angle" --> ipark
-```
+![Control loop: speed PI, d/q current PI, inverse Park and Clarke, SVPWM and the power stage drive the motor. Measured currents return through Clarke and Park. The Hall sensor or the SMO gives the angle and speed.](docs/img/control_loop.svg)
 
 The SMO also uses the voltage commanded by the current loop. The id reference is 0. In profile torque mode the speed PI is skipped, and the torque target sets the iq reference directly.
 
@@ -124,6 +110,7 @@ In FreeRTOS a higher number means a higher priority, and all tasks use static me
 
 ```mermaid
 stateDiagram-v2
+    direction LR
     [*] --> INIT
     INIT --> IDLE: current offset measured
     IDLE --> CLOSED_LOOP: start, Hall
