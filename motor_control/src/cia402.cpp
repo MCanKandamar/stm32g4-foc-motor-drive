@@ -29,11 +29,12 @@ namespace motor_control
             case FaultCode::DRIVER_OVER_TEMP:    return 0x4210U;    // excess temperature device
             case FaultCode::SENSOR_ERROR:        return 0x7300U;    // sensor
             case FaultCode::SENSORLESS_LOST:     return 0xFF01U;    // device specific: SMO lock lost
+            case FaultCode::COMMUNICATION_LOST:  return 0x8100U;    // communication lost (e.g. CANopen heartbeat lost)
         }
         return 0xFF00U;
     }
 
-    Cia402Actions Cia402::update(uint16_t controlword, MotorState motor_state)
+    Cia402Actions Cia402::update(uint16_t controlword, MotorState motor_state, bool comm_lost, int16_t abort_option)
     {
         Cia402Actions action{};
 
@@ -111,6 +112,16 @@ namespace motor_control
                     state = Cia402State::SWITCH_ON_DISABLED;
                 else if (c == Cia402Cmd::QUICK_STOP)
                     state = Cia402State::QUICK_STOP_ACTIVE;     // coast to stop, no braking
+
+                if (comm_lost && state == Cia402State::OPERATION_ENABLED)
+                {
+                    if (abort_option == 1)
+                        action.comm_fault = true;          // 0x6007 = 1: raise the fault
+                    else if (abort_option == 2)
+                        state = Cia402State::SWITCH_ON_DISABLED;   // 0x6007 = 2: stop the motor
+                    else if (abort_option == 3)
+                        state = Cia402State::QUICK_STOP_ACTIVE;     // 0x6007 = 3: coast to stop, no braking
+                }
                 action.leave_operation = (state != Cia402State::OPERATION_ENABLED);
                 break;
 

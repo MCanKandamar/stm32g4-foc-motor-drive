@@ -81,6 +81,7 @@ TEST(Cia402ErrorCode, EveryFaultHasItsCode)
     EXPECT_EQ(cia402_error_code(FaultCode::DRIVER_OVER_TEMP), 0x4210U);
     EXPECT_EQ(cia402_error_code(FaultCode::SENSOR_ERROR), 0x7300U);
     EXPECT_EQ(cia402_error_code(FaultCode::SENSORLESS_LOST), 0xFF01U);
+    EXPECT_EQ(cia402_error_code(FaultCode::COMMUNICATION_LOST), 0x8100U);
 }
 
 TEST(Cia402, StartsNotReady)
@@ -120,6 +121,88 @@ TEST(Cia402, StandardStartSequence)
 
     EXPECT_TRUE(drive.update(kEnable, MotorState::IDLE).enter_operation);
     EXPECT_EQ(drive.getState(), Cia402State::OPERATION_ENABLED);
+}
+
+TEST(Cia402, CommLossOption0DoesNothing)
+{
+    Cia402 drive;
+    to_operation_enabled(drive);
+
+    const Cia402Actions action = drive.update(kEnable, MotorState::CLOSED_LOOP, true, 0);
+    EXPECT_EQ(drive.getState(), Cia402State::OPERATION_ENABLED);
+    EXPECT_FALSE(action.comm_fault);
+    EXPECT_FALSE(action.leave_operation);
+}
+
+TEST(Cia402, CommLossOption1AsksForFault)
+{
+    Cia402 drive;
+    to_operation_enabled(drive);
+
+    const Cia402Actions action = drive.update(kEnable, MotorState::CLOSED_LOOP, true, 1);
+    EXPECT_EQ(drive.getState(), Cia402State::OPERATION_ENABLED);    // Fault comes from MotorState
+    EXPECT_TRUE(action.comm_fault);
+    EXPECT_FALSE(action.leave_operation);
+
+    drive.update(kEnable, MotorState::FAULT, true, 1);
+    EXPECT_EQ(drive.getState(), Cia402State::FAULT);
+}
+
+TEST(Cia402, CommLossOption2DisablesVoltage)
+{
+    Cia402 drive;
+    to_operation_enabled(drive);
+
+    const Cia402Actions action = drive.update(kEnable, MotorState::CLOSED_LOOP, true, 2);
+    EXPECT_EQ(drive.getState(), Cia402State::SWITCH_ON_DISABLED);
+    EXPECT_TRUE(action.leave_operation);
+    EXPECT_FALSE(action.comm_fault);
+}
+
+TEST(Cia402, CommLossOption3QuickStops)
+{
+    Cia402 drive;
+    to_operation_enabled(drive);
+
+    const Cia402Actions action = drive.update(kEnable, MotorState::CLOSED_LOOP, true, 3);
+    EXPECT_EQ(drive.getState(), Cia402State::QUICK_STOP_ACTIVE);
+    EXPECT_TRUE(action.leave_operation);
+
+    drive.update(kEnable, MotorState::IDLE, true, 3);
+    EXPECT_EQ(drive.getState(), Cia402State::SWITCH_ON_DISABLED);
+}
+
+TEST(Cia402, NoCommLossNoReaction)
+{
+    Cia402 drive;
+    to_operation_enabled(drive);
+
+    const Cia402Actions action = drive.update(kEnable, MotorState::CLOSED_LOOP, false, 1);
+    EXPECT_EQ(drive.getState(), Cia402State::OPERATION_ENABLED);
+    EXPECT_FALSE(action.comm_fault);
+    EXPECT_FALSE(action.leave_operation);
+}
+
+TEST(Cia402, CommLossOutsideOperationEnabledDoesNothing)
+{
+    Cia402 drive;
+    to_switched_on(drive);
+
+    const Cia402Actions action = drive.update(kSwitchOn, MotorState::IDLE, true, 1);
+    EXPECT_EQ(drive.getState(), Cia402State::SWITCHED_ON);
+    EXPECT_FALSE(action.comm_fault);
+}
+
+TEST(Cia402, NoRestartAfterCommLossWhileControlwordStays)
+{
+    Cia402 drive;
+    to_operation_enabled(drive);
+    drive.update(kEnable, MotorState::CLOSED_LOOP, true, 2);
+
+    // NMT is back, the last controlword is still 0x0F
+    const Cia402Actions action = drive.update(kEnable, MotorState::IDLE, false, 2);
+    EXPECT_EQ(drive.getState(), Cia402State::SWITCH_ON_DISABLED);
+    EXPECT_FALSE(action.enter_operation);
 }
 
 TEST(Cia402, EnableInReadyGoesThroughSwitchedOn)

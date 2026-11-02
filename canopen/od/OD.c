@@ -209,6 +209,7 @@ OD_ATTR_RAM OD_RAM_t OD_RAM = {
     .x2010_speedRefRpm = 0,
     .x2011_command = 0x00,
     .x2012_sensorMode = 0x00,
+    .x6007_abortConnectionOptionCode = 1,
     .x603F_errorCode = 0x0000,
     .x6040_controlword = 0x0000,
     .x6041_statusword = 0x0000,
@@ -270,6 +271,7 @@ typedef struct {
     OD_obj_var_t o_2010_speedRefRpm;
     OD_obj_var_t o_2011_command;
     OD_obj_var_t o_2012_sensorMode;
+    OD_obj_var_t o_6007_abortConnectionOptionCode;
     OD_obj_var_t o_603F_errorCode;
     OD_obj_var_t o_6040_controlword;
     OD_obj_var_t o_6041_statusword;
@@ -1185,6 +1187,11 @@ static CO_PROGMEM ODObjs_t ODObjs = {
         .attribute = ODA_SDO_RW,
         .dataLength = 1
     },
+    .o_6007_abortConnectionOptionCode = {
+        .dataOrig = &OD_RAM.x6007_abortConnectionOptionCode,
+        .attribute = ODA_SDO_RW | ODA_MB,
+        .dataLength = 2
+    },
     .o_603F_errorCode = {
         .dataOrig = &OD_RAM.x603F_errorCode,
         .attribute = ODA_SDO_R | ODA_TPDO | ODA_MB,
@@ -1297,6 +1304,7 @@ static OD_ATTR_OD OD_entry_t ODList[] = {
     {0x2010, 0x01, ODT_VAR, &ODObjs.o_2010_speedRefRpm, NULL},
     {0x2011, 0x01, ODT_VAR, &ODObjs.o_2011_command, NULL},
     {0x2012, 0x01, ODT_VAR, &ODObjs.o_2012_sensorMode, NULL},
+    {0x6007, 0x01, ODT_VAR, &ODObjs.o_6007_abortConnectionOptionCode, NULL},
     {0x603F, 0x01, ODT_VAR, &ODObjs.o_603F_errorCode, NULL},
     {0x6040, 0x01, ODT_VAR, &ODObjs.o_6040_controlword, NULL},
     {0x6041, 0x01, ODT_VAR, &ODObjs.o_6041_statusword, NULL},

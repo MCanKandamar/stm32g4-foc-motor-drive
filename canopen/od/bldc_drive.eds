@@ -8,8 +8,8 @@ Description=
 CreationTime=2:00PM
 CreationDate=11-23-2020
 CreatedBy=
-ModificationTime=5:05PM
-ModificationDate=10-23-2026
+ModificationTime=9:35AM
+ModificationDate=11-02-2026
 ModifiedBy=
 
 [DeviceInfo]
@@ -125,7 +125,7 @@ DefaultValue=0x00000000
 PDOMapping=0
 
 [OptionalObjects]
-SupportedObjects=43
+SupportedObjects=44
 1=0x1003
 2=0x1005
 3=0x1006
@@ -156,19 +156,20 @@ SupportedObjects=43
 28=0x1A01
 29=0x1A02
 30=0x1A03
-31=0x603F
-32=0x6040
-33=0x6041
-34=0x6060
-35=0x6061
-36=0x606C
-37=0x6071
-38=0x6076
-39=0x6077
-40=0x6083
-41=0x6084
-42=0x6087
-43=0x60FF
+31=0x6007
+32=0x603F
+33=0x6040
+34=0x6041
+35=0x6060
+36=0x6061
+37=0x606C
+38=0x6071
+39=0x6076
+40=0x6077
+41=0x6083
+42=0x6084
+43=0x6087
+44=0x60FF
 
 [1003]
 ParameterName=Pre-defined error field
@@ -1767,6 +1768,15 @@ ObjectType=0x7
 DataType=0x0007
 AccessType=rw
 DefaultValue=0x00000000
+PDOMapping=0
+
+[6007]
+ParameterName=Abort Connection Option Code
+ObjectType=0x7
+;StorageLocation=RAM
+DataType=0x0003
+AccessType=rw
+DefaultValue=1
 PDOMapping=0
 
 [603F]

@@ -1,5 +1,5 @@
 # Work
-<!-- agent-lite v4. State, not instructions. Target ≤ 80 lines.
+<!-- agent-lite v5. State, not instructions. Target ≤ 80 lines.
 Never delete the active task, its plan, step status or evidence to meet the target.
 When over the target, do all of these, in order: move lasting lessons and constraints from
 Dead ends to PROJECT.md › Decisions & constraints (as "Constraint:"); drop obsolete dead ends; trim
@@ -11,7 +11,14 @@ Task: Password reset · branch: feature/reset · started: 2026-10-25
 - [x] Token table + migration — verified: `npm test` ✓
 - [ ] (in progress) Send reset e-mail
 - [ ] Reset form -->
-_No active task._
+Task: CANopen phase 7, robustness · branch: main (user 2026-11-02) · started: 2026-11-02
+Goal: the motor must not keep running when the CAN master is lost; the node must recover from bus errors. `learning` is on: the user writes the code. The uncommitted agent-lite v5 diff goes in with the first phase 7 commit (user 2026-11-02).
+- [x] Comm-loss reaction: 0x6007 (0, 1, 2, 3, default 1) in the OD, `FaultCode::COMMUNICATION_LOST` = 0x8100, reaction in `Cia402::update`, bridge and write guard by the user; `canopen_bridge.cpp` reorganised by the agent on the user's request, 7 host tests by the agent (the user: agent writes the tests this session) — verified: `ctest --preset HostTests` 164/164 ✓, built ✓ (Debug flash 167.4/512 KB, RAM 34.3/128 KB, 0 warnings), needs HW test (0x6007 reactions, guards, and every old bridge function after the reorganisation)
+- [ ] Heartbeat consumer: 0x1016 entry for the master, timeout gives error 0x1B
+- [ ] RPDO timeout: 0x1400:05 and 0x1401:05, timeout gives error 0x17
+- [ ] Bus-off recovery: check the FDCAN path on the board, error 0x12 clears after recovery
+- [ ] NMT return to operational after comm errors; under-voltage fault latched at power-up
+- [ ] HIL test: new script in `tools/hil/`, cable pull and silent master
 
 ## Next
 <!-- Order set by the user 2026-10-30 -->
@@ -50,7 +57,7 @@ Later (user 2026-10-30): rename the working folder `015_BLDC_FOC_RTOS_MotorDrive
 
 ## Open questions
 <!-- question · impact · default used meanwhile -->
-- How to clean the git history now that the repo is public? · old commits still hold the Microsoft-licensed `Middlewares/ST/threadx` and `usbx` files, so deleting them on a branch is not enough · the repo is public since the user changed it (seen 2026-10-30), so tags `v0.1.0`–`v0.3.0` expose those 317 files · needs the user's decision · meanwhile: nothing changed
+- How to clean the git history now that the repo is public? · old commits still hold the Microsoft-licensed `Middlewares/ST/threadx` and `usbx` files, so deleting them on a branch is not enough · the repo is public since the user changed it (seen 2026-10-30), so tags `v0.1.0`–`v0.3.0` expose those 317 files · user's decision 2026-10-30: the repo stays public, told about the exposure; history clean-up not decided · meanwhile: nothing changed
 - Stale wording left on purpose (`canopen/` stays unchanged in this task): `canopen/VERSIONS.md` line 10 and a comment in `CO_app_STM32.c` line 191 still say ThreadX
 - Why does 0x6077 sit about 7–12 % under the target while the motor accelerates? · at 80 ‰: SDO means 72.7–74.5, TPDO2 means 65.8–76.3, single reads 58–92; at standstill 50 ‰ gave 46.9–49.6 · cause not measured · meanwhile: pdo C passes inside ±15 ‰, with ~8 ‰ of margin
 - One `test_pdo.py` start got no SDO answer in preflight (pdo_20261030_122547, right after the D run); the retry passed · cause not found, may belong to Next 2 · meanwhile: rerun once and report it

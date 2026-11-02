@@ -15,7 +15,7 @@
         <ProfileTechnology>CANopen</ProfileTechnology>
       </ISO15745Reference>
     </ProfileHeader>
-    <ProfileBody xmlns:q1="http://www.canopen.org/xml/1.1" xsi:type="q1:ProfileBody_Device_CANopen" formatName="CANopen" formatVersion="1.0" fileName="bldc_drive.xdd" fileCreator="" fileCreationDate="2020-11-23" fileCreationTime="14:00:00.0000000+03:00" fileModifiedBy="" fileModificationDate="2026-10-23" fileModificationTime="17:05:30.7615472+03:00" fileVersion="1" supportedLanguages="en" xmlns="">
+    <ProfileBody xmlns:q1="http://www.canopen.org/xml/1.1" xsi:type="q1:ProfileBody_Device_CANopen" formatName="CANopen" formatVersion="1.0" fileName="bldc_drive.xdd" fileCreator="" fileCreationDate="2020-11-23" fileCreationTime="14:00:00.0000000+03:00" fileModifiedBy="" fileModificationDate="2026-11-02" fileModificationTime="09:35:26.3244512+03:00" fileVersion="1" supportedLanguages="en" xmlns="">
       <q1:DeviceIdentity>
         <q1:vendorName>M. Can Kandamar</q1:vendorName>
         <q1:vendorID>0</q1:vendorID>
@@ -2305,85 +2305,76 @@
             <q1:defaultValue value="0" />
           </q1:parameter>
           <q1:parameter uniqueID="UID_OBJ_2012" access="readWrite">
-            <label lang="en">Sensor mode</label>
             <description lang="en">Angle source for Profile Velocity: 0 = sensorless (SMO), 1 = Hall. Profile Torque always uses Hall. Writable only outside Operation Enabled</description>
             <USINT />
             <q1:defaultValue value="0" />
           </q1:parameter>
+          <q1:parameter uniqueID="UID_OBJ_6007" access="readWrite">
+            <description lang="en">It configures how a motor drive or slave device behaves (e.g., triggering a quick stop) if it suddenly loses communication with the master controller.</description>
+            <INT />
+            <q1:defaultValue value="1" />
+          </q1:parameter>
           <q1:parameter uniqueID="UID_OBJ_603F">
-            <label lang="en">Error code</label>
             <description lang="en">CiA 402 code of the last active fault, 0 = no fault</description>
             <UINT />
             <q1:defaultValue value="0" />
           </q1:parameter>
           <q1:parameter uniqueID="UID_OBJ_6040" access="readWriteOutput">
-            <label lang="en">Controlword</label>
             <description lang="en">CiA 402 controlword: bit 0 switch on, bit 1 enable voltage, bit 2 quick stop (0 = active), bit 3 enable operation, bit 7 fault reset (rising edge)</description>
             <UINT />
             <q1:defaultValue value="0" />
           </q1:parameter>
           <q1:parameter uniqueID="UID_OBJ_6041">
-            <label lang="en">Statusword</label>
             <description lang="en">CiA 402 statusword: bit 0 ready to switch on, bit 1 switched on, bit 2 operation enabled, bit 3 fault, bit 4 voltage enabled, bit 5 quick stop (0 = active), bit 6 switch on disabled, bit 9 remote</description>
             <UINT />
             <q1:defaultValue value="0" />
           </q1:parameter>
           <q1:parameter uniqueID="UID_OBJ_6060" access="readWriteOutput">
-            <label lang="en">Modes of operation</label>
             <description lang="en">CiA 402 mode: 3 = profile velocity, 4 = profile torque. Writable only outside Operation Enabled</description>
             <SINT />
             <q1:defaultValue value="3" />
           </q1:parameter>
           <q1:parameter uniqueID="UID_OBJ_6061">
-            <label lang="en">Modes of operation display</label>
             <description lang="en">Active CiA 402 mode, see 0x6060</description>
             <SINT />
             <q1:defaultValue value="3" />
           </q1:parameter>
           <q1:parameter uniqueID="UID_OBJ_606C">
-            <label lang="en">Velocity actual value</label>
             <description lang="en">Actual speed [rpm]</description>
             <DINT />
             <q1:defaultValue value="0" />
           </q1:parameter>
           <q1:parameter uniqueID="UID_OBJ_6071" access="readWriteOutput">
-            <label lang="en">Target torque</label>
             <description lang="en">Profile torque target [per mille of 0x6076]</description>
             <INT />
             <q1:defaultValue value="0" />
           </q1:parameter>
           <q1:parameter uniqueID="UID_OBJ_6076">
-            <label lang="en">Motor rated torque</label>
             <description lang="en">Motor rated (continuous) torque [mNm], 57BLF02 datasheet</description>
             <UDINT />
             <q1:defaultValue value="400" />
           </q1:parameter>
           <q1:parameter uniqueID="UID_OBJ_6077">
-            <label lang="en">Torque actual value</label>
             <description lang="en">Actual torque from iq feedback [per mille of 0x6076]</description>
             <INT />
             <q1:defaultValue value="0" />
           </q1:parameter>
           <q1:parameter uniqueID="UID_OBJ_6083" access="readWrite">
-            <label lang="en">Profile acceleration</label>
             <description lang="en">Profile velocity ramp when the speed magnitude grows [rpm/s]</description>
             <UDINT />
             <q1:defaultValue value="1000" />
           </q1:parameter>
           <q1:parameter uniqueID="UID_OBJ_6084" access="readWrite">
-            <label lang="en">Profile deceleration</label>
             <description lang="en">Profile velocity ramp when the speed magnitude shrinks [rpm/s]</description>
             <UDINT />
             <q1:defaultValue value="1000" />
           </q1:parameter>
           <q1:parameter uniqueID="UID_OBJ_6087" access="readWrite">
-            <label lang="en">Torque slope</label>
             <description lang="en">Profile torque ramp [per mille of 0x6076 per s]</description>
             <UDINT />
             <q1:defaultValue value="1000" />
           </q1:parameter>
           <q1:parameter uniqueID="UID_OBJ_60FF" access="readWriteOutput">
-            <label lang="en">Target velocity</label>
             <description lang="en">Profile velocity target [rpm]</description>
             <DINT />
             <q1:defaultValue value="0" />
@@ -2405,7 +2396,7 @@
         <ProfileTechnology>CANopen</ProfileTechnology>
       </ISO15745Reference>
     </ProfileHeader>
-    <ProfileBody xmlns:q2="http://www.canopen.org/xml/1.1" xsi:type="q2:ProfileBody_CommunicationNetwork_CANopen" formatName="CANopen" formatVersion="1.0" fileName="bldc_drive.xdd" fileCreator="" fileCreationDate="2020-11-23" fileCreationTime="14:00:00.0000000+03:00" fileModificationDate="2026-10-23" fileModificationTime="17:05:30.7615472+03:00" fileVersion="1" supportedLanguages="en" xmlns="">
+    <ProfileBody xmlns:q2="http://www.canopen.org/xml/1.1" xsi:type="q2:ProfileBody_CommunicationNetwork_CANopen" formatName="CANopen" formatVersion="1.0" fileName="bldc_drive.xdd" fileCreator="" fileCreationDate="2020-11-23" fileCreationTime="14:00:00.0000000+03:00" fileModificationDate="2026-11-02" fileModificationTime="09:35:26.3244512+03:00" fileVersion="1" supportedLanguages="en" xmlns="">
       <ApplicationLayers>
         <q2:CANopenObjectList>
           <CANopenObject index="1000" name="Device type" objectType="7" PDOmapping="no" uniqueIDRef="UID_OBJ_1000" />
@@ -2726,6 +2717,7 @@
           <CANopenObject index="2010" name="Speed ref rpm" objectType="7" PDOmapping="RPDO" uniqueIDRef="UID_OBJ_2010" />
           <CANopenObject index="2011" name="Command" objectType="7" PDOmapping="no" uniqueIDRef="UID_OBJ_2011" />
           <CANopenObject index="2012" name="Sensor mode" objectType="7" PDOmapping="no" uniqueIDRef="UID_OBJ_2012" />
+          <CANopenObject index="6007" name="Abort Connection Option Code" objectType="7" PDOmapping="no" uniqueIDRef="UID_OBJ_6007" />
           <CANopenObject index="603F" name="Error code" objectType="7" PDOmapping="TPDO" uniqueIDRef="UID_OBJ_603F" />
           <CANopenObject index="6040" name="Controlword" objectType="7" PDOmapping="RPDO" uniqueIDRef="UID_OBJ_6040" />
           <CANopenObject index="6041" name="Statusword" objectType="7" PDOmapping="TPDO" uniqueIDRef="UID_OBJ_6041" />

@@ -39,13 +39,15 @@ namespace motor_control
         bool leave_operation;   // stop the motor
         bool offset_cal;        // refresh the current offset
         bool reset_fault;       // ask for a fault reset
+        bool comm_fault;        // communication lost and 0x6007 = 1: raise the fault
     };
 
     class Cia402
     {
         public:
             // controlword 0x6040, motor_state of the motor state machine
-            Cia402Actions update(uint16_t controlword, MotorState motor_state);
+            Cia402Actions update(uint16_t controlword, MotorState motor_state,
+                                 bool comm_lost = false, int16_t abort_option = 0);
 
             Cia402State getState() const { return state; }
 

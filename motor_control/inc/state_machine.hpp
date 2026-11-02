@@ -39,7 +39,8 @@ namespace motor_control
         MOTOR_OVER_TEMP,
         DRIVER_OVER_TEMP,
         SENSOR_ERROR,
-        SENSORLESS_LOST     // SMO speed below SL_LOST_RPM: angle estimate is not reliable
+        SENSORLESS_LOST,     // SMO speed below SL_LOST_RPM: angle estimate is not reliable
+        COMMUNICATION_LOST   // CANopen communication lost (e.g. heartbeat lost)
     };
 
     class StateMachine
