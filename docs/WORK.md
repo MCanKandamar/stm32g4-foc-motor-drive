@@ -15,8 +15,8 @@ Task: Password reset · branch: feature/reset · started: 2026-10-25
 Task: KISS/YAGNI trim, list approved by the user · branch: main · started: 2026-11-02
 Kept by the user's choice: `PidController`, OD 0x1010/0x1011, PDO 3–4, all `motor_parameters.hpp` fields.
 - [x] Dead code, repeated constants, CMake leftovers (A2–A7) — built ✓ (Debug flash 167.4/512 KB, RAM 34.3/128 KB), verified: `ctest --preset HostTests` 164/164 ✓, needs HW test
-- [ ] (in progress) CANopen port: storage files, old comment, `log_printf` off (B1–B3)
-- [ ] `status.rpm`/`theta_deg`, divider array, `test_cia402.py` rename (C2, C3, C5)
+- [x] CANopen port: storage files, old comment, `log_printf` off (B1–B3) — built ✓ (Debug flash 166.5/512 KB, RAM 34.3/128 KB), needs HW test
+- [ ] (in progress) `status.rpm`/`theta_deg`, divider array, `test_cia402.py` rename (C2, C3, C5)
 - [ ] `bldc_drive.xdd`: drop the 22 disabled objects, fill empty descriptions, export OD and EDS
 
 ## Next

@@ -28,9 +28,7 @@
 #include "CANopen.h"
 #include "main.h"
 #include <inttypes.h>
-#include <stdio.h>
 
-#include "CO_storageBlank.h"
 #include "OD.h"
 
 CANopenNodeSTM32*
@@ -38,7 +36,8 @@ CANopenNodeSTM32*
 
 /* Printf function of CanOpen app */
 #ifndef log_printf
-#define log_printf(macropar_message, ...) printf(macropar_message, ##__VA_ARGS__)
+/* No log output is connected on this board: the calls compile to nothing, so printf is not linked */
+#define log_printf(macropar_message, ...)
 #endif
 
 /* default values for CO_CANopenInit() */
@@ -77,17 +76,6 @@ canopen_app_init(CANopenNodeSTM32* _canopenNodeSTM32) {
     // Keep a copy global reference of canOpenSTM32 Object
     canopenNodeSTM32 = _canopenNodeSTM32;
 
-#if (CO_CONFIG_STORAGE) & CO_CONFIG_STORAGE_ENABLE
-    static CO_storage_t storage;
-    static CO_storage_entry_t storageEntries[] = {{.addr = &OD_PERSIST_COMM,
-                                                   .len = sizeof(OD_PERSIST_COMM),
-                                                   .subIndexOD = 2,
-                                                   .attr = CO_storage_cmd | CO_storage_restore,
-                                                   .addrNV = NULL}};
-    uint8_t storageEntriesCount = sizeof(storageEntries) / sizeof(storageEntries[0]);
-    uint32_t storageInitError = 0;
-#endif
-
     /* Allocate memory */
     CO_config_t* config_ptr = NULL;
 #ifdef CO_MULTIPLE_OD
@@ -109,17 +97,6 @@ canopen_app_init(CANopenNodeSTM32* _canopenNodeSTM32) {
     }
 
     canopenNodeSTM32->canOpenStack = CO;
-
-#if (CO_CONFIG_STORAGE) & CO_CONFIG_STORAGE_ENABLE
-    err = CO_storageBlank_init(&storage, CO->CANmodule, OD_ENTRY_H1010_storeParameters,
-                               OD_ENTRY_H1011_restoreDefaultParameters, storageEntries, storageEntriesCount,
-                               &storageInitError);
-
-    if (err != CO_ERROR_NO && err != CO_ERROR_DATA_CORRUPT) {
-        log_printf("Error: Storage %d\n", storageInitError);
-        return 2;
-    }
-#endif
 
     canopen_app_resetCommunication();
     return 0;
@@ -188,7 +165,7 @@ canopen_app_resetCommunication() {
     }
 
     /* Configure Timer interrupt function for execution every 1 millisecond */
-    /* Projemiz: timerHandle NULL ise canopen_app_interrupt() 1 ms'lik ThreadX thread'inden çağrılır */
+    /* This project: with timerHandle NULL, the 1 ms CANopen task calls canopen_app_interrupt() */
     if (canopenNodeSTM32->timerHandle != NULL) {
         HAL_TIM_Base_Start_IT(canopenNodeSTM32->timerHandle); // 1ms interrupt
     }
@@ -198,11 +175,6 @@ canopen_app_resetCommunication() {
     /* Configure CANopen callbacks, etc */
     if (!CO->nodeIdUnconfigured) {
 
-#if (CO_CONFIG_STORAGE) & CO_CONFIG_STORAGE_ENABLE
-        if (storageInitError != 0) {
-            CO_errorReport(CO->em, CO_EM_NON_VOLATILE_MEMORY, CO_EMC_HARDWARE, storageInitError);
-        }
-#endif
     } else {
         log_printf("CANopenNode - Node-id not initialized\n");
     }
@@ -211,7 +183,6 @@ canopen_app_resetCommunication() {
     CO_CANsetNormalMode(CO->CANmodule);
 
     log_printf("CANopenNode - Running...\n");
-    fflush(stdout);
     time_old = time_current = HAL_GetTick();
     return 0;
 }
