@@ -482,6 +482,16 @@ def t6():
 
 # --- main -------------------------------------------------------------------
 
+def nmt_start():
+    # No ACK while the adapter channel was closed: TX overflow sets the communication bit of 0x1001 and
+    # NMT falls to pre-op. With 0x6007 = 1 a start in pre-op ends in Fault, so wait for it to clear first.
+    t_end = time.perf_counter() + 5.0
+    while time.perf_counter() < t_end and (rd(0x1001) & 0x10):
+        time.sleep(0.1)
+    bus.send(can.Message(arbitration_id=0x000, data=[0x01, 0x0D], is_extended_id=False))
+    time.sleep(0.1)
+
+
 def main():
     global bus
     ap = argparse.ArgumentParser()
@@ -499,6 +509,7 @@ def main():
     latencies = []
     hb = None
     try:
+        nmt_start()
         for t in tests:
             try:
                 # a board reset (T1, T9) ends the Scrutiny watches, so connect after them

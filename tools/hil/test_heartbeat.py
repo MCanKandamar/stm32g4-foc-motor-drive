@@ -3,11 +3,12 @@
 The PC plays a master with node-ID 1: it sends 0x701 [05] every 100 ms.
 Usage (python-can, SLCAN adapter on test_pdo.PORT):
     python tools/hil/test_heartbeat.py
-    python tools/hil/test_heartbeat.py --tests H,M --motor-ok
+    python tools/hil/test_heartbeat.py --tests H,M,O --motor-ok
 
 H: motor off, config / timeout / recovery / master reset
 M: sensorless pv at 1000 rpm, the master goes silent, 0x6007 = 1 must stop the motor (--motor-ok only)
-On every exit: 0x1016:01 = 0, NMT start, 0x6040 = 0, 0x2011 = 2, 0x6060/0x2012 restored.
+O: 0x6007 write guard, then values 2, 3 and 0 with NMT pre-op at 1000 rpm (--motor-ok only)
+On every exit: 0x1016:01 = 0, 0x6007 = 1, NMT start, 0x6040 = 0, 0x2011 = 2, 0x6060/0x2012 restored.
 0x1016 stays in RAM: a real master must write it after each boot of the drive.
 Log: tools/hil/logs/heartbeat_<date>_<time>.json
 """
@@ -190,6 +191,19 @@ def test_h(master):
 
 # --- M: the motor runs when the master goes silent ------------------------------
 
+def start_pv(t_from):
+    t.sdo_write(0x6060, 0, 3, 1)
+    t.sdo_write(0x2012, 0, 0, 1)
+    t.rpdo1(0x06, PV_RPM)
+    t.wait_sw(0x0231)
+    t.rpdo1(0x07, PV_RPM)
+    t.wait_sw(0x0233)
+    t.rpdo1(0x0F, PV_RPM)
+    t.wait_sw(0x0027, mask=0x006F)
+    t.wait_state(t.ST_CL, 10.0, t_from)
+    time.sleep(1.0)
+
+
 def test_m(master):
     t_from = t.now()
     t.to_switch_on_disabled()
@@ -198,17 +212,8 @@ def test_m(master):
     master.start()
     time.sleep(0.3)
     nmt_start()                              # a failed H test can leave the node in pre-operational
-    t.sdo_write(0x6060, 0, 3, 1)
-    t.sdo_write(0x2012, 0, 0, 1)
     try:
-        t.rpdo1(0x06, PV_RPM)
-        t.wait_sw(0x0231)
-        t.rpdo1(0x07, PV_RPM)
-        t.wait_sw(0x0233)
-        t.rpdo1(0x0F, PV_RPM)
-        t.wait_sw(0x0027, mask=0x006F)
-        t.wait_state(t.ST_CL, 10.0, t_from)
-        time.sleep(1.0)
+        start_pv(t_from)
 
         t_stop = t.now()
         last = master.stop()
@@ -239,14 +244,53 @@ def test_m(master):
              (reg & ERR_REG_COMM) == 0 and started and t.sdo_read(0x2002) == t.ST_IDLE and t.sdo_read(0x2003) == 0)
 
 
+# --- O: the other 0x6007 reactions, NMT pre-op is the comm loss here ------------
+
+def test_o():
+    abort = None
+    try:
+        t.sdo_write(0x6007, 0, 7, 2)
+    except RuntimeError as e:
+        abort = str(e)
+    back = t.sdo_read(0x6007, signed=True)
+    t.record('O1', 'write 7 to 0x6007: SDO abort 0x06090030, value stays 1', f"{abort}, read back {back}",
+             abort is not None and '0x06090030' in abort and back == 1)
+
+    for name, option, expected, stops in (('O2', 2, 'disable voltage: sw 0x0250, motor IDLE, no fault', True),
+                                          ('O3', 3, 'quick stop: ends at sw 0x0250, motor IDLE, no fault', True),
+                                          ('O4', 0, 'no reaction: stays in OE, motor CLOSED_LOOP', False)):
+        t_from = t.now()
+        t.to_switch_on_disabled()
+        t.sdo_write(0x6007, 0, option, 2)
+        try:
+            start_pv(t_from)
+            t.send(0x000, [0x80, 0x0D])
+            pre_op = wait_nmt(NMT_PRE_OP)
+            if stops:
+                sw = t.wait_sw(0x0250, 3.0)
+            else:
+                time.sleep(1.0)
+                sw = t.sdo_read(0x6041)
+            state, fault = t.sdo_read(0x2002), t.sdo_read(0x2003)
+            ok = pre_op and fault == 0 and (state == t.ST_IDLE if stops else
+                                            (state == t.ST_CL and (sw & 0x006F) == 0x0027))
+            t.record(name, f'0x6007 = {option}, NMT pre-op at {PV_RPM} rpm: {expected}',
+                     f"NMT {nmt_state():#04x}, sw {sw:#06x}, state {state}, 0x2003 = {fault}", ok)
+        finally:
+            t.safe_state()
+            nmt_start()
+        t.coast(False)
+
+
 # --- main ---------------------------------------------------------------------
 
 def clean_up(master):
     try:
         t.sdo_write(0x1016, 1, 0, 4)         # first: a stopped master must not cause a timeout now
         t.sdo_write(0x1016, 2, 0, 4)
+        t.sdo_write(0x6007, 0, 1, 2)
     except Exception as e:
-        print(f"  clean up: 0x1016 write failed: {e}")
+        print(f"  clean up: write failed: {e}")
     master.stop()
     t.send(0x000, [0x01, 0x0D])
     time.sleep(0.1)
@@ -274,7 +318,7 @@ def main():
     try:
         if t.preflight():
             for name in tests:
-                if name == 'M' and not args.motor_ok:
+                if name in ('M', 'O') and not args.motor_ok:
                     t.record(name, 'motor test', 'not run: --motor-ok missing', False, skipped=True)
                     continue
                 try:
@@ -282,6 +326,8 @@ def main():
                         test_h(master)
                     elif name == 'M':
                         test_m(master)
+                    elif name == 'O':
+                        test_o()
                 except t.SafetyStop:
                     raise
                 except Exception as e:
