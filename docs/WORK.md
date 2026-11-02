@@ -12,9 +12,9 @@ Task: Password reset · branch: feature/reset · started: 2026-10-25
 - [ ] (in progress) Send reset e-mail
 - [ ] Reset form -->
 Task: CANopen phase 7, robustness · branch: main (user 2026-11-02) · started: 2026-11-02
-Goal: the motor must not keep running when the CAN master is lost; the node must recover from bus errors. `learning` is on: the user writes the code. The uncommitted agent-lite v5 diff goes in with the first phase 7 commit (user 2026-11-02).
+Goal: the motor must not keep running when the CAN master is lost; the node must recover from bus errors. `learning` was on for step 1; the agent writes from step 2 on (user 2026-11-02).
 - [x] Comm-loss reaction: 0x6007 (0, 1, 2, 3, default 1) in the OD, `FaultCode::COMMUNICATION_LOST` = 0x8100, reaction in `Cia402::update`, bridge and write guard by the user; `canopen_bridge.cpp` reorganised by the agent on the user's request, 7 host tests by the agent (the user: agent writes the tests this session) — verified: `ctest --preset HostTests` 164/164 ✓, built ✓ (Debug flash 167.4/512 KB, RAM 34.3/128 KB, 0 warnings), needs HW test (0x6007 reactions, guards, and every old bridge function after the reorganisation)
-- [ ] Heartbeat consumer: 0x1016 entry for the master, timeout gives error 0x1B
+- [x] Heartbeat consumer: no firmware change, the stack and OD already have it (PROJECT.md 2026-11-02); `tools/hil/test_heartbeat.py` by the agent on the user's request, `test_pdo.send` now has a TX lock — script parses and imports only, not run on the board, needs HW test (H with the motor off, M with `--motor-ok`)
 - [ ] RPDO timeout: 0x1400:05 and 0x1401:05, timeout gives error 0x17
 - [ ] Bus-off recovery: check the FDCAN path on the board, error 0x12 clears after recovery
 - [ ] NMT return to operational after comm errors; under-voltage fault latched at power-up

@@ -31,6 +31,7 @@ bus = None
 rxq = queue.Queue()
 log = []
 _stop_rx = threading.Event()
+_tx_lock = threading.Lock()  # test_heartbeat.py sends from a second thread
 T0 = time.perf_counter()
 results = []
 orig = {}
@@ -63,7 +64,8 @@ def _drain():
 
 
 def send(cid, data):
-    bus.send(can.Message(arbitration_id=cid, data=bytes(data), is_extended_id=False))
+    with _tx_lock:
+        bus.send(can.Message(arbitration_id=cid, data=bytes(data), is_extended_id=False))
 
 
 def _wait_sdo(index, sub, timeout=0.5):
