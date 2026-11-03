@@ -22,6 +22,8 @@ namespace motor_control
             Idq_ref_t get_output() const { return idq_ref; }   // output of the last update()
 
             void reset(float iq_init = 0.0f);   // iq_init: for a smooth start after a switch
+
+            void setLimits(float iq_min, float iq_max);   // the integral is held inside too (no wind-up)
     };
 }
 

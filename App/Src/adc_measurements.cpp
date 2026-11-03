@@ -134,6 +134,12 @@ motor_control::Vabc_t get_abc_voltages()
     return V_abc;
 }
 
+float get_vdc()
+{
+    // ADC5 converts all the time (circular DMA): this is the latest sample
+    return voltage_divider_get_voltage(adc_dma.adc_vdc_vrefint_raw[0] * adc_cal.volt_per_lsb, 39.0f, 2.2f);
+}
+
 float voltage_divider_get_voltage(float voltage, float kohm_top, float kohm_bottom)
 {
     return voltage * ((kohm_top + kohm_bottom) / kohm_bottom);

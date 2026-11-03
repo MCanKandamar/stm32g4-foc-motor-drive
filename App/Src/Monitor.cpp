@@ -45,10 +45,8 @@ void MonitorRun(void)
     status.dir         = hall.getDirection();
     status.idq_fdb     = foc.get_idq_feedback();
 
-    status.Vdc = voltage_divider_get_voltage(  (adc_cal.volt_per_lsb * adc_dma.adc_vdc_vrefint_raw[0]),
-                                               39.0f,
-                                               2.2f    );
-                                        
+    status.Vdc = meas.vdc;      // filtered in the FOC ISR, which also trips over-voltage fast while the PWM runs
+
     // The MCU can start before the DC supply: stay quiet until the supply is seen once.
     // A start without the supply still faults, because the motor is no longer waiting.
     if (status.Vdc >= VDC_READY)

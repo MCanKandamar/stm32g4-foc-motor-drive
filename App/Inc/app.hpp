@@ -27,6 +27,10 @@ constexpr float     I_MAX           = 20.0f;
 constexpr float     VDC_MAX         = 30.0f;
 constexpr float     VDC_MIN         = 12.0f;
 constexpr float     VDC_READY       = 14.0f;                     // above VDC_MIN so a slow rise does not fault at the limit
+constexpr float     VDC_REGEN_START = 27.0f;                     // braking iq is cut from here ...
+constexpr float     VDC_REGEN_STOP  = 29.0f;                     // ... down to 0 here, below the VDC_MAX trip
+constexpr float     VDC_LPF_ALPHA   = 0.15f;                     // Vdc filter in the FOC ISR: time constant 50 µs / 0.15 ≈ 0.33 ms
+constexpr float     IQ_SPEED_MAX    = 9.0f;                      // speed PI output limit [A]
 
 constexpr motor_control::NtcParams PCB_NTC = {10'000.0f, 3950.0f, 10'000.0f};   // R24 NTC 10k (B assumed 3950), R23 10k
 constexpr float     PCB_TEMP_MAX    = 85.0f;                     // board temperature trip [°C]
@@ -93,6 +97,8 @@ struct Measurements
     motor_control::Z_alphabeta_t z_alphabeta;
     uint8_t                  hall_state = 0;
     volatile uint32_t        isr_count  = 0;    // FOC ISR calls, for the rate check in Monitor
+    volatile float           vdc         = 0.0f;   // filtered DC bus voltage [V], Monitor copies it to status.Vdc
+    volatile float           regen_scale = 1.0f;   // allowed share of the braking iq (1 = all, 0 = none)
 };
 
 // Writer: Supervisor. ISR reads. angle_src/loop change only through set_foc_mode().
@@ -194,7 +200,8 @@ void    update_duties(motor_control::duties_t duties);
 motor_control::Iabc_t get_abc_currents();
 motor_control::Vabc_t get_abc_voltages();
 float get_motor_angle_hal();
-motor_control::Idq_ref_t get_idq_ref(float omega_ref_rpm, float omega_fdbck_rpm);
+float get_vdc();
+motor_control::Idq_ref_t get_idq_ref(float omega_ref_rpm, float omega_fdbck_rpm, float regen_scale);
 
 
 

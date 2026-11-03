@@ -1,10 +1,14 @@
 #include "app.hpp"
 #include "observer.hpp"
+#include "filters.hpp"
 #include "pll.hpp"
+#include "regen_limit.hpp"
 #include "scrutiny.h"
 #include "transforms.hpp"
 #include "types.hpp"
 #include <cmath>
+
+static motor_control::LowPassFilter vdc_filter = {VDC_LPF_ALPHA, 0.0f, false};
 
 /* Interrupt Callbacks -------------------------------------------------------*/
 extern "C" void HAL_ADCEx_InjectedConvCpltCallback(ADC_HandleTypeDef *hadc)
@@ -25,6 +29,15 @@ extern "C" void HAL_ADCEx_InjectedConvCpltCallback(ADC_HandleTypeDef *hadc)
         meas.speed_rpm_hall     = hall.getMechanicalSpeedRpm();
         meas.speed_rpm_hall_pll = pll.get_speed() / POLE_PAIRS * RAD_TO_RPM;
         meas.speed_rpm_smo      = pll_smo.get_speed() / POLE_PAIRS * RAD_TO_RPM;
+        meas.vdc                = vdc_filter.update(get_vdc());
+        meas.regen_scale        = regen_scale(meas.vdc, VDC_REGEN_START, VDC_REGEN_STOP);
+
+        // Here and not in Monitor: braking can raise the bus by volts within a few ms
+        if (meas.vdc > VDC_MAX && foc_cfg.loop != LoopMode::OFF)
+        {
+            powerOff();
+            fault = FaultCode::OVER_VOLTAGE;
+        }
 
         if (foc_cfg.loop == LoopMode::OFF)      // the Supervisor turned PWM off
         {
@@ -59,15 +72,19 @@ extern "C" void HAL_ADCEx_InjectedConvCpltCallback(ADC_HandleTypeDef *hadc)
         /* Loop Mode --------------------------------------------------*/
         if (foc_cfg.loop == LoopMode::SPEED)
             meas.idq_ref = get_idq_ref( foc_cfg.speed_ref_rpm,
-                                        speed_fb_rpm );
+                                        speed_fb_rpm,
+                                        meas.regen_scale );
         else
             meas.idq_ref = foc_cfg.idq_ref;
+
+        // Every ISR, also in CURRENT mode: the speed PI limits above change only at 1 kHz
+        meas.idq_ref.iq_ref = limit_braking_iq(meas.idq_ref.iq_ref, speed_fb_rpm, meas.regen_scale);
 
         /* Calculate Dutiess ------------------------------------------*/
         meas.duties = foc.update(   meas.idq_ref,
                                     meas.Iabc,
                                     meas.SinCos,
-                                    status.Vdc      );
+                                    meas.vdc        );
         
         meas.v_alphabeta = foc.get_Valphabeta();
         update_duties(meas.duties);

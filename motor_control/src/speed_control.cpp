@@ -23,4 +23,9 @@ namespace motor_control
         SpeedController.setIntegral(iq_init);
         idq_ref = {0.0f, iq_init};
     }
+
+    void speed_control::setLimits(float iq_min, float iq_max)
+    {
+        SpeedController.setLimits(iq_min, iq_max);
+    }
 }

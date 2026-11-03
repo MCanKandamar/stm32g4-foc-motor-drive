@@ -26,8 +26,8 @@ namespace
         .Ki            = 0.02f,
         .Kd            = 0.0f,
         .step_time     = 0.001f,
-        .out_max       = 9.0f,
-        .out_min       = -9.0f,
+        .out_max       = IQ_SPEED_MAX,
+        .out_min       = -IQ_SPEED_MAX,
     });
 
     motor_control::PiConfig_ pll_pi_cfg(
@@ -163,13 +163,21 @@ float get_motor_angle_hal()
     return hall.getElectricalAngleRad();
 }
 
-motor_control::Idq_ref_t get_idq_ref(float omega_ref_rpm, float omega_fdbck_rpm)
+motor_control::Idq_ref_t get_idq_ref(float omega_ref_rpm, float omega_fdbck_rpm, float regen_scale)
 {
     using namespace motor_control;
     static uint8_t div = 0;
     if (++div >= 20)   // 1 kHz
     {
         div = 0;
+        // Braking iq has the opposite sign of the speed: shrink only that side, so the integral cannot wind up
+        const float brake_max = IQ_SPEED_MAX * regen_scale;
+        if (omega_fdbck_rpm > 0.0f)
+            speed_ctrl.setLimits(-brake_max, IQ_SPEED_MAX);
+        else if (omega_fdbck_rpm < 0.0f)
+            speed_ctrl.setLimits(-IQ_SPEED_MAX, brake_max);
+        else
+            speed_ctrl.setLimits(-IQ_SPEED_MAX, IQ_SPEED_MAX);
         speed_ctrl.update(omega_ref_rpm, omega_fdbck_rpm);
     }
     return speed_ctrl.get_output();     // last output between updates (the reset(iq_init) value after a switch)

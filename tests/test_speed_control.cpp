@@ -74,3 +74,18 @@ TEST(SpeedControl, DefaultResetGoesToZero)
     EXPECT_FLOAT_EQ(speed.get_output().iq_ref, 0.0f);
     EXPECT_NEAR(speed.update(500.0f, 500.0f).iq_ref, 0.0f, kTol);
 }
+
+TEST(SpeedControl, SetLimitsStopsWindUp)
+{
+    speed_control speed(speed_config());
+
+    // regen limit: no braking allowed while the speed is far above the reference
+    speed.setLimits(0.0f, 9.0f);
+    for (int i = 0; i < 1000; ++i)
+        EXPECT_FLOAT_EQ(speed.update(0.0f, 2000.0f).iq_ref, 0.0f);
+
+    // limits back: the integral did not wind up, so iq is only the P part plus one I step
+    // error = -200 rpm: P = -0.5 A, I = -0.004 A
+    speed.setLimits(-9.0f, 9.0f);
+    EXPECT_NEAR(speed.update(800.0f, 1000.0f).iq_ref, -0.504f, kTol);
+}

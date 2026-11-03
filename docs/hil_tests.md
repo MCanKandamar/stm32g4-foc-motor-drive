@@ -17,6 +17,7 @@ The scripts in [tools/hil/](../tools/hil) test a real board over CAN and Scrutin
 | `speed_step.py` | Speed-step or speed-ramp response from a Scrutiny datalog, with rise time and overshoot |
 | `sensorless_capture.py` | Scrutiny datalog of the sensorless start-up, the SMO angle against the Hall angle, or the SMO back-EMF and PWM duties |
 | `stop_test.py` | Stop over CAN: `0x06`/`0x07` on the `0x6084` ramp, `0x00`/`0x02` at once, with a Scrutiny datalog |
+| `regen_test.py` | Fast speed drop (3000 → 500 rpm, `0x6084` = 100000 rpm/s): DC-bus voltage, over-voltage fault, optional Scrutiny datalog |
 | `hall_speed_capture.py` | Scrutiny datalog of the Hall and SMO speeds during a Hall run |
 | `plot_readme.py` | Draws the README plots (SVG) from the newest logs |
 | `drive_util.py` | Status read-out, fault reset, Hall calibration |
@@ -51,6 +52,25 @@ python tools/hil/sensorless_capture.py --angle --motor-ok
 python tools/hil/sensorless_capture.py --waves --motor-ok
 python tools/hil/plot_readme.py
 ```
+
+Regen limit (DC bus during a fast speed drop):
+
+```shell
+python tools/hil/regen_test.py --motor-ok
+python tools/hil/regen_test.py --sensorless --motor-ok
+```
+
+## Results of 2026-11-03: regen limit
+
+Release build, 24 V lab supply, no load. 3000 → 500 rpm with `0x6084` = 100000 rpm/s. Vdc, speed and state read over SDO about every 7 ms. Each run ran once.
+
+| Firmware | Sensor | Vdc before | Vdc max | Fault | 500 rpm reached after | Lowest speed |
+|---|---|---|---|---|---|---|
+| before (`b4461e7`) | Hall | 23.4 V | 30.8 V | `OVER_VOLTAGE` after 37 ms | — | — |
+| regen limit | Hall | 23.5 V | 28.5 V | none | 0.22 s | ~330 rpm |
+| regen limit | sensorless | 23.4 V | 28.5 V | none | 0.17 s | ~230 rpm |
+
+The bus stays at about 28.5 V while the motor slows down, inside the 27–29 V band. After the drop the speed falls below 500 rpm for about 0.3 s, because the speed PI is at its limit during the drop. On the same firmware `test_pdo.py` D, A, B, C passed and `stop_test.py --can-only` reached IDLE in 908 ms.
 
 ## Results of 2026-11-03: stop on the 0x6084 ramp
 
