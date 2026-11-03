@@ -54,7 +54,7 @@ python tools/hil/plot_readme.py
 
 ## Results of 2026-11-03: stop on the 0x6084 ramp
 
-Debug build of the soft-stop change, 24 V, no load, 0x6084 = 1000 rpm/s unless noted. Each run ran once.
+Debug build of the soft-stop change, 24 V, no load, 0x6084 = 1000 rpm/s unless noted. Each run ran once. The first runs used a Hall ramp to 0 rpm; after them the Hall ramp was changed to end at 100 rpm (last table).
 
 Over CAN with `stop_test.py`. The time to IDLE is read over SDO about every 50 ms:
 
@@ -71,10 +71,19 @@ From Scrutiny (`cmd.control_source` = `SCRUTINY`, `cmd.stop` and `cmd.stop_now`)
 
 | Test | Result |
 |---|---|
-| Hall, `cmd.stop` at 1000 rpm | Reference 1000 → 0 rpm in 0.99 s, then IDLE. The speed follows down to about 150 rpm; below that the Hall PLL speed swings by ±100 rpm and iq reaches 0.8 A for a short time |
+| Hall, `cmd.stop` at 1000 rpm (ramp to 0 rpm) | Reference 1000 → 0 rpm in 0.99 s, then IDLE. The speed follows down to about 150 rpm; below that the Hall PLL speed swings by ±100 rpm and iq reaches 0.8 A for a short time |
 | Sensorless, `cmd.stop` at 1000 rpm | Reference 1000 → 300 rpm in 0.69 s, speed 305 rpm when the PWM turned off, no `SENSORLESS_LOST` |
 | Hall, `cmd.stop_now` at 1000 rpm | PWM off within 10 ms (the Scrutiny poll step) |
 | DC bus in all runs | 23.6 to 23.9 V, no rise |
+
+With the Hall ramp ending at 100 rpm, over CAN with `--can-only`:
+
+| Test | Result |
+|---|---|
+| Hall, `0x06` at 1000 rpm | IDLE after 907 ms |
+| Sensorless, `0x06` at 1000 rpm | IDLE after 709 ms |
+| Hall, `0x00` at 1000 rpm | IDLE after 11 ms |
+| `test_pdo.py --tests D,A,B,C` | All passed, two runs |
 
 ## Results of 2026-11-03: README plots
 

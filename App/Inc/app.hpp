@@ -53,6 +53,7 @@ constexpr float     IQ_REF_MAX      = 5.0f;                      // iq limit in 
 
 constexpr float     SL_MIN_RPM      = 300.0f;                    // lowest speed reference in sensorless mode [rpm]
 constexpr float     SL_LOST_RPM     = 200.0f;                    // SMO speed below this → lock is lost [rpm]
+constexpr float     HALL_STOP_RPM   = 100.0f;                    // soft stop with Hall ends here, then coast: the Hall PLL speed is noisy below ~150 rpm
 constexpr uint32_t  SL_LOST_MS      = 50;                        // fault if it stays below for this long [ms]
 constexpr uint32_t  FOC_RATE_CHECK_MS = 100;                    // FOC ISR rate is counted over this window [ms]
 constexpr float     FOC_RATE_TOL    = 0.05f;                     // allowed rate error (5 %)

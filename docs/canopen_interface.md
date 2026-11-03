@@ -16,7 +16,7 @@ To run the motor at 1000 rpm over SDO:
 | 3 | `0x60FF` | `1000` | Set the target velocity in rpm |
 | 4 | `0x6040` | `0x06` → `0x07` → `0x0F` | Shutdown → Switch On → Enable Operation |
 
-Write `0x06` (or `0x07`) to `0x6040` to stop. In profile velocity the speed reference falls on the `0x6084` ramp to 0 rpm with Hall or to 300 rpm sensorless, then the PWM outputs turn off and the motor coasts. The statusword leaves Operation Enabled at once, and `0x0F` is accepted again when the motor is idle. `0x00` or `0x02` during the ramp turns off the PWM outputs at once. In profile torque mode, a stop turns off the PWM outputs at once. To clear a fault, write `0x00`, then `0x80`, then `0x00`.
+Write `0x06` (or `0x07`) to `0x6040` to stop. In profile velocity the speed reference falls on the `0x6084` ramp to 100 rpm with Hall or to 300 rpm sensorless, then the PWM outputs turn off and the motor coasts. The statusword leaves Operation Enabled at once, and `0x0F` is accepted again when the motor is idle. `0x00` or `0x02` during the ramp turns off the PWM outputs at once. In profile torque mode, a stop turns off the PWM outputs at once. To clear a fault, write `0x00`, then `0x80`, then `0x00`.
 
 A state command such as `0x06` written during start-up is not lost. `0x6040` keeps the value, and the drive acts on it when `INIT` ends.
 

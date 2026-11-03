@@ -206,8 +206,12 @@ void run_closed_loop()
     // User reference (cmd) → foc_cfg
     if (run_mode.loop == LoopMode::SPEED && soft_stopping)
     {
-        // Sensorless: stop the ramp at SL_MIN_RPM, the SMO angle is not reliable below it
-        const float end = (run_mode.sensor == SensorMode::SENSORLESS) ? SL_MIN_RPM : 0.0f;
+        // Sensorless: stop the ramp at SL_MIN_RPM, the SMO angle is not reliable below it.
+        // Hall: stop at ±HALL_STOP_RPM (or where the ref already is), then coast.
+        const float ref = stop_ramp.get_output();
+        const float end = (run_mode.sensor == SensorMode::SENSORLESS) ? SL_MIN_RPM
+                        : (std::fabs(ref) <= HALL_STOP_RPM)           ? ref
+                                                                      : std::copysign(HALL_STOP_RPM, ref);
         const float dec = cmd.decel_rpm_s;
 
         foc_cfg.speed_ref_rpm = stop_ramp.update(end, dec, dec, SUPERVISOR_DT);
