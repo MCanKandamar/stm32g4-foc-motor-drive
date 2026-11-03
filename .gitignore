@@ -15,3 +15,6 @@ README_TODO.md
 
 # Hardware test (HIL) outputs
 tools/hil/logs/
+
+# Local Claude Code entry file (loads AGENTS.md and the profiles)
+CLAUDE.md
