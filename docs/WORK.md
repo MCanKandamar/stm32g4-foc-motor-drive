@@ -35,7 +35,6 @@ Release: `v0.5.0` is the latest; `v1.0.0` waits for the "v1:" items in Open ques
 
 ## Open questions
 <!-- question · impact · default used meanwhile -->
-- ADC3 interrupts on the 1st injected conversion (`ADC_EOC_SINGLE_CONV`): does the callback read JDR2/JDR3 before they are done? · phase currents may be one period old · not checked; the rate is 20 kHz, so one call per period
 - v1: which DRV8350S registers to write over SPI? · dead time comes from the driver default, TIM8 adds none; `DRIVER_OVER_CURRENT` is never raised · driver defaults
 - v1: read the NTC inputs, with which limits? · `MOTOR_OVER_TEMP` and `DRIVER_OVER_TEMP` are never raised · no temperature protection
 - v1: what load and run time for the load test? · every board test so far is unloaded · not tested

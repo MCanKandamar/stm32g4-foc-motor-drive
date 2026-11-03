@@ -123,9 +123,7 @@ static void init_peripherals()
     hall.init(meas.hall_state);
 
     // FOC ISR: injected conversions triggered by TIM8. Runs with LoopMode::OFF in IDLE and also measures the offset.
-    HAL_ADCEx_InjectedStart_IT(&hadc3);
-    __HAL_ADC_DISABLE_IT(&hadc3, ADC_IT_JEOC);
-    __HAL_ADC_ENABLE_IT(&hadc3, ADC_IT_JEOS);
+    HAL_ADCEx_InjectedStart_IT(&hadc3);         // EOCSelection = SEQ_CONV: one JEOS interrupt after all 3 ranks
 }
 
 
