@@ -50,6 +50,8 @@ constexpr float     IQ_REF_MAX      = 5.0f;                      // iq limit in 
 constexpr float     SL_MIN_RPM      = 300.0f;                    // lowest speed reference in sensorless mode [rpm]
 constexpr float     SL_LOST_RPM     = 200.0f;                    // SMO speed below this → lock is lost [rpm]
 constexpr uint32_t  SL_LOST_MS      = 50;                        // fault if it stays below for this long [ms]
+constexpr uint32_t  FOC_RATE_CHECK_MS = 100;                    // FOC ISR rate is counted over this window [ms]
+constexpr float     FOC_RATE_TOL    = 0.05f;                     // allowed rate error (5 %)
 
 constexpr float SPEED_REF_MAX_RPM = 3560.0f;   // 57BLF02 nominal rated: = 3000 rpm
                                                //                tested: = 3560 rpm
@@ -84,6 +86,7 @@ struct Measurements
     motor_control::I_AlphaBeta_t i_alphabeta;
     motor_control::Z_alphabeta_t z_alphabeta;
     uint8_t                  hall_state = 0;
+    volatile uint32_t        isr_count  = 0;    // FOC ISR calls, for the rate check in Monitor
 };
 
 // Writer: Supervisor. ISR reads. angle_src/loop change only through set_foc_mode().
@@ -105,6 +108,7 @@ struct Status
     volatile int                dir;
     volatile float              Vdc;
     motor_control::Idq_fdb_t    idq_fdb;
+    volatile float              foc_isr_hz;     // measured FOC ISR rate, 20 000 when right
 };
 
 // Who owns the motor. The names CAN and USB are taken: stm32g473xx.h defines them as macros.

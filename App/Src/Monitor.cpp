@@ -7,6 +7,9 @@ static bool vdc_seen = false;
 
 static bool iwdg_started = false;
 
+static uint32_t t_rate = 0;
+static uint32_t isr_count_last = 0;
+
 volatile bool alive_supervisor  = false;
 volatile bool alive_canopen     = false;
 volatile bool alive_monitor     = false;
@@ -61,6 +64,21 @@ void MonitorRun(void)
     }
 
     uint32_t now = HAL_GetTick();
+
+    // Lost or extra FOC calls make every ISR speed wrong (e.g. at -O0 every 2nd ADC3 interrupt is lost)
+    if (now - t_rate >= FOC_RATE_CHECK_MS)
+    {
+        const uint32_t count = meas.isr_count;
+        status.foc_isr_hz = static_cast<float>(count - isr_count_last) * 1000.0f / static_cast<float>(now - t_rate);
+        if (isr_count_last != 0U && std::fabs(status.foc_isr_hz * TS - 1.0f) > FOC_RATE_TOL)   // 0: the ISR has not started yet
+        {
+            powerOff();
+            fault = FaultCode::FOC_RATE_ERROR;
+        }
+        isr_count_last = count;
+        t_rate         = now;
+    }
+
     if (now - t_led >= LED_PERIOD_MS)
     {
         t_led = now;

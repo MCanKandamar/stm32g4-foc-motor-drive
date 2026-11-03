@@ -82,6 +82,7 @@ TEST(Cia402ErrorCode, EveryFaultHasItsCode)
     EXPECT_EQ(cia402_error_code(FaultCode::SENSOR_ERROR), 0x7300U);
     EXPECT_EQ(cia402_error_code(FaultCode::SENSORLESS_LOST), 0xFF01U);
     EXPECT_EQ(cia402_error_code(FaultCode::COMMUNICATION_LOST), 0x8100U);
+    EXPECT_EQ(cia402_error_code(FaultCode::FOC_RATE_ERROR), 0x6100U);
 }
 
 TEST(Cia402, StartsNotReady)

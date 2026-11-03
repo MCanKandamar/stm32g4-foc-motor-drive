@@ -89,6 +89,11 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     App/Src/usb_descriptors.c
 )
 
+# FOC ISR code always at -O2: at -O0 (Debug) the ISR is longer than its 50 us period and every 2nd ADC3 interrupt is lost
+set(FOC_ISR_OPT $<$<CONFIG:Debug>:-O2>)
+set_source_files_properties(App/Src/isr.cpp App/Src/adc_measurements.cpp PROPERTIES COMPILE_OPTIONS ${FOC_ISR_OPT})
+target_compile_options(motor_control PRIVATE ${FOC_ISR_OPT})
+
 # Add include paths
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
     # Add user defined include paths

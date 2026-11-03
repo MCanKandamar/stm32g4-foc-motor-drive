@@ -13,6 +13,7 @@ extern "C" void HAL_ADCEx_InjectedConvCpltCallback(ADC_HandleTypeDef *hadc)
 
     if (hadc->Instance == ADC3)
     {   
+        meas.isr_count = meas.isr_count + 1U;
         offsetCalSample();                      // add the sample if an offset measurement is running
         meas.Iabc               = get_abc_currents();
         meas.Vabc               = get_abc_voltages();

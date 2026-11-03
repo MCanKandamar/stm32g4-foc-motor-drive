@@ -40,7 +40,8 @@ namespace motor_control
         DRIVER_OVER_TEMP,
         SENSOR_ERROR,
         SENSORLESS_LOST,     // SMO speed below SL_LOST_RPM: angle estimate is not reliable
-        COMMUNICATION_LOST   // CANopen communication lost (e.g. heartbeat lost)
+        COMMUNICATION_LOST,  // CANopen communication lost (e.g. heartbeat lost)
+        FOC_RATE_ERROR       // FOC interrupt not at its rate: lost or extra calls make every ISR speed wrong
     };
 
     class StateMachine

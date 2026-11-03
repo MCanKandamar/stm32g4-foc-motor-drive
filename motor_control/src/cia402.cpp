@@ -30,6 +30,7 @@ namespace motor_control
             case FaultCode::SENSOR_ERROR:        return 0x7300U;    // sensor
             case FaultCode::SENSORLESS_LOST:     return 0xFF01U;    // device specific: SMO lock lost
             case FaultCode::COMMUNICATION_LOST:  return 0x8100U;    // communication lost (e.g. CANopen heartbeat lost)
+            case FaultCode::FOC_RATE_ERROR:      return 0x6100U;    // internal software
         }
         return 0xFF00U;
     }
