@@ -4,13 +4,13 @@ FileVersion=1
 FileRevision=1
 LastEDS=
 EDSVersion=4.0
-Description=
+Description=BLDC/PMSM FOC drive on STM32G473, CiA 402 profile velocity and torque, node-ID 13, 500 kbit/s
 CreationTime=2:00PM
-CreationDate=11-23-2020
-CreatedBy=
-ModificationTime=4:57PM
-ModificationDate=11-02-2026
-ModifiedBy=
+CreationDate=10-24-2026
+CreatedBy=M. Can Kandamar
+ModificationTime=6:00PM
+ModificationDate=11-03-2026
+ModifiedBy=M. Can Kandamar
 
 [DeviceInfo]
 VendorName=M. Can Kandamar
@@ -112,7 +112,7 @@ ObjectType=0x7
 ;StorageLocation=RAM
 DataType=0x0007
 AccessType=ro
-DefaultValue=0x00010000
+DefaultValue=0x00000000
 PDOMapping=0
 
 [1018sub4]
@@ -377,8 +377,8 @@ ParameterName=Save all parameters
 ObjectType=0x7
 ;StorageLocation=RAM
 DataType=0x0007
-AccessType=rw
-DefaultValue=0x00000001
+AccessType=ro
+DefaultValue=0x00000000
 PDOMapping=0
 
 [1010sub2]
@@ -386,8 +386,8 @@ ParameterName=Save communication parameters
 ObjectType=0x7
 ;StorageLocation=RAM
 DataType=0x0007
-AccessType=rw
-DefaultValue=0x00000001
+AccessType=ro
+DefaultValue=0x00000000
 PDOMapping=0
 
 [1010sub3]
@@ -395,8 +395,8 @@ ParameterName=Save application parameters
 ObjectType=0x7
 ;StorageLocation=RAM
 DataType=0x0007
-AccessType=rw
-DefaultValue=0x00000001
+AccessType=ro
+DefaultValue=0x00000000
 PDOMapping=0
 
 [1010sub4]
@@ -404,8 +404,8 @@ ParameterName=Save manufacturer defined parameters
 ObjectType=0x7
 ;StorageLocation=RAM
 DataType=0x0007
-AccessType=rw
-DefaultValue=0x00000001
+AccessType=ro
+DefaultValue=0x00000000
 PDOMapping=0
 
 [1011]
@@ -428,8 +428,8 @@ ParameterName=Restore all default parameters
 ObjectType=0x7
 ;StorageLocation=RAM
 DataType=0x0007
-AccessType=rw
-DefaultValue=0x00000001
+AccessType=ro
+DefaultValue=0x00000000
 PDOMapping=0
 
 [1011sub2]
@@ -437,8 +437,8 @@ ParameterName=Restore communication default parameters
 ObjectType=0x7
 ;StorageLocation=RAM
 DataType=0x0007
-AccessType=rw
-DefaultValue=0x00000001
+AccessType=ro
+DefaultValue=0x00000000
 PDOMapping=0
 
 [1011sub3]
@@ -446,8 +446,8 @@ ParameterName=Restore application default parameters
 ObjectType=0x7
 ;StorageLocation=RAM
 DataType=0x0007
-AccessType=rw
-DefaultValue=0x00000001
+AccessType=ro
+DefaultValue=0x00000000
 PDOMapping=0
 
 [1011sub4]
@@ -455,8 +455,8 @@ ParameterName=Restore manufacturer defined default parameters
 ObjectType=0x7
 ;StorageLocation=RAM
 DataType=0x0007
-AccessType=rw
-DefaultValue=0x00000001
+AccessType=ro
+DefaultValue=0x00000000
 PDOMapping=0
 
 [1012]

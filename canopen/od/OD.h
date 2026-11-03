@@ -14,10 +14,10 @@
         Project File: bldc_drive.xdd
         File Version: 1
 
-        Created:      11/23/2020 2:00:00 PM
-        Created By:   
-        Modified:     11/2/2026 4:57:12 PM
-        Modified By:  
+        Created:      10/24/2026 2:00:00 PM
+        Created By:   M. Can Kandamar
+        Modified:     11/3/2026 6:00:00 PM
+        Modified By:  M. Can Kandamar
 
     Device Info:
         Vendor Name:  M. Can Kandamar
@@ -25,7 +25,7 @@
         Product Name: Motor_Drive
         Product ID:   1
 
-        Description:  
+        Description:  BLDC/PMSM FOC drive on STM32G473, CiA 402 profile velocity and torque, node-ID 13, 500 kbit/s
 *******************************************************************************/
 
 #ifndef OD_H

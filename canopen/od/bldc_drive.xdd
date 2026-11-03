@@ -15,11 +15,14 @@
         <ProfileTechnology>CANopen</ProfileTechnology>
       </ISO15745Reference>
     </ProfileHeader>
-    <ProfileBody xmlns:q1="http://www.canopen.org/xml/1.1" xsi:type="q1:ProfileBody_Device_CANopen" formatName="CANopen" formatVersion="1.0" fileName="bldc_drive.xdd" fileCreator="" fileCreationDate="2020-11-23" fileCreationTime="14:00:00.0000000+03:00" fileModifiedBy="" fileModificationDate="2026-11-02" fileModificationTime="16:57:12.4222393+03:00" fileVersion="1" supportedLanguages="en" xmlns="">
+    <ProfileBody xmlns:q1="http://www.canopen.org/xml/1.1" xsi:type="q1:ProfileBody_Device_CANopen" formatName="CANopen" formatVersion="1.0" fileName="bldc_drive.xdd" fileCreator="M. Can Kandamar" fileCreationDate="2026-10-24" fileCreationTime="14:00:00.0000000+03:00" fileModifiedBy="M. Can Kandamar" fileModificationDate="2026-11-03" fileModificationTime="18:00:00.0000000+03:00" fileVersion="1" supportedLanguages="en" xmlns="">
       <q1:DeviceIdentity>
         <q1:vendorName>M. Can Kandamar</q1:vendorName>
         <q1:vendorID>0</q1:vendorID>
         <q1:productName>Motor_Drive</q1:productName>
+        <q1:productText>
+          <description lang="en">BLDC/PMSM FOC drive on STM32G473, CiA 402 profile velocity and torque, node-ID 13, 500 kbit/s</description>
+        </q1:productText>
         <q1:productID>1</q1:productID>
         <q1:version versionType="SW">0</q1:version>
         <q1:version versionType="FW">0</q1:version>
@@ -605,25 +608,25 @@
             <USINT />
             <q1:defaultValue value="0x04" />
           </q1:parameter>
-          <q1:parameter uniqueID="UID_SUB_101001" access="readWrite">
-            <description lang="en">Reads 1. A write changes RAM only: parameter storage is not built in this firmware.</description>
+          <q1:parameter uniqueID="UID_SUB_101001" access="read">
+            <description lang="en">Reads 0: this firmware does not store or restore parameters (all values live in RAM).</description>
             <UDINT />
-            <q1:defaultValue value="0x00000001" />
+            <q1:defaultValue value="0x00000000" />
           </q1:parameter>
-          <q1:parameter uniqueID="UID_SUB_101002" access="readWrite">
-            <description lang="en">Reads 1. A write changes RAM only: parameter storage is not built in this firmware.</description>
+          <q1:parameter uniqueID="UID_SUB_101002" access="read">
+            <description lang="en">Reads 0: this firmware does not store or restore parameters (all values live in RAM).</description>
             <UDINT />
-            <q1:defaultValue value="0x00000001" />
+            <q1:defaultValue value="0x00000000" />
           </q1:parameter>
-          <q1:parameter uniqueID="UID_SUB_101003" access="readWrite">
-            <description lang="en">Reads 1. A write changes RAM only: parameter storage is not built in this firmware.</description>
+          <q1:parameter uniqueID="UID_SUB_101003" access="read">
+            <description lang="en">Reads 0: this firmware does not store or restore parameters (all values live in RAM).</description>
             <UDINT />
-            <q1:defaultValue value="0x00000001" />
+            <q1:defaultValue value="0x00000000" />
           </q1:parameter>
-          <q1:parameter uniqueID="UID_SUB_101004" access="readWrite">
-            <description lang="en">Reads 1. A write changes RAM only: parameter storage is not built in this firmware.</description>
+          <q1:parameter uniqueID="UID_SUB_101004" access="read">
+            <description lang="en">Reads 0: this firmware does not store or restore parameters (all values live in RAM).</description>
             <UDINT />
-            <q1:defaultValue value="0x00000001" />
+            <q1:defaultValue value="0x00000000" />
           </q1:parameter>
           <q1:parameter uniqueID="UID_OBJ_1011">
             <description lang="en">Sub-indexes 1 and above:
@@ -637,25 +640,25 @@
             <USINT />
             <q1:defaultValue value="0x04" />
           </q1:parameter>
-          <q1:parameter uniqueID="UID_SUB_101101" access="readWrite">
-            <description lang="en">Reads 1. A write changes RAM only: parameter storage is not built in this firmware.</description>
+          <q1:parameter uniqueID="UID_SUB_101101" access="read">
+            <description lang="en">Reads 0: this firmware does not store or restore parameters (all values live in RAM).</description>
             <UDINT />
-            <q1:defaultValue value="0x00000001" />
+            <q1:defaultValue value="0x00000000" />
           </q1:parameter>
-          <q1:parameter uniqueID="UID_SUB_101102" access="readWrite">
-            <description lang="en">Reads 1. A write changes RAM only: parameter storage is not built in this firmware.</description>
+          <q1:parameter uniqueID="UID_SUB_101102" access="read">
+            <description lang="en">Reads 0: this firmware does not store or restore parameters (all values live in RAM).</description>
             <UDINT />
-            <q1:defaultValue value="0x00000001" />
+            <q1:defaultValue value="0x00000000" />
           </q1:parameter>
-          <q1:parameter uniqueID="UID_SUB_101103" access="readWrite">
-            <description lang="en">Reads 1. A write changes RAM only: parameter storage is not built in this firmware.</description>
+          <q1:parameter uniqueID="UID_SUB_101103" access="read">
+            <description lang="en">Reads 0: this firmware does not store or restore parameters (all values live in RAM).</description>
             <UDINT />
-            <q1:defaultValue value="0x00000001" />
+            <q1:defaultValue value="0x00000000" />
           </q1:parameter>
-          <q1:parameter uniqueID="UID_SUB_101104" access="readWrite">
-            <description lang="en">Reads 1. A write changes RAM only: parameter storage is not built in this firmware.</description>
+          <q1:parameter uniqueID="UID_SUB_101104" access="read">
+            <description lang="en">Reads 0: this firmware does not store or restore parameters (all values live in RAM).</description>
             <UDINT />
-            <q1:defaultValue value="0x00000001" />
+            <q1:defaultValue value="0x00000000" />
           </q1:parameter>
           <q1:parameter uniqueID="UID_OBJ_1012" access="readWrite">
             <description lang="en">* bit 31: If set, CANopen device consumes TIME message
@@ -771,7 +774,7 @@
           <q1:parameter uniqueID="UID_SUB_101803">
             <description lang="en">Revision number of the drive.</description>
             <UDINT />
-            <q1:defaultValue value="0x00010000" />
+            <q1:defaultValue value="0x00000000" />
           </q1:parameter>
           <q1:parameter uniqueID="UID_SUB_101804">
             <description lang="en">Serial number of the drive.</description>
@@ -1762,7 +1765,7 @@
         <ProfileTechnology>CANopen</ProfileTechnology>
       </ISO15745Reference>
     </ProfileHeader>
-    <ProfileBody xmlns:q2="http://www.canopen.org/xml/1.1" xsi:type="q2:ProfileBody_CommunicationNetwork_CANopen" formatName="CANopen" formatVersion="1.0" fileName="bldc_drive.xdd" fileCreator="" fileCreationDate="2020-11-23" fileCreationTime="14:00:00.0000000+03:00" fileModificationDate="2026-11-02" fileModificationTime="16:57:12.4222393+03:00" fileVersion="1" supportedLanguages="en" xmlns="">
+    <ProfileBody xmlns:q2="http://www.canopen.org/xml/1.1" xsi:type="q2:ProfileBody_CommunicationNetwork_CANopen" formatName="CANopen" formatVersion="1.0" fileName="bldc_drive.xdd" fileCreator="M. Can Kandamar" fileCreationDate="2026-10-24" fileCreationTime="14:00:00.0000000+03:00" fileModifiedBy="M. Can Kandamar" fileModificationDate="2026-11-03" fileModificationTime="18:00:00.0000000+03:00" fileVersion="1" supportedLanguages="en" xmlns="">
       <ApplicationLayers>
         <q2:CANopenObjectList>
           <CANopenObject index="1000" name="Device type" objectType="7" PDOmapping="no" uniqueIDRef="UID_OBJ_1000" />
