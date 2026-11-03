@@ -55,6 +55,7 @@ void HAL_TIM_MspPostInit(TIM_HandleTypeDef *htim);
 void Error_Handler(void);
 void MX_FDCAN1_Init(void);
 void MX_USB_PCD_Init(void);
+void MX_IWDG_Init(void);
 
 /* USER CODE BEGIN EFP */
 

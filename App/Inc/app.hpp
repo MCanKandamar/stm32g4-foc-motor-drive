@@ -60,6 +60,7 @@ extern "C" ADC_HandleTypeDef    hadc4;
 extern "C" ADC_HandleTypeDef    hadc5;
 extern "C" DMA_HandleTypeDef    hdma_adc4;
 extern "C" DMA_HandleTypeDef    hdma_adc5;
+extern "C" IWDG_HandleTypeDef   hiwdg;
 
 /* Shared data: each group has one writer -----------------------------------*/
 

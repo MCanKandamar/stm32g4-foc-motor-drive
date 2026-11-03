@@ -127,16 +127,45 @@ void InitTask(void const *argument)
   ScrutinyInit();
   SupervisorInit();
 
-  xTaskCreateStatic(supervisor_task, "Supervisor", SUPERVISOR_TASK_STACK_WORDS, NULL,
-                    SUPERVISOR_TASK_PRIO, supervisor_task_stack, &supervisor_task_tcb);
-  xTaskCreateStatic(canopen_task, "CANopen", CANOPEN_TASK_STACK_WORDS, NULL,
-                    CANOPEN_TASK_PRIO, canopen_task_stack, &canopen_task_tcb);
-  xTaskCreateStatic(monitor_task, "Monitor", MONITOR_TASK_STACK_WORDS, NULL,
-                    MONITOR_TASK_PRIO, monitor_task_stack, &monitor_task_tcb);
-  xTaskCreateStatic(usb_task, "USB", USB_TASK_STACK_WORDS, NULL,
-                    USB_TASK_PRIO, usb_task_stack, &usb_task_tcb);
-  xTaskCreateStatic(scrutiny_task, "Scrutiny", SCRUTINY_TASK_STACK_WORDS, NULL,
-                    SCRUTINY_TASK_PRIO, scrutiny_task_stack, &scrutiny_task_tcb);
+  xTaskCreateStatic(supervisor_task,
+                    "Supervisor",
+                    SUPERVISOR_TASK_STACK_WORDS,
+                    NULL,
+                    SUPERVISOR_TASK_PRIO,
+                    supervisor_task_stack,
+                    &supervisor_task_tcb);
+
+  xTaskCreateStatic(canopen_task,
+                    "CANopen",
+                    CANOPEN_TASK_STACK_WORDS,
+                    NULL,
+                    CANOPEN_TASK_PRIO,
+                    canopen_task_stack,
+                    &canopen_task_tcb);
+
+  xTaskCreateStatic(monitor_task,
+                    "Monitor",
+                    MONITOR_TASK_STACK_WORDS,
+                    NULL,
+                    MONITOR_TASK_PRIO,
+                    monitor_task_stack,
+                    &monitor_task_tcb);
+
+  xTaskCreateStatic(usb_task,
+                    "USB",
+                    USB_TASK_STACK_WORDS,
+                    NULL,
+                    USB_TASK_PRIO,
+                    usb_task_stack,
+                    &usb_task_tcb);
+
+  xTaskCreateStatic(scrutiny_task,
+                    "Scrutiny",
+                    SCRUTINY_TASK_STACK_WORDS,
+                    NULL,
+                    SCRUTINY_TASK_PRIO,
+                    scrutiny_task_stack,
+                    &scrutiny_task_tcb);
 
   vTaskDelete(NULL);
 }
@@ -146,6 +175,7 @@ static void supervisor_task(void *argument)
   while (1)
   {
     SupervisorRun();
+    alive_supervisor = true;
     vTaskDelay(pdMS_TO_TICKS(1));
   }
 }
@@ -156,6 +186,7 @@ static void canopen_task(void *argument)
   while (1)
   {
     CanopenRun();
+    alive_canopen = true;
     vTaskDelay(pdMS_TO_TICKS(1));
   }
 }
@@ -165,6 +196,7 @@ static void monitor_task(void *argument)
   while (1)
   {
     MonitorRun();
+    alive_monitor = true;
     vTaskDelay(pdMS_TO_TICKS(10));
   }
 }
