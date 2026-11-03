@@ -26,6 +26,7 @@ void SupervisorInit(void)
 
 void SupervisorRun(void)
 {
+    drvFaultPoll();
     handle_commands();
     offsetCalPoll();
 
@@ -107,6 +108,8 @@ static void init_peripherals()
     adc_cal.amp_per_lsb     = adc_cal.volt_per_lsb / SHUNT_RES_OHM / SHUNT_AMP_GAIN;
 
     DRV_ENABLE_RESET();
+    CoreDebug->DEMCR |= CoreDebug_DEMCR_TRCENA_Msk;     // cycle counter for the DRV8350S software SPI timing
+    DWT->CTRL        |= DWT_CTRL_CYCCNTENA_Msk;
     HAL_TIM_PWM_Start(&htim8, TIM_CHANNEL_1);
     HAL_TIMEx_PWMN_Start(&htim8, TIM_CHANNEL_1);
 

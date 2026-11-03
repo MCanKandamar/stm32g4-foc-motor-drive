@@ -1,6 +1,7 @@
 #pragma once
 /* Exported functions prototypes ---------------------------------------------*/
 #include "current_control.hpp"
+#include "drv8350s.hpp"
 #include "foc_mode.hpp"
 #include "main.h"
 #include "hall_sensor.hpp"
@@ -174,6 +175,10 @@ extern Commands     cmd;
 // Fault latch: it has many writers (ISRs, Monitor, Supervisor), so it is kept outside the groups on purpose.
 extern volatile motor_control::FaultCode  fault;
 
+// Writer: nFAULT ISR sets it, drvFaultPoll() clears it.
+extern volatile bool                      drv_fault_pending;
+extern motor_control::Drv8350s::Status    drv_status;     // last status read after nFAULT, for Scrutiny
+
 extern motor_control::HallSensor          hall;
 extern motor_control::current_control     foc;
 extern motor_control::speed_control       speed_ctrl;
@@ -192,6 +197,7 @@ void    DRV_ENABLE_SET();
 void    DRV_ENABLE_RESET();
 void    powerOn();
 void    powerOff();
+void    drvFaultPoll();
 void    offsetCalStart();
 bool    offsetCalBusy();
 void    offsetCalSample();

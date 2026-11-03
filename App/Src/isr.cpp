@@ -98,7 +98,8 @@ extern "C" void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
     using namespace motor_control;
     if (GPIO_Pin == FAULT_N_Pin)
     {
-        powerOff();
+        __HAL_TIM_MOE_DISABLE_UNCONDITIONALLY(&htim8);  // PWM off now; ENABLE stays high until drvFaultPoll() reads the cause
         fault = FaultCode::DRIVER_FAULT;
+        drv_fault_pending = true;
     }
 }

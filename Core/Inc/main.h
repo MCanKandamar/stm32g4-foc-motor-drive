@@ -72,6 +72,12 @@ void MX_IWDG_Init(void);
 #define CURR_C_GPIO_Port GPIOE
 #define DRV_CS_Pin GPIO_PIN_12
 #define DRV_CS_GPIO_Port GPIOB
+#define DRV_SCLK_Pin GPIO_PIN_13
+#define DRV_SCLK_GPIO_Port GPIOB
+#define DRV_SDO_Pin GPIO_PIN_14
+#define DRV_SDO_GPIO_Port GPIOB
+#define DRV_SDI_Pin GPIO_PIN_15
+#define DRV_SDI_GPIO_Port GPIOB
 #define SENS_C_Pin GPIO_PIN_10
 #define SENS_C_GPIO_Port GPIOD
 #define CURR_B_Pin GPIO_PIN_11

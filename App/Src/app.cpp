@@ -48,6 +48,41 @@ namespace
         .out_min        = -2000.0f,
     });
 
+    // Chip reset values for now; the register values are chosen later.
+    constexpr motor_control::Drv8350s::Config DRV_CONFIG{};
+
+    // DRV8350S SDO is open-drain and the board has no pull-up resistor; the weak MCU pull-up
+    // rises too slowly for the SPI peripheral (even at 664 kHz). So the SPI is done by software,
+    // slow enough for the pull-up: 2.5 µs per half clock (200 kHz), one frame ≈ 85 µs.
+    constexpr uint32_t DRV_HALF_CLOCK_CYCLES = 425;    // 2.5 µs at 170 MHz
+
+    void waitCycles(uint32_t cycles)
+    {
+        const uint32_t start = DWT->CYCCNT;
+        while (DWT->CYCCNT - start < cycles) {}
+    }
+
+    // SPI mode 1: the DRV sends a bit on the rising edge and reads SDI on the falling edge.
+    // An interrupt in between only makes the clock slower, which the DRV accepts.
+    uint16_t drvTransfer(uint16_t tx)
+    {
+        uint16_t rx = 0;
+        HAL_GPIO_WritePin(DRV_CS_GPIO_Port, DRV_CS_Pin, GPIO_PIN_RESET);
+        waitCycles(DRV_HALF_CLOCK_CYCLES);
+        for (int bit = 15; bit >= 0; --bit)
+        {
+            HAL_GPIO_WritePin(DRV_SDI_GPIO_Port, DRV_SDI_Pin, ((tx >> bit) & 1u) ? GPIO_PIN_SET : GPIO_PIN_RESET);
+            HAL_GPIO_WritePin(DRV_SCLK_GPIO_Port, DRV_SCLK_Pin, GPIO_PIN_SET);
+            waitCycles(DRV_HALF_CLOCK_CYCLES);
+            rx = static_cast<uint16_t>((rx << 1) | (HAL_GPIO_ReadPin(DRV_SDO_GPIO_Port, DRV_SDO_Pin) == GPIO_PIN_SET));
+            HAL_GPIO_WritePin(DRV_SCLK_GPIO_Port, DRV_SCLK_Pin, GPIO_PIN_RESET);
+            waitCycles(DRV_HALF_CLOCK_CYCLES);
+        }
+        HAL_GPIO_WritePin(DRV_CS_GPIO_Port, DRV_CS_Pin, GPIO_PIN_SET);
+        waitCycles(DRV_HALF_CLOCK_CYCLES);              // CS high ≥ 400 ns before the next frame
+        return rx;
+    }
+
     motor_control::smo_config smo_cfg(
     {
         .phase_resistance_ohm = 0.20f,
@@ -76,7 +111,11 @@ motor_control::AnglePLL           pll_smo(pll_smo_pi_cfg, cordicSinCos);
 motor_control::smo_observer       smo(smo_cfg);
 motor_control::OpenLoopAngle      open_loop;
 
+motor_control::Drv8350s           drv(drvTransfer);
+
 volatile motor_control::FaultCode fault = motor_control::FaultCode::NONE;
+volatile bool                     drv_fault_pending = false;
+motor_control::Drv8350s::Status   drv_status;
 
 Measurements meas;
 FocConfig    foc_cfg;
@@ -117,6 +156,12 @@ void powerOn()
     HAL_NVIC_DisableIRQ(EXTI0_IRQn);  
     DRV_ENABLE_SET();
     vTaskDelay(pdMS_TO_TICKS(2));
+    if (!drv.configure(DRV_CONFIG))           // registers were reset while ENABLE was low
+    {
+        powerOff();
+        fault = motor_control::FaultCode::DRIVER_FAULT;
+        return;
+    }
     __HAL_GPIO_EXTI_CLEAR_IT(FAULT_N_Pin);
     HAL_NVIC_ClearPendingIRQ(EXTI0_IRQn);
     HAL_NVIC_EnableIRQ(EXTI0_IRQn);
@@ -133,6 +178,26 @@ void powerOff()
 {
     __HAL_TIM_MOE_DISABLE_UNCONDITIONALLY(&htim8);
     DRV_ENABLE_RESET();
+}
+
+// After nFAULT: read the cause before ENABLE low resets the driver.
+void drvFaultPoll()
+{
+    using motor_control::Drv8350s;
+
+    if (!drv_fault_pending)
+        return;
+    drv_fault_pending = false;
+
+    if (HAL_GPIO_ReadPin(DRV_ENABLE_GPIO_Port, DRV_ENABLE_Pin) == GPIO_PIN_SET)   // still awake
+    {
+        drv_status = drv.read_status();
+        if (drv_status.fault & Drv8350s::VDS_OCP)
+            fault = motor_control::FaultCode::DRIVER_OVER_CURRENT;
+        else if (drv_status.fault & Drv8350s::OTSD)
+            fault = motor_control::FaultCode::DRIVER_OVER_TEMP;
+    }
+    powerOff();
 }
 
 uint8_t readHallPins()

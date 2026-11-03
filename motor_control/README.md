@@ -9,6 +9,7 @@
 - **Rotor angle and speed:** from Hall sensors (interpolated between edges, with edge-angle calibration), or without a sensor from a sliding-mode back-EMF observer. A PLL smooths the angle and gives the speed in both cases.
 - **Start-up and supervision:** an open-loop angle generator, a motor state machine and fault codes.
 - **CiA 402 drive logic:** the CiA 402 state machine, controlword decoding, statusword and error codes, and the speed and torque ramps. The CANopen stack itself stays in the application.
+- **Gate driver:** DRV8350S settings and fault status over SPI. The library builds and checks the SPI frames; the application passes the function that sends one frame.
 
 The library only does the math. It never touches a register, a HAL function, an RTOS call or an interrupt. The application reads the hardware, converts the readings to physical units (A, V, rad), calls the library, and writes the result back to the timer. This is why the same code runs unchanged on the PC, where it is unit-tested.
 
@@ -41,6 +42,8 @@ Each block is a small class or a free function in namespace `motor_control`. Hea
 | **CiA 402 drive profile** |  |  |  |
 | `cia402` | `Cia402, decode_controlword, cia402_error_code` | CiA 402 state machine on top of the motor states; controlword → command, statusword, fault code → EMCY error code | CANopen 10 |
 | `ramp` | `Ramp` | Reference that moves to its target at a fixed slope (profile velocity and torque ramps) | CANopen 10.3 |
+| **Gate driver** |  |  |  |
+| `drv8350s` | `Drv8350s::configure, read_status` | Writes the DRV8350S settings (dead time, over-current, gate current) and reads them back; reads the fault status registers | TI SLVSDY6A |
 | **Helpers** |  |  |  |
 | `types` | `Iabc_t, I_AlphaBeta_t, Vdq_t, duties_t, SinCos_t …` | Plain data structs passed between the blocks |  |
 | `filters` | `LowPassFilter` | First-order low-pass filter |  |
