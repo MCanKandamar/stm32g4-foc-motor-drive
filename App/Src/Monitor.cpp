@@ -11,6 +11,8 @@ volatile bool alive_supervisor  = false;
 volatile bool alive_canopen     = false;
 volatile bool alive_monitor     = false;
 
+volatile bool reset_by_iwdg     = false;    // the last reset came from the watchdog (read in Scrutiny)
+
 void MonitorRun(void)
 {
     using namespace motor_control;
@@ -19,6 +21,8 @@ void MonitorRun(void)
        Once started, only a reset stops it. */
     if (!iwdg_started)
     {
+        reset_by_iwdg = (RCC->CSR & RCC_CSR_IWDGRSTF) != 0U;
+        __HAL_RCC_CLEAR_RESET_FLAGS();      // so the next reset shows only its own cause
         MX_IWDG_Init();
         iwdg_started = true;
     }
