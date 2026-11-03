@@ -48,8 +48,19 @@ namespace
         .out_min        = -2000.0f,
     });
 
-    // Chip reset values for now; the register values are chosen later.
-    constexpr motor_control::Drv8350s::Config DRV_CONFIG{};
+    // Chosen 2026-11-03 for BSC070N10NS5SC (Qgd 6 nC, RDS(on) 7 mΩ max) and 5 Ω gate resistors.
+    constexpr motor_control::Drv8350s::Config DRV_CONFIG(
+    {
+        .ocp_act    = true,     // an over-current turns off all three half-bridges
+        .idrivep_hs = 0x2,      // 100 mA: VDS rises in ~60 ns (6 nC / 100 mA)
+        .idriven_hs = 0x2,      // 200 mA: falls in ~30 ns
+        .idrivep_ls = 0x2,
+        .idriven_ls = 0x2,
+        .dead_time  = 1,        // 100 ns on top of the VGS handshake
+        .ocp_mode   = 0,        // latch: the fault bits stay until ENABLE low, so drvFaultPoll() can read them
+        .ocp_deg    = 1,        // 2 us
+        .vds_lvl    = 7,        // 0.4 V: trips at ~67 A cold, ~40 A hot (2x the 20 A firmware limit)
+    });
 
     // DRV8350S SDO is open-drain and the board has no pull-up resistor; the weak MCU pull-up
     // rises too slowly for the SPI peripheral (even at 664 kHz). So the SPI is done by software,
