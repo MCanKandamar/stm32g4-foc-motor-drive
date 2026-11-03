@@ -127,7 +127,8 @@ enum class ControlSource : uint8_t
 struct Commands
 {
     volatile bool  start         = false;
-    volatile bool  stop          = false;
+    volatile bool  stop          = false;   // in speed mode: slow down on decel_rpm_s first, then PWM off
+    volatile bool  stop_now      = false;   // PWM off at once, the motor coasts
     volatile bool  reset_fault   = false;
     volatile bool  calibrate     = false;   // Hall calibration (only in IDLE)
     volatile bool  offset_cal    = false;   // refresh the current offset (only in IDLE, CiA 402 Switch On)
@@ -136,6 +137,7 @@ struct Commands
     volatile motor_control::LoopMode   loop   = motor_control::LoopMode::SPEED;         // fixed at START
     volatile float speed_ref_rpm = 0.0f;    // in SPEED mode
     volatile float iq_ref        = 0.0f;    // in CURRENT mode [A]
+    volatile float decel_rpm_s   = 1000.0f; // stop deceleration [rpm/s], from 0x6084
 };
 
 // Writer: Supervisor (init and offsetCalPoll). ISR reads.

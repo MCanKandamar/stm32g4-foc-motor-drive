@@ -184,6 +184,7 @@ static void update_targets()
     const float trq_max = IQ_REF_MAX * permille_per_amp();     // 5 A ≈ ‰825
 
     vel_target = limit_speed(OD_RAM.x60FF_targetVelocity);
+    cmd.decel_rpm_s = std::max(static_cast<float>(OD_RAM.x6084_profileDeceleration), 1.0f);
     trq_target = std::clamp(static_cast<float>(OD_RAM.x6071_targetTorque), -trq_max, trq_max);
 }
 
@@ -290,7 +291,10 @@ static void apply_cia402_actions(const Cia402Actions& action)
     if (action.leave_operation)
     {
         cmd.start = false;                  // cancel start if it is not handled yet; the Supervisor checks start after stop
-        cmd.stop  = true;
+        if (action.soft_stop)
+            cmd.stop     = true;            // 0x06 / 0x07: slow down on 0x6084 first
+        else
+            cmd.stop_now = true;            // 0x00, 0x02, lost master: PWM off at once
     }
     if (action.offset_cal)
         cmd.offset_cal = true;

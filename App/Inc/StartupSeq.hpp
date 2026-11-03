@@ -14,6 +14,7 @@ void run_open_loop();
 
 void enter_closed_loop();
 void run_closed_loop();
+bool begin_soft_stop();     // slow down on cmd.decel_rpm_s, then STOP; false: not in speed mode, stop at once
 
 void enter_calibrating();
 void run_calibrating();

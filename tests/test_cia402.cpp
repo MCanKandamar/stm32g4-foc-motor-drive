@@ -282,6 +282,72 @@ TEST(Cia402, LeavingOperationStopsTheMotor)
     }
 }
 
+TEST(Cia402, OnlyShutdownAndSwitchOnStopSoftly)
+{
+    struct Case { uint16_t command; bool soft; };
+    constexpr Case cases[] = {
+        {kSwitchOn, true},
+        {kShutdown, true},
+        {kDisableVoltage, false},
+        {kQuickStop, false},
+    };
+
+    for (const Case& c : cases) {
+        Cia402 drive;
+        to_operation_enabled(drive);
+        drive.update(kEnable, MotorState::CLOSED_LOOP);
+
+        EXPECT_EQ(drive.update(c.command, MotorState::CLOSED_LOOP).soft_stop, c.soft);
+    }
+}
+
+TEST(Cia402, CommLossStopsAtOnce)
+{
+    for (int16_t option : {2, 3}) {
+        Cia402 drive;
+        to_operation_enabled(drive);
+        drive.update(kEnable, MotorState::CLOSED_LOOP);
+
+        const Cia402Actions action = drive.update(kEnable, MotorState::CLOSED_LOOP, true, option);
+        EXPECT_TRUE(action.leave_operation);
+        EXPECT_FALSE(action.soft_stop);
+    }
+}
+
+TEST(Cia402, DisableVoltageEndsASoftStop)
+{
+    for (uint16_t command : {kDisableVoltage, kQuickStop}) {
+        Cia402 drive;
+        to_operation_enabled(drive);
+        drive.update(kEnable, MotorState::CLOSED_LOOP);
+        drive.update(kSwitchOn, MotorState::CLOSED_LOOP);         // soft stop, motor still turning
+
+        const Cia402Actions action = drive.update(command, MotorState::CLOSED_LOOP);
+        EXPECT_TRUE(action.leave_operation);
+        EXPECT_FALSE(action.soft_stop);
+        EXPECT_EQ(drive.getState(), Cia402State::SWITCH_ON_DISABLED);
+    }
+}
+
+TEST(Cia402, DisableVoltageAtRestDoesNotStop)
+{
+    Cia402 drive;
+    to_switched_on(drive);
+
+    EXPECT_FALSE(drive.update(kDisableVoltage, MotorState::IDLE).leave_operation);
+}
+
+TEST(Cia402, NoRestartDuringASoftStop)
+{
+    Cia402 drive;
+    to_operation_enabled(drive);
+    drive.update(kEnable, MotorState::CLOSED_LOOP);
+    drive.update(kSwitchOn, MotorState::CLOSED_LOOP);
+
+    EXPECT_FALSE(drive.update(kEnable, MotorState::CLOSED_LOOP).enter_operation);   // still slowing down
+    EXPECT_TRUE(drive.update(kEnable, MotorState::IDLE).enter_operation);           // stopped
+}
+
 TEST(Cia402, HoldingEnableDoesNotStopTheMotor)
 {
     Cia402 drive;

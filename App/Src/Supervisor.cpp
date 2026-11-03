@@ -141,10 +141,17 @@ static void enter_off()
 
 static void handle_commands()
 {
+    if (cmd.stop_now)
+    {
+        cmd.stop_now = false;
+        cmd.stop     = false;
+        motor_state_machine.event_handler(MotorEvent::STOP);
+    }
     if (cmd.stop)
     {
         cmd.stop = false;
-        motor_state_machine.event_handler(MotorEvent::STOP);
+        if (motor_state_machine.getState() != MotorState::CLOSED_LOOP || !begin_soft_stop())
+            motor_state_machine.event_handler(MotorEvent::STOP);
     }
     if (cmd.reset_fault)
     {

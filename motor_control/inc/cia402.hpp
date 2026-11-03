@@ -37,6 +37,7 @@ namespace motor_control
     {
         bool enter_operation;   // start the motor in the selected mode
         bool leave_operation;   // stop the motor
+        bool soft_stop;         // with leave_operation: 0x06 / 0x07, slow down on the ramp first
         bool offset_cal;        // refresh the current offset
         bool reset_fault;       // ask for a fault reset
         bool comm_fault;        // communication lost and 0x6007 = 1: raise the fault

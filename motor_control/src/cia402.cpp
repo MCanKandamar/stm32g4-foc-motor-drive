@@ -88,7 +88,10 @@ namespace motor_control
                     action.offset_cal = true;
                 }
                 else if (c == Cia402Cmd::DISABLE_VOLTAGE || c == Cia402Cmd::QUICK_STOP)
-                    state = Cia402State::SWITCH_ON_DISABLED;
+                {
+                    state                  = Cia402State::SWITCH_ON_DISABLED;
+                    action.leave_operation = (motor_state != MotorState::IDLE);  // ends a soft stop at once
+                }
                 break;
 
             case Cia402State::SWITCHED_ON:
@@ -101,7 +104,10 @@ namespace motor_control
                 else if (c == Cia402Cmd::SHUTDOWN)
                     state = Cia402State::READY_TO_SWITCH_ON;
                 else if (c == Cia402Cmd::DISABLE_VOLTAGE || c == Cia402Cmd::QUICK_STOP)
-                    state = Cia402State::SWITCH_ON_DISABLED;
+                {
+                    state                  = Cia402State::SWITCH_ON_DISABLED;
+                    action.leave_operation = (motor_state != MotorState::IDLE);  // ends a soft stop at once
+                }
                 break;
 
             case Cia402State::OPERATION_ENABLED:
@@ -124,6 +130,8 @@ namespace motor_control
                         state = Cia402State::QUICK_STOP_ACTIVE;     // 0x6007 = 3: coast to stop, no braking
                 }
                 action.leave_operation = (state != Cia402State::OPERATION_ENABLED);
+                action.soft_stop       = (state == Cia402State::SWITCHED_ON ||
+                                          state == Cia402State::READY_TO_SWITCH_ON);   // 0x07 / 0x06
                 break;
 
             case Cia402State::QUICK_STOP_ACTIVE:

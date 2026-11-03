@@ -1,5 +1,6 @@
 #include "StartupSeq.hpp"
 #include "app.hpp"
+#include "ramp.hpp"
 #include <cstdint>
 
 using namespace motor_control;
@@ -37,6 +38,9 @@ enum class OlStep
 };
 static OlStep ol_step;
 static float  ol_delta;         // θ_ol − θ_smo [rad], to watch in Scrutiny
+
+static bool   soft_stopping;    // CLOSED_LOOP: the speed ref ramps down, then STOP
+static Ramp   stop_ramp;        // [rpm]
 
 
 /* Common helpers -----------------------------------------------------------*/
@@ -170,6 +174,7 @@ void enter_closed_loop()
                          : 0.0f;                                           // no offset with Hall
     set_foc_mode(src, run_mode.loop);           // enables the IRQ again
     t_sl_ok = HAL_GetTick();
+    soft_stopping = false;
 }
 
 void run_closed_loop()
@@ -199,12 +204,36 @@ void run_closed_loop()
     }
 
     // User reference (cmd) → foc_cfg
-    if (run_mode.loop == LoopMode::SPEED)
+    if (run_mode.loop == LoopMode::SPEED && soft_stopping)
+    {
+        // Sensorless: stop the ramp at SL_MIN_RPM, the SMO angle is not reliable below it
+        const float end = (run_mode.sensor == SensorMode::SENSORLESS) ? SL_MIN_RPM : 0.0f;
+        const float dec = cmd.decel_rpm_s;
+
+        foc_cfg.speed_ref_rpm = stop_ramp.update(end, dec, dec, SUPERVISOR_DT);
+        if (stop_ramp.get_output() == end)
+        {
+            soft_stopping = false;
+            motor_state_machine.event_handler(MotorEvent::STOP);
+        }
+    }
+    else if (run_mode.loop == LoopMode::SPEED)
         foc_cfg.speed_ref_rpm = std::clamp(static_cast<float>(cmd.speed_ref_rpm),
                                            ref_min, SPEED_REF_MAX_RPM);
     else
         foc_cfg.idq_ref = {0.0f, std::clamp(static_cast<float>(cmd.iq_ref),
                                             -IQ_REF_MAX, IQ_REF_MAX)};
+}
+
+bool begin_soft_stop()
+{
+    if (run_mode.loop != LoopMode::SPEED)
+        return false;                           // torque mode: nothing to slow down with
+
+    if (!soft_stopping)
+        stop_ramp.reset(foc_cfg.speed_ref_rpm);
+    soft_stopping = true;
+    return true;
 }
 
 

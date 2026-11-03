@@ -44,7 +44,7 @@ Top: the back-EMF that the SMO estimates in the fixed α-β frame, two sine wave
 - **CANopen node:** CiA 402 state machine, profile velocity and profile torque modes, PDOs, SYNC and EMCY, built on CANopenNode over FDCAN1. A lost master is detected by heartbeat or RPDO timeout, with a set reaction (`0x6007`).
 - **Protection:** gate-driver fault input, phase over-current, DC-bus over-voltage and under-voltage, board over-temperature (85 °C), loss of sensorless lock, an independent watchdog (IWDG, 100 ms) and a check of the FOC interrupt rate.
 - **Live debugging:** [Scrutiny](https://github.com/scrutinydebugger/scrutiny-embedded) over USB CDC with TinyUSB, for watching variables and datalogging from the 20 kHz loop.
-- **Testing:** 168 PC unit tests for the control library, CI on GitHub Actions, and Python hardware-in-the-loop (HIL) tests for the real board.
+- **Testing:** 173 PC unit tests for the control library, CI on GitHub Actions, and Python hardware-in-the-loop (HIL) tests for the real board.
 
 ## Hardware
 
@@ -81,13 +81,10 @@ One pin assignment differs from the Motor-Control schematic: this firmware reads
 | Communication-loss reaction (`0x6007`, heartbeat consumer, RPDO timeout) | Tested on the board, time from a cable pull to motor stop not measured |
 | Bus-off recovery | Tested on the board with a CAN_H to CAN_L short, motor off and at 1000 rpm |
 | One control owner (CAN or Scrutiny) | Tested on the board |
+| Stop on the `0x6084` ramp | Tested on the board over CAN and from Scrutiny, Hall and sensorless |
 | IWDG watchdog | Tested on the board: a halted CPU resets, `reset_by_iwdg` shows it |
 | FOC interrupt rate check | Tested on the board: an old unoptimised Debug build gives `FOC_RATE_ERROR`, the current build runs at 20 kHz |
 | Board over-temperature | Reads 24.9 °C at rest on the board; warm-up and trip not tested |
-| Under-voltage fault held off until the DC supply is first seen | Not tested on the board |
-| Final EDS file | Not done |
-| `0x1010` store parameters | Dropped, the drive stores no parameters |
-| Hall calibration stored in flash | Dropped |
 | DC-bus sag and regenerative over-voltage control | Not done |
 
 ## Known limitations
@@ -95,8 +92,8 @@ One pin assignment differs from the Motor-Control schematic: this firmware reads
 This is a development project, not a safety-rated drive. Check these points before you power a motor:
 
 - **Communication loss needs setup by the master:** the drive sees a silent master only if the master writes `0x1016` or `0x1400:05` and `0x1401:05` after each boot, because these are 0 by default. A CAN error moves the node to pre-operational until an NMT start. Details in [docs/canopen_interface.md](docs/canopen_interface.md#communication-loss).
-- **No braking:** Quick Stop lets the motor coast.
-- **Basic DC-bus protection:** the Monitor task checks the voltage every 10 ms and turns off the PWM outputs above 30 V or below 12 V. Nothing limits regenerative energy, so a fast deceleration can raise the DC-bus voltage. If the MCU starts before the 24 V supply, the under-voltage fault stays off in `INIT` and `IDLE` until the DC bus first reaches 14 V. This has not been tested on the board.
+- **Stopping:** a stop (`0x06`, `0x07`, `0x2011` = `2` or Scrutiny `cmd.stop`) in profile velocity slows the motor down on the `0x6084` ramp to 0 rpm with Hall or to 300 rpm sensorless, then turns off the PWM outputs, and the motor coasts from there. Quick Stop (`0x02`), `0x00`, a fault, a lost master and a stop in torque mode turn off the PWM outputs at once. Below about 150 rpm the Hall speed estimate is noisy, so the end of a Hall stop is less smooth. The drive has no brake resistor, so the energy goes back to the DC bus. At 1000 rpm/s with no load, the bus did not rise.
+- **Basic DC-bus protection:** the Monitor task checks the voltage every 10 ms and turns off the PWM outputs above 30 V or below 12 V. Nothing limits regenerative energy, so a fast deceleration can raise the DC-bus voltage. If the MCU starts before the 24 V supply, the under-voltage fault stays off in `INIT` and `IDLE` until the DC bus first reaches 14 V.
 - **Board temperature only:** the board NTC is read every 10 ms, and above 85 °C the drive trips with `DRIVER_OVER_TEMP`. Its B value of 3950 is assumed, because the part number is unknown, so the reading may be off by a few °C away from 25 °C. The motor has no sensor, so `MOTOR_OVER_TEMP` is never raised.
 - **Gate driver on its defaults:** the firmware configures SPI2 but never writes the DRV8350S registers. TIM8 adds no dead time, so the dead time comes from the driver's default setting. `DRIVER_OVER_CURRENT` is never raised.
 - **No stored parameters:** all object dictionary values live in RAM, so the master must write its settings after each boot. `0x1010` and `0x1011` still report that they work on command, but a write changes only RAM (from reading the code, not tested on the board).
@@ -180,7 +177,7 @@ cmake --preset Debug
 cmake --build --preset Debug
 ```
 
-Use the `Release` preset for an optimised build. The output is `build/<preset>/stm32g4-foc-motor-drive.elf`, and the link step prints the memory use. On 2026-11-03 the Debug build used 162.6 KB and the Release build 96.9 KB of the 512 KB flash, and both used 34.5 KB of the 128 KB RAM.
+Use the `Release` preset for an optimised build. The output is `build/<preset>/stm32g4-foc-motor-drive.elf`, and the link step prints the memory use. On 2026-11-03 the Debug build used 163.0 KB and the Release build 97.2 KB of the 512 KB flash, and both used 34.5 KB of the 128 KB RAM.
 
 The Debug build runs the motor too: [App/Src/isr.cpp](App/Src/isr.cpp), [App/Src/adc_measurements.cpp](App/Src/adc_measurements.cpp) and `motor_control/` are built with -O2 in Debug, so the 20 kHz interrupt keeps its rate.
 
@@ -196,7 +193,7 @@ cmake --build --preset HostTests
 ctest --preset HostTests
 ```
 
-All 168 tests passed on the PC on 2026-11-03.
+All 173 tests passed on the PC on 2026-11-03.
 
 ## Hardware tests
 
@@ -211,7 +208,7 @@ Python scripts in [tools/hil/](tools/hil) test a real board over CAN and Scrutin
 
 ## CANopen and Scrutiny
 
-To run the motor at 1000 rpm, check that the node is operational (it is after boot; send NMT start after a CAN error), then write over SDO `3` to `0x6060` (profile velocity), `1` to `0x2012` (Hall), `1000` to `0x60FF`, then `0x06`, `0x07` and `0x0F` to `0x6040`. Write `0x06` to stop. All objects, PDOs, fault codes and the communication-loss setup are in [docs/canopen_interface.md](docs/canopen_interface.md).
+To run the motor at 1000 rpm, check that the node is operational (it is after boot; send NMT start after a CAN error), then write over SDO `3` to `0x6060` (profile velocity), `1` to `0x2012` (Hall), `1000` to `0x60FF`, then `0x06`, `0x07` and `0x0F` to `0x6040`. Write `0x06` to stop: the motor slows down on `0x6084`, then the PWM outputs turn off. All objects, PDOs, fault codes and the communication-loss setup are in [docs/canopen_interface.md](docs/canopen_interface.md).
 
 Useful Scrutiny variables:
 
@@ -240,7 +237,7 @@ Useful Scrutiny variables:
 
 ## Licence
 
-The project's own code is under the [MIT licence](LICENSE), © 2026 Can Kandamar. This repository as a whole is not under MIT, because third-party code keeps its own licence:
+The project's own code is under the [MIT licence](LICENSE), © 2026 M. Can Kandamar. This repository as a whole is not under MIT, because third-party code keeps its own licence:
 
 | Component | Path | Licence |
 |---|---|---|
