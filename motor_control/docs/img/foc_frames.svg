@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 230" width="600" height="230" class="fig-svg" role="img"><rect x="0" y="0" width="100%" height="100%" fill="#ffffff"/><defs><marker id="frames-arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,1 L10,5 L0,9 z" fill="#52514e"/></marker><marker id="frames-arrb" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,1 L10,5 L0,9 z" fill="#2a78d6"/></marker></defs>
+<defs><marker id="frames-b" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,1 L10,5 L0,9 z" fill="#2a78d6"/></marker></defs><defs><marker id="frames-g" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,1 L10,5 L0,9 z" fill="#1baf7a"/></marker></defs><defs><marker id="frames-o" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,1 L10,5 L0,9 z" fill="#eb6834"/></marker></defs><defs><marker id="frames-k" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,1 L10,5 L0,9 z" fill="#52514e"/></marker></defs><defs><marker id="frames-m" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,1 L10,5 L0,9 z" fill="#898781"/></marker></defs>
+<path d="M150.0,120.0 L238.0,120.0" fill="none" stroke="#898781" stroke-width="1.2" stroke-dasharray="4 3" marker-end="url(#frames-m)"/>
+<text x="250.0" y="124.0" font-family="Calibri, 'Segoe UI', sans-serif" font-size="12" fill="#898781" text-anchor="middle" font-weight="normal" font-style="italic">a</text>
+<path d="M150.0,120.0 L106.0,43.8" fill="none" stroke="#898781" stroke-width="1.2" stroke-dasharray="4 3" marker-end="url(#frames-m)"/>
+<text x="100.0" y="37.4" font-family="Calibri, 'Segoe UI', sans-serif" font-size="12" fill="#898781" text-anchor="middle" font-weight="normal" font-style="italic">b</text>
+<path d="M150.0,120.0 L106.0,196.2" fill="none" stroke="#898781" stroke-width="1.2" stroke-dasharray="4 3" marker-end="url(#frames-m)"/>
+<text x="100.0" y="210.6" font-family="Calibri, 'Segoe UI', sans-serif" font-size="12" fill="#898781" text-anchor="middle" font-weight="normal" font-style="italic">c</text>
+<path d="M150.0,120.0 L230.0,120.0" fill="none" stroke="#2a78d6" stroke-width="2.0" marker-end="url(#frames-b)"/>
+<path d="M150.0,120.0 L150.0,40.0" fill="none" stroke="#2a78d6" stroke-width="2.0" marker-end="url(#frames-b)"/>
+<text x="224.0" y="138.0" font-family="Calibri, 'Segoe UI', sans-serif" font-size="13" fill="#2a78d6" text-anchor="middle" font-weight="normal">α</text>
+<text x="162.0" y="40.0" font-family="Calibri, 'Segoe UI', sans-serif" font-size="13" fill="#2a78d6" text-anchor="middle" font-weight="normal">β</text>
+<text x="150.0" y="222.0" font-family="Calibri, 'Segoe UI', sans-serif" font-size="11" fill="#0b0b0b" text-anchor="middle" font-weight="normal">(a) Clarke: three phase axes → α, β</text>
+<path d="M450.0,120.0 L538.0,120.0" fill="none" stroke="#898781" stroke-width="1.1" marker-end="url(#frames-m)"/>
+<path d="M450.0,120.0 L450.0,32.0" fill="none" stroke="#898781" stroke-width="1.1" marker-end="url(#frames-m)"/>
+<text x="546.0" y="124.0" font-family="Calibri, 'Segoe UI', sans-serif" font-size="12" fill="#898781" text-anchor="start" font-weight="normal">α</text>
+<text x="456.0" y="30.0" font-family="Calibri, 'Segoe UI', sans-serif" font-size="12" fill="#898781" text-anchor="start" font-weight="normal">β</text>
+<path d="M450.0,120.0 L522.1,69.5" fill="none" stroke="#1baf7a" stroke-width="1.6" marker-end="url(#frames-g)"/>
+<path d="M450.0,120.0 L399.5,47.9" fill="none" stroke="#1baf7a" stroke-width="1.6" marker-end="url(#frames-g)"/>
+<text x="534.3" y="67.8" font-family="Calibri, 'Segoe UI', sans-serif" font-size="13" fill="#1baf7a" text-anchor="start" font-weight="normal" font-style="italic">d</text>
+<text x="389.8" y="39.7" font-family="Calibri, 'Segoe UI', sans-serif" font-size="13" fill="#1baf7a" text-anchor="end" font-weight="normal" font-style="italic">q</text>
+<path d="M450.0,120.0 L487.7,93.6" fill="none" stroke="#52514e" stroke-width="3.0" marker-end="url(#frames-k)"/>
+<text x="477.7" y="85.8" font-family="Calibri, 'Segoe UI', sans-serif" font-size="11" fill="#52514e" text-anchor="end" font-weight="normal">ψ<tspan font-size="8.2" baseline-shift="-0.25em">f</tspan><tspan font-size="11.0"></tspan></text>
+<path d="M450.0,120.0 L412.1,65.9" fill="none" stroke="#eb6834" stroke-width="3.0" marker-end="url(#frames-o)"/>
+<text x="404.1" y="81.9" font-family="Calibri, 'Segoe UI', sans-serif" font-size="11" fill="#eb6834" text-anchor="end" font-weight="normal">i = i<tspan font-size="8.2" baseline-shift="-0.25em">q</tspan><tspan font-size="11.0"></tspan></text>
+<path d="M478.0,120.0 A28,28 0 0 0 472.9,103.9" fill="none" stroke="#52514e" stroke-width="1"/>
+<text x="496.0" y="117.0" font-family="Calibri, 'Segoe UI', sans-serif" font-size="11" fill="#52514e" text-anchor="start" font-weight="normal">θ<tspan font-size="8.2" baseline-shift="-0.25em">e</tspan><tspan font-size="11.0"></tspan></text>
+<path d="M459.8,113.1 L452.9,103.3 L443.1,110.2" fill="none" stroke="#52514e" stroke-width="0.9"/>
+<path d="M513.1,29.9 A110,110 0 0 0 450.0,10.0" fill="none" stroke="#1baf7a" stroke-width="1.2" marker-end="url(#frames-g)"/>
+<text x="446.0" y="6.0" font-family="Calibri, 'Segoe UI', sans-serif" font-size="11" fill="#1baf7a" text-anchor="end" font-weight="normal">ω<tspan font-size="8.2" baseline-shift="-0.25em">e</tspan><tspan font-size="11.0"></tspan></text>
+<text x="450.0" y="222.0" font-family="Calibri, 'Segoe UI', sans-serif" font-size="11" fill="#0b0b0b" text-anchor="middle" font-weight="normal">(b) Park: axes that rotate with the rotor</text></svg>

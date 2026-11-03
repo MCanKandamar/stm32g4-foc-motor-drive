@@ -1,0 +1,69 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 112" width="600" height="112" class="fig-svg" role="img"><rect x="0" y="0" width="100%" height="100%" fill="#ffffff"/><defs><marker id="ext-arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,1 L10,5 L0,9 z" fill="#52514e"/></marker><marker id="ext-arrb" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,1 L10,5 L0,9 z" fill="#2a78d6"/></marker></defs>
+<rect x="4.0" y="34.0" width="28.0" height="36.0" rx="0" fill="#f1f2f4" fill-opacity="1.0" stroke="#c3c2b7" stroke-width="1.0"/>
+<text x="18.0" y="56.0" font-family="Calibri, 'Segoe UI', sans-serif" font-size="9.5" fill="#0b0b0b" text-anchor="middle" font-weight="normal">SOF</text>
+<text x="18.0" y="84.0" font-family="Calibri, 'Segoe UI', sans-serif" font-size="9" fill="#52514e" text-anchor="middle" font-weight="normal">1</text>
+<text x="18.0" y="98.0" font-family="Consolas, 'Courier New', monospace" font-size="10" fill="#1f5fa8" text-anchor="middle" font-weight="bold">d</text>
+<rect x="32.0" y="34.0" width="70.0" height="36.0" rx="0" fill="#e8eff8" fill-opacity="1.0" stroke="#1f5fa8" stroke-width="1.0"/>
+<text x="67.0" y="50.5" font-family="Calibri, 'Segoe UI', sans-serif" font-size="10.5" fill="#0b0b0b" text-anchor="middle" font-weight="bold">Base ID</text>
+<text x="67.0" y="61.5" font-family="Calibri, 'Segoe UI', sans-serif" font-size="10.5" fill="#0b0b0b" text-anchor="middle" font-weight="bold">ID28…18</text>
+<text x="67.0" y="84.0" font-family="Calibri, 'Segoe UI', sans-serif" font-size="9" fill="#52514e" text-anchor="middle" font-weight="normal">11</text>
+<rect x="102.0" y="34.0" width="30.0" height="36.0" rx="0" fill="#e8eff8" fill-opacity="1.0" stroke="#1f5fa8" stroke-width="1.0"/>
+<text x="117.0" y="56.0" font-family="Calibri, 'Segoe UI', sans-serif" font-size="9.5" fill="#0b0b0b" text-anchor="middle" font-weight="normal">SRR</text>
+<text x="117.0" y="84.0" font-family="Calibri, 'Segoe UI', sans-serif" font-size="9" fill="#52514e" text-anchor="middle" font-weight="normal">1</text>
+<text x="117.0" y="98.0" font-family="Consolas, 'Courier New', monospace" font-size="10" fill="#898781" text-anchor="middle" font-weight="bold">r</text>
+<rect x="132.0" y="34.0" width="30.0" height="36.0" rx="0" fill="#e8eff8" fill-opacity="1.0" stroke="#1f5fa8" stroke-width="1.0"/>
+<text x="147.0" y="56.0" font-family="Calibri, 'Segoe UI', sans-serif" font-size="9.5" fill="#0b0b0b" text-anchor="middle" font-weight="normal">IDE</text>
+<text x="147.0" y="84.0" font-family="Calibri, 'Segoe UI', sans-serif" font-size="9" fill="#52514e" text-anchor="middle" font-weight="normal">1</text>
+<text x="147.0" y="98.0" font-family="Consolas, 'Courier New', monospace" font-size="10" fill="#898781" text-anchor="middle" font-weight="bold">r</text>
+<rect x="162.0" y="34.0" width="92.0" height="36.0" rx="0" fill="#e8eff8" fill-opacity="1.0" stroke="#1f5fa8" stroke-width="1.0"/>
+<text x="208.0" y="50.5" font-family="Calibri, 'Segoe UI', sans-serif" font-size="10.5" fill="#0b0b0b" text-anchor="middle" font-weight="bold">ID ext.</text>
+<text x="208.0" y="61.5" font-family="Calibri, 'Segoe UI', sans-serif" font-size="10.5" fill="#0b0b0b" text-anchor="middle" font-weight="bold">ID17 … ID0</text>
+<text x="208.0" y="84.0" font-family="Calibri, 'Segoe UI', sans-serif" font-size="9" fill="#52514e" text-anchor="middle" font-weight="normal">18</text>
+<rect x="254.0" y="34.0" width="30.0" height="36.0" rx="0" fill="#e8eff8" fill-opacity="1.0" stroke="#1f5fa8" stroke-width="1.0"/>
+<text x="269.0" y="56.0" font-family="Calibri, 'Segoe UI', sans-serif" font-size="9.5" fill="#0b0b0b" text-anchor="middle" font-weight="normal">RTR</text>
+<text x="269.0" y="84.0" font-family="Calibri, 'Segoe UI', sans-serif" font-size="9" fill="#52514e" text-anchor="middle" font-weight="normal">1</text>
+<text x="269.0" y="98.0" font-family="Consolas, 'Courier New', monospace" font-size="10" fill="#1f5fa8" text-anchor="middle" font-weight="bold">d</text>
+<rect x="284.0" y="34.0" width="24.0" height="36.0" rx="0" fill="#f1f2f4" fill-opacity="1.0" stroke="#4b5057" stroke-width="1.0"/>
+<text x="296.0" y="56.0" font-family="Calibri, 'Segoe UI', sans-serif" font-size="9.5" fill="#0b0b0b" text-anchor="middle" font-weight="normal">r1</text>
+<text x="296.0" y="84.0" font-family="Calibri, 'Segoe UI', sans-serif" font-size="9" fill="#52514e" text-anchor="middle" font-weight="normal">1</text>
+<text x="296.0" y="98.0" font-family="Consolas, 'Courier New', monospace" font-size="10" fill="#1f5fa8" text-anchor="middle" font-weight="bold">d</text>
+<rect x="308.0" y="34.0" width="24.0" height="36.0" rx="0" fill="#f1f2f4" fill-opacity="1.0" stroke="#4b5057" stroke-width="1.0"/>
+<text x="320.0" y="56.0" font-family="Calibri, 'Segoe UI', sans-serif" font-size="9.5" fill="#0b0b0b" text-anchor="middle" font-weight="normal">r0</text>
+<text x="320.0" y="84.0" font-family="Calibri, 'Segoe UI', sans-serif" font-size="9" fill="#52514e" text-anchor="middle" font-weight="normal">1</text>
+<text x="320.0" y="98.0" font-family="Consolas, 'Courier New', monospace" font-size="10" fill="#1f5fa8" text-anchor="middle" font-weight="bold">d</text>
+<rect x="332.0" y="34.0" width="40.0" height="36.0" rx="0" fill="#f1f2f4" fill-opacity="1.0" stroke="#4b5057" stroke-width="1.0"/>
+<text x="352.0" y="56.0" font-family="Calibri, 'Segoe UI', sans-serif" font-size="10.5" fill="#0b0b0b" text-anchor="middle" font-weight="bold">DLC</text>
+<text x="352.0" y="84.0" font-family="Calibri, 'Segoe UI', sans-serif" font-size="9" fill="#52514e" text-anchor="middle" font-weight="normal">4</text>
+<rect x="372.0" y="34.0" width="70.0" height="36.0" rx="0" fill="#f1f2f4" fill-opacity="1.0" stroke="#4b5057" stroke-width="1.0"/>
+<text x="407.0" y="56.0" font-family="Calibri, 'Segoe UI', sans-serif" font-size="10.5" fill="#0b0b0b" text-anchor="middle" font-weight="bold">Data</text>
+<text x="407.0" y="84.0" font-family="Calibri, 'Segoe UI', sans-serif" font-size="9" fill="#52514e" text-anchor="middle" font-weight="normal">0 … 64</text>
+<rect x="442.0" y="34.0" width="44.0" height="36.0" rx="0" fill="#f1f2f4" fill-opacity="1.0" stroke="#4b5057" stroke-width="1.0"/>
+<text x="464.0" y="56.0" font-family="Calibri, 'Segoe UI', sans-serif" font-size="10.5" fill="#0b0b0b" text-anchor="middle" font-weight="bold">CRC</text>
+<text x="464.0" y="84.0" font-family="Calibri, 'Segoe UI', sans-serif" font-size="9" fill="#52514e" text-anchor="middle" font-weight="normal">15</text>
+<rect x="486.0" y="34.0" width="24.0" height="36.0" rx="0" fill="#f1f2f4" fill-opacity="1.0" stroke="#4b5057" stroke-width="1.0"/>
+<text x="498.0" y="56.0" font-family="Calibri, 'Segoe UI', sans-serif" font-size="9.5" fill="#0b0b0b" text-anchor="middle" font-weight="normal">del</text>
+<text x="498.0" y="84.0" font-family="Calibri, 'Segoe UI', sans-serif" font-size="9" fill="#52514e" text-anchor="middle" font-weight="normal">1</text>
+<text x="498.0" y="98.0" font-family="Consolas, 'Courier New', monospace" font-size="10" fill="#898781" text-anchor="middle" font-weight="bold">r</text>
+<rect x="510.0" y="34.0" width="30.0" height="36.0" rx="0" fill="#fbece5" fill-opacity="1.0" stroke="#4b5057" stroke-width="1.0"/>
+<text x="525.0" y="56.0" font-family="Calibri, 'Segoe UI', sans-serif" font-size="9.5" fill="#0b0b0b" text-anchor="middle" font-weight="normal">ACK</text>
+<text x="525.0" y="84.0" font-family="Calibri, 'Segoe UI', sans-serif" font-size="9" fill="#52514e" text-anchor="middle" font-weight="normal">1</text>
+<text x="525.0" y="98.0" font-family="Consolas, 'Courier New', monospace" font-size="10" fill="#898781" text-anchor="middle" font-weight="bold">r→d</text>
+<rect x="540.0" y="34.0" width="24.0" height="36.0" rx="0" fill="#fbece5" fill-opacity="1.0" stroke="#4b5057" stroke-width="1.0"/>
+<text x="552.0" y="56.0" font-family="Calibri, 'Segoe UI', sans-serif" font-size="9.5" fill="#0b0b0b" text-anchor="middle" font-weight="normal">del</text>
+<text x="552.0" y="84.0" font-family="Calibri, 'Segoe UI', sans-serif" font-size="9" fill="#52514e" text-anchor="middle" font-weight="normal">1</text>
+<text x="552.0" y="98.0" font-family="Consolas, 'Courier New', monospace" font-size="10" fill="#898781" text-anchor="middle" font-weight="bold">r</text>
+<rect x="564.0" y="34.0" width="32.0" height="36.0" rx="0" fill="#f1f2f4" fill-opacity="1.0" stroke="#c3c2b7" stroke-width="1.0"/>
+<text x="580.0" y="56.0" font-family="Calibri, 'Segoe UI', sans-serif" font-size="9.5" fill="#0b0b0b" text-anchor="middle" font-weight="normal">EOF</text>
+<text x="580.0" y="84.0" font-family="Calibri, 'Segoe UI', sans-serif" font-size="9" fill="#52514e" text-anchor="middle" font-weight="normal">7</text>
+<text x="580.0" y="98.0" font-family="Consolas, 'Courier New', monospace" font-size="10" fill="#898781" text-anchor="middle" font-weight="bold">r</text>
+<polyline points="34.00,30.00 34.00,25.00 282.00,25.00 282.00,30.00" fill="none" stroke="#1f5fa8" stroke-width="0.9" stroke-linejoin="miter" stroke-linecap="round"/>
+<text x="158.0" y="20.0" font-family="Calibri, 'Segoe UI', sans-serif" font-size="9.5" fill="#1f5fa8" text-anchor="middle" font-weight="normal">Arbitration field (11 + 18 = 29-bit ID)</text>
+<polyline points="286.00,30.00 286.00,25.00 370.00,25.00 370.00,30.00" fill="none" stroke="#4b5057" stroke-width="0.9" stroke-linejoin="miter" stroke-linecap="round"/>
+<text x="328.0" y="20.0" font-family="Calibri, 'Segoe UI', sans-serif" font-size="9.5" fill="#4b5057" text-anchor="middle" font-weight="normal">Control</text>
+<polyline points="374.00,30.00 374.00,25.00 440.00,25.00 440.00,30.00" fill="none" stroke="#4b5057" stroke-width="0.9" stroke-linejoin="miter" stroke-linecap="round"/>
+<text x="407.0" y="20.0" font-family="Calibri, 'Segoe UI', sans-serif" font-size="9.5" fill="#4b5057" text-anchor="middle" font-weight="normal">Data</text>
+<polyline points="444.00,30.00 444.00,25.00 508.00,25.00 508.00,30.00" fill="none" stroke="#4b5057" stroke-width="0.9" stroke-linejoin="miter" stroke-linecap="round"/>
+<text x="476.0" y="20.0" font-family="Calibri, 'Segoe UI', sans-serif" font-size="9.5" fill="#4b5057" text-anchor="middle" font-weight="normal">CRC</text>
+<polyline points="512.00,30.00 512.00,25.00 562.00,25.00 562.00,30.00" fill="none" stroke="#4b5057" stroke-width="0.9" stroke-linejoin="miter" stroke-linecap="round"/>
+<text x="537.0" y="20.0" font-family="Calibri, 'Segoe UI', sans-serif" font-size="9.5" fill="#4b5057" text-anchor="middle" font-weight="normal">ACK</text>
+<text x="0.0" y="84.0" font-family="Calibri, 'Segoe UI', sans-serif" font-size="9" fill="#0b0b0b" text-anchor="middle" font-weight="normal"></text></svg>

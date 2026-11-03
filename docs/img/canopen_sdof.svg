@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 92" width="600" height="92" class="fig-svg" role="img"><rect x="0" y="0" width="100%" height="100%" fill="#ffffff"/><defs><marker id="sdof-arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,1 L10,5 L0,9 z" fill="#52514e"/></marker><marker id="sdof-arrb" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,1 L10,5 L0,9 z" fill="#2a78d6"/></marker></defs>
+<text x="62.0" y="16.0" font-family="Calibri, 'Segoe UI', sans-serif" font-size="9.5" fill="#52514e" text-anchor="middle" font-weight="normal">COB-ID</text>
+<rect x="20.0" y="22.0" width="84.0" height="28.0" rx="0" fill="#e8eff8" fill-opacity="1.0" stroke="#1f5fa8" stroke-width="1.0"/>
+<text x="62.0" y="39.9" font-family="Consolas, 'Courier New', monospace" font-size="11" fill="#0b0b0b" text-anchor="middle" font-weight="bold">0x605</text>
+<text x="130.0" y="16.0" font-family="Calibri, 'Segoe UI', sans-serif" font-size="9.5" fill="#52514e" text-anchor="middle" font-weight="normal">DLC</text>
+<rect x="110.0" y="22.0" width="40.0" height="28.0" rx="0" fill="#f1f2f4" fill-opacity="1.0" stroke="#4b5057" stroke-width="1.0"/>
+<text x="130.0" y="39.9" font-family="Consolas, 'Courier New', monospace" font-size="11" fill="#0b0b0b" text-anchor="middle" font-weight="normal">8</text>
+<text x="181.0" y="16.0" font-family="Calibri, 'Segoe UI', sans-serif" font-size="9.5" fill="#52514e" text-anchor="middle" font-weight="normal">B0</text>
+<rect x="156.0" y="22.0" width="50.0" height="28.0" rx="0" fill="#ffffff" fill-opacity="1.0" stroke="#c3c2b7" stroke-width="1.0"/>
+<text x="181.0" y="39.7" font-family="Consolas, 'Courier New', monospace" font-size="10.5" fill="#0b0b0b" text-anchor="middle" font-weight="normal">2F</text>
+<text x="231.0" y="16.0" font-family="Calibri, 'Segoe UI', sans-serif" font-size="9.5" fill="#52514e" text-anchor="middle" font-weight="normal">B1</text>
+<rect x="206.0" y="22.0" width="50.0" height="28.0" rx="0" fill="#ffffff" fill-opacity="1.0" stroke="#c3c2b7" stroke-width="1.0"/>
+<text x="231.0" y="39.7" font-family="Consolas, 'Courier New', monospace" font-size="10.5" fill="#0b0b0b" text-anchor="middle" font-weight="normal">60</text>
+<text x="281.0" y="16.0" font-family="Calibri, 'Segoe UI', sans-serif" font-size="9.5" fill="#52514e" text-anchor="middle" font-weight="normal">B2</text>
+<rect x="256.0" y="22.0" width="50.0" height="28.0" rx="0" fill="#ffffff" fill-opacity="1.0" stroke="#c3c2b7" stroke-width="1.0"/>
+<text x="281.0" y="39.7" font-family="Consolas, 'Courier New', monospace" font-size="10.5" fill="#0b0b0b" text-anchor="middle" font-weight="normal">60</text>
+<text x="331.0" y="16.0" font-family="Calibri, 'Segoe UI', sans-serif" font-size="9.5" fill="#52514e" text-anchor="middle" font-weight="normal">B3</text>
+<rect x="306.0" y="22.0" width="50.0" height="28.0" rx="0" fill="#ffffff" fill-opacity="1.0" stroke="#c3c2b7" stroke-width="1.0"/>
+<text x="331.0" y="39.7" font-family="Consolas, 'Courier New', monospace" font-size="10.5" fill="#0b0b0b" text-anchor="middle" font-weight="normal">00</text>
+<text x="381.0" y="16.0" font-family="Calibri, 'Segoe UI', sans-serif" font-size="9.5" fill="#52514e" text-anchor="middle" font-weight="normal">B4</text>
+<rect x="356.0" y="22.0" width="50.0" height="28.0" rx="0" fill="#ffffff" fill-opacity="1.0" stroke="#c3c2b7" stroke-width="1.0"/>
+<text x="381.0" y="39.7" font-family="Consolas, 'Courier New', monospace" font-size="10.5" fill="#0b0b0b" text-anchor="middle" font-weight="normal">03</text>
+<text x="431.0" y="16.0" font-family="Calibri, 'Segoe UI', sans-serif" font-size="9.5" fill="#52514e" text-anchor="middle" font-weight="normal">B5</text>
+<rect x="406.0" y="22.0" width="50.0" height="28.0" rx="0" fill="#ffffff" fill-opacity="1.0" stroke="#c3c2b7" stroke-width="1.0"/>
+<text x="431.0" y="39.7" font-family="Consolas, 'Courier New', monospace" font-size="10.5" fill="#0b0b0b" text-anchor="middle" font-weight="normal">00</text>
+<text x="481.0" y="16.0" font-family="Calibri, 'Segoe UI', sans-serif" font-size="9.5" fill="#52514e" text-anchor="middle" font-weight="normal">B6</text>
+<rect x="456.0" y="22.0" width="50.0" height="28.0" rx="0" fill="#ffffff" fill-opacity="1.0" stroke="#c3c2b7" stroke-width="1.0"/>
+<text x="481.0" y="39.7" font-family="Consolas, 'Courier New', monospace" font-size="10.5" fill="#0b0b0b" text-anchor="middle" font-weight="normal">00</text>
+<text x="531.0" y="16.0" font-family="Calibri, 'Segoe UI', sans-serif" font-size="9.5" fill="#52514e" text-anchor="middle" font-weight="normal">B7</text>
+<rect x="506.0" y="22.0" width="50.0" height="28.0" rx="0" fill="#ffffff" fill-opacity="1.0" stroke="#c3c2b7" stroke-width="1.0"/>
+<text x="531.0" y="39.7" font-family="Consolas, 'Courier New', monospace" font-size="10.5" fill="#0b0b0b" text-anchor="middle" font-weight="normal">00</text>
+<polyline points="158.00,54.00 158.00,59.00 204.00,59.00 204.00,54.00" fill="none" stroke="#1f5fa8" stroke-width="0.9" stroke-linejoin="miter" stroke-linecap="round"/>
+<text x="181.0" y="72.0" font-family="Calibri, 'Segoe UI', sans-serif" font-size="9.5" fill="#1f5fa8" text-anchor="middle" font-weight="normal">command</text>
+<text x="181.0" y="83.5" font-family="Calibri, 'Segoe UI', sans-serif" font-size="9.5" fill="#1f5fa8" text-anchor="middle" font-weight="normal">byte</text>
+<polyline points="208.00,54.00 208.00,59.00 304.00,59.00 304.00,54.00" fill="none" stroke="#4b5057" stroke-width="0.9" stroke-linejoin="miter" stroke-linecap="round"/>
+<text x="256.0" y="72.0" font-family="Calibri, 'Segoe UI', sans-serif" font-size="9.5" fill="#4b5057" text-anchor="middle" font-weight="normal">index (LE)</text>
+<text x="256.0" y="83.5" font-family="Calibri, 'Segoe UI', sans-serif" font-size="9.5" fill="#4b5057" text-anchor="middle" font-weight="normal">0x6060</text>
+<polyline points="308.00,54.00 308.00,59.00 354.00,59.00 354.00,54.00" fill="none" stroke="#4b5057" stroke-width="0.9" stroke-linejoin="miter" stroke-linecap="round"/>
+<text x="331.0" y="72.0" font-family="Calibri, 'Segoe UI', sans-serif" font-size="9.5" fill="#4b5057" text-anchor="middle" font-weight="normal">sub-</text>
+<text x="331.0" y="83.5" font-family="Calibri, 'Segoe UI', sans-serif" font-size="9.5" fill="#4b5057" text-anchor="middle" font-weight="normal">index</text>
+<polyline points="358.00,54.00 358.00,59.00 554.00,59.00 554.00,54.00" fill="none" stroke="#4b5057" stroke-width="0.9" stroke-linejoin="miter" stroke-linecap="round"/>
+<text x="456.0" y="72.0" font-family="Calibri, 'Segoe UI', sans-serif" font-size="9.5" fill="#4b5057" text-anchor="middle" font-weight="normal">data (LE): 0x03</text>
+<text x="456.0" y="83.5" font-family="Calibri, 'Segoe UI', sans-serif" font-size="9.5" fill="#4b5057" text-anchor="middle" font-weight="normal">= profile velocity</text></svg>

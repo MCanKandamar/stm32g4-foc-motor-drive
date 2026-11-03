@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 120" width="600" height="120" class="fig-svg" role="img"><rect x="0" y="0" width="100%" height="100%" fill="#ffffff"/><defs><marker id="cobid-arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,1 L10,5 L0,9 z" fill="#52514e"/></marker><marker id="cobid-arrb" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,1 L10,5 L0,9 z" fill="#2a78d6"/></marker></defs>
+<text x="167.0" y="24.0" font-family="Calibri, 'Segoe UI', sans-serif" font-size="9.5" fill="#52514e" text-anchor="middle" font-weight="normal">10</text>
+<rect x="150.0" y="30.0" width="34.0" height="26.0" rx="0" fill="#e8eff8" fill-opacity="1.0" stroke="#1f5fa8" stroke-width="1.0"/>
+<text x="167.0" y="46.7" font-family="Consolas, 'Courier New', monospace" font-size="10.5" fill="#0b0b0b" text-anchor="middle" font-weight="bold">0</text>
+<text x="201.0" y="24.0" font-family="Calibri, 'Segoe UI', sans-serif" font-size="9.5" fill="#52514e" text-anchor="middle" font-weight="normal">9</text>
+<rect x="184.0" y="30.0" width="34.0" height="26.0" rx="0" fill="#e8eff8" fill-opacity="1.0" stroke="#1f5fa8" stroke-width="1.0"/>
+<text x="201.0" y="46.7" font-family="Consolas, 'Courier New', monospace" font-size="10.5" fill="#0b0b0b" text-anchor="middle" font-weight="bold">0</text>
+<text x="235.0" y="24.0" font-family="Calibri, 'Segoe UI', sans-serif" font-size="9.5" fill="#52514e" text-anchor="middle" font-weight="normal">8</text>
+<rect x="218.0" y="30.0" width="34.0" height="26.0" rx="0" fill="#e8eff8" fill-opacity="1.0" stroke="#1f5fa8" stroke-width="1.0"/>
+<text x="235.0" y="46.7" font-family="Consolas, 'Courier New', monospace" font-size="10.5" fill="#0b0b0b" text-anchor="middle" font-weight="bold">1</text>
+<text x="269.0" y="24.0" font-family="Calibri, 'Segoe UI', sans-serif" font-size="9.5" fill="#52514e" text-anchor="middle" font-weight="normal">7</text>
+<rect x="252.0" y="30.0" width="34.0" height="26.0" rx="0" fill="#e8eff8" fill-opacity="1.0" stroke="#1f5fa8" stroke-width="1.0"/>
+<text x="269.0" y="46.7" font-family="Consolas, 'Courier New', monospace" font-size="10.5" fill="#0b0b0b" text-anchor="middle" font-weight="bold">1</text>
+<text x="303.0" y="24.0" font-family="Calibri, 'Segoe UI', sans-serif" font-size="9.5" fill="#52514e" text-anchor="middle" font-weight="normal">6</text>
+<rect x="286.0" y="30.0" width="34.0" height="26.0" rx="0" fill="#f1f2f4" fill-opacity="1.0" stroke="#4b5057" stroke-width="1.0"/>
+<text x="303.0" y="46.7" font-family="Consolas, 'Courier New', monospace" font-size="10.5" fill="#0b0b0b" text-anchor="middle" font-weight="bold">0</text>
+<text x="337.0" y="24.0" font-family="Calibri, 'Segoe UI', sans-serif" font-size="9.5" fill="#52514e" text-anchor="middle" font-weight="normal">5</text>
+<rect x="320.0" y="30.0" width="34.0" height="26.0" rx="0" fill="#f1f2f4" fill-opacity="1.0" stroke="#4b5057" stroke-width="1.0"/>
+<text x="337.0" y="46.7" font-family="Consolas, 'Courier New', monospace" font-size="10.5" fill="#0b0b0b" text-anchor="middle" font-weight="bold">0</text>
+<text x="371.0" y="24.0" font-family="Calibri, 'Segoe UI', sans-serif" font-size="9.5" fill="#52514e" text-anchor="middle" font-weight="normal">4</text>
+<rect x="354.0" y="30.0" width="34.0" height="26.0" rx="0" fill="#f1f2f4" fill-opacity="1.0" stroke="#4b5057" stroke-width="1.0"/>
+<text x="371.0" y="46.7" font-family="Consolas, 'Courier New', monospace" font-size="10.5" fill="#0b0b0b" text-anchor="middle" font-weight="bold">0</text>
+<text x="405.0" y="24.0" font-family="Calibri, 'Segoe UI', sans-serif" font-size="9.5" fill="#52514e" text-anchor="middle" font-weight="normal">3</text>
+<rect x="388.0" y="30.0" width="34.0" height="26.0" rx="0" fill="#f1f2f4" fill-opacity="1.0" stroke="#4b5057" stroke-width="1.0"/>
+<text x="405.0" y="46.7" font-family="Consolas, 'Courier New', monospace" font-size="10.5" fill="#0b0b0b" text-anchor="middle" font-weight="bold">0</text>
+<text x="439.0" y="24.0" font-family="Calibri, 'Segoe UI', sans-serif" font-size="9.5" fill="#52514e" text-anchor="middle" font-weight="normal">2</text>
+<rect x="422.0" y="30.0" width="34.0" height="26.0" rx="0" fill="#f1f2f4" fill-opacity="1.0" stroke="#4b5057" stroke-width="1.0"/>
+<text x="439.0" y="46.7" font-family="Consolas, 'Courier New', monospace" font-size="10.5" fill="#0b0b0b" text-anchor="middle" font-weight="bold">1</text>
+<text x="473.0" y="24.0" font-family="Calibri, 'Segoe UI', sans-serif" font-size="9.5" fill="#52514e" text-anchor="middle" font-weight="normal">1</text>
+<rect x="456.0" y="30.0" width="34.0" height="26.0" rx="0" fill="#f1f2f4" fill-opacity="1.0" stroke="#4b5057" stroke-width="1.0"/>
+<text x="473.0" y="46.7" font-family="Consolas, 'Courier New', monospace" font-size="10.5" fill="#0b0b0b" text-anchor="middle" font-weight="bold">0</text>
+<text x="507.0" y="24.0" font-family="Calibri, 'Segoe UI', sans-serif" font-size="9.5" fill="#52514e" text-anchor="middle" font-weight="normal">0</text>
+<rect x="490.0" y="30.0" width="34.0" height="26.0" rx="0" fill="#f1f2f4" fill-opacity="1.0" stroke="#4b5057" stroke-width="1.0"/>
+<text x="507.0" y="46.7" font-family="Consolas, 'Courier New', monospace" font-size="10.5" fill="#0b0b0b" text-anchor="middle" font-weight="bold">1</text>
+<text x="138.0" y="48.0" font-family="Calibri, 'Segoe UI', sans-serif" font-size="11" fill="#0b0b0b" text-anchor="end" font-weight="bold">COB-ID 0x185 =</text>
+<polyline points="152.00,60.00 152.00,65.00 284.00,65.00 284.00,60.00" fill="none" stroke="#1f5fa8" stroke-width="0.9" stroke-linejoin="miter" stroke-linecap="round"/>
+<text x="218.0" y="78.0" font-family="Calibri, 'Segoe UI', sans-serif" font-size="9.5" fill="#1f5fa8" text-anchor="middle" font-weight="normal">function code (4 bits)</text>
+<text x="218.0" y="89.5" font-family="Calibri, 'Segoe UI', sans-serif" font-size="9.5" fill="#1f5fa8" text-anchor="middle" font-weight="normal">0011 = 3 → TPDO1 (0x180)</text>
+<polyline points="288.00,60.00 288.00,65.00 522.00,65.00 522.00,60.00" fill="none" stroke="#4b5057" stroke-width="0.9" stroke-linejoin="miter" stroke-linecap="round"/>
+<text x="405.0" y="78.0" font-family="Calibri, 'Segoe UI', sans-serif" font-size="9.5" fill="#4b5057" text-anchor="middle" font-weight="normal">node ID (7 bits)</text>
+<text x="405.0" y="89.5" font-family="Calibri, 'Segoe UI', sans-serif" font-size="9.5" fill="#4b5057" text-anchor="middle" font-weight="normal">000 0101 = 5</text>
+<text x="536.0" y="48.0" font-family="Calibri, 'Segoe UI', sans-serif" font-size="11" fill="#0b0b0b" text-anchor="start" font-weight="normal">= 0x180 + 5</text></svg>
