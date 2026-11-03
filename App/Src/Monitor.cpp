@@ -28,6 +28,9 @@ void MonitorRun(void)
         __HAL_RCC_CLEAR_RESET_FLAGS();      // so the next reset shows only its own cause
         MX_IWDG_Init();
         iwdg_started = true;
+
+        HAL_ADCEx_Calibration_Start(&hadc1, ADC_SINGLE_ENDED);
+        HAL_ADC_Start(&hadc1);              // first board temperature conversion
     }
 
     /* Kick only if every watched task ran since the last kick */
@@ -61,6 +64,17 @@ void MonitorRun(void)
     else if (status.Vdc < VDC_MIN && !waiting) {
         powerOff();
         fault = FaultCode::UNDER_VOLTAGE;
+    }
+
+    // Board temperature: read the last conversion, then start the next one (no waiting)
+    if (__HAL_ADC_GET_FLAG(&hadc1, ADC_FLAG_EOC))
+    {
+        status.pcb_temp_c = ntc_temp_c(static_cast<uint16_t>(HAL_ADC_GetValue(&hadc1)), PCB_NTC);
+        if (status.pcb_temp_c > PCB_TEMP_MAX) {
+            powerOff();
+            fault = FaultCode::DRIVER_OVER_TEMP;
+        }
+        HAL_ADC_Start(&hadc1);
     }
 
     uint32_t now = HAL_GetTick();

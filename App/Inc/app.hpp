@@ -5,6 +5,7 @@
 #include "main.h"
 #include "hall_sensor.hpp"
 #include "motor_parameters.hpp"
+#include "ntc.hpp"
 #include "observer.hpp"
 #include "pi_controller.hpp"
 #include "pll.hpp"
@@ -26,6 +27,9 @@ constexpr float     I_MAX           = 20.0f;
 constexpr float     VDC_MAX         = 30.0f;
 constexpr float     VDC_MIN         = 12.0f;
 constexpr float     VDC_READY       = 14.0f;                     // above VDC_MIN so a slow rise does not fault at the limit
+
+constexpr motor_control::NtcParams PCB_NTC = {10'000.0f, 3950.0f, 10'000.0f};   // R24 NTC 10k (B assumed 3950), R23 10k
+constexpr float     PCB_TEMP_MAX    = 85.0f;                     // board temperature trip [°C]
 
 constexpr float     I_ALIGN         = 1.0f;
 constexpr uint32_t  ALIGN_MS        = 1000;
@@ -57,6 +61,7 @@ constexpr float SPEED_REF_MAX_RPM = 3560.0f;   // 57BLF02 nominal rated: = 3000 
                                                //                tested: = 3560 rpm
 extern "C" TIM_HandleTypeDef    htim3;
 extern "C" TIM_HandleTypeDef    htim8;
+extern "C" ADC_HandleTypeDef    hadc1;
 extern "C" ADC_HandleTypeDef    hadc3;
 extern "C" ADC_HandleTypeDef    hadc4;
 extern "C" ADC_HandleTypeDef    hadc5;
@@ -109,6 +114,7 @@ struct Status
     volatile float              Vdc;
     motor_control::Idq_fdb_t    idq_fdb;
     volatile float              foc_isr_hz;     // measured FOC ISR rate, 20 000 when right
+    volatile float              pcb_temp_c;     // board NTC on PC3 [°C]
 };
 
 // Who owns the motor. The names CAN and USB are taken: stm32g473xx.h defines them as macros.
